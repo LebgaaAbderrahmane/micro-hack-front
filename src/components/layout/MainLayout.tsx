@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { usePathname } from "@/i18n/routing";
 import { Header } from "./Header";
 import { FloatingSettings } from "../common/FloatingSettings";
+import { AIChat } from "../common/AIChat";
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -47,6 +48,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <FloatingSettings />
+      <AIChat />
     </div>
   );
 };

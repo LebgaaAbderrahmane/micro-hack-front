@@ -29,7 +29,7 @@ export const FloatingSettings = () => {
     };
 
     return (
-        <div className="fixed bottom-6 right-24 flex items-center gap-3 z-[100]">
+        <div className="fixed bottom-6 left-6 flex items-center gap-3 z-[100]">
             {/* Language Toggle */}
             <motion.button
                 whileHover={{ scale: 1.05 }}
