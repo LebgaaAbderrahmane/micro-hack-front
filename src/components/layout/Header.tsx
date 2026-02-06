@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Dashboard", href: "/" },
-  { label: "Logging", href: "/bookings" },
+  { label: "Logging", href: "/loggings" },
   { label: "Manage", href: "/fleet" },
   { label: "Analytics", href: "/settings" },
 ];
@@ -89,10 +89,10 @@ export const Header = () => {
                 fontWeight: 500,
                 ...(active
                   ? {
-                      background:
-                        "linear-gradient(179.92deg, rgb(107,171,255) 0.2%, rgb(75,151,251) 99.8%)",
-                      borderRadius: 200,
-                    }
+                    background:
+                      "linear-gradient(179.92deg, rgb(107,171,255) 0.2%, rgb(75,151,251) 99.8%)",
+                    borderRadius: 200,
+                  }
                   : {}),
               }}
             >

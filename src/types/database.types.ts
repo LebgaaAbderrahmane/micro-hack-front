@@ -435,6 +435,84 @@ export type Database = {
           },
         ]
       }
+      checkpoint_blobs: {
+        Row: {
+          blob: string
+          blob_id: string
+          checkpoint_id: string
+          thread_id: string
+          type: string
+        }
+        Insert: {
+          blob: string
+          blob_id: string
+          checkpoint_id: string
+          thread_id: string
+          type: string
+        }
+        Update: {
+          blob?: string
+          blob_id?: string
+          checkpoint_id?: string
+          thread_id?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      checkpoint_writes: {
+        Row: {
+          channel: string
+          checkpoint_id: string
+          idx: number
+          task_id: string
+          thread_id: string
+          type: string | null
+          value: string | null
+        }
+        Insert: {
+          channel: string
+          checkpoint_id: string
+          idx: number
+          task_id: string
+          thread_id: string
+          type?: string | null
+          value?: string | null
+        }
+        Update: {
+          channel?: string
+          checkpoint_id?: string
+          idx?: number
+          task_id?: string
+          thread_id?: string
+          type?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
+      checkpoints: {
+        Row: {
+          checkpoint: string
+          checkpoint_id: string
+          metadata: string
+          parent_id: string | null
+          thread_id: string
+        }
+        Insert: {
+          checkpoint: string
+          checkpoint_id: string
+          metadata: string
+          parent_id?: string | null
+          thread_id: string
+        }
+        Update: {
+          checkpoint?: string
+          checkpoint_id?: string
+          metadata?: string
+          parent_id?: string | null
+          thread_id?: string
+        }
+        Relationships: []
+      }
       containers: {
         Row: {
           cargo_weight: number | null

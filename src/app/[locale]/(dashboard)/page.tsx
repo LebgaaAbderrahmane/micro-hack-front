@@ -5,6 +5,12 @@ import { TerminalCard } from "@/components/Terminals/TerminalCard";
 import { GateIndicator } from "@/components/Terminals/GateIndicator";
 import type { TileState } from "@/components/Terminals/TileGrid";
 import { Calendar, ChevronDown } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  AdminDashboard,
+  TerminalOpDashboard,
+  CarrierDashboard,
+} from "@/components/dashboard/RoleDashboards";
 
 // ---------------------------------------------------------------------------
 // Helper: generate a tile grid from a pattern description
@@ -65,30 +71,29 @@ const gatesData: { label: string; segments: TileState[] }[] = [
   { label: "gate 6", segments: ["gray", "gray", "gray", "gray"] },
 ];
 
-import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "@/i18n/routing";
-import { useEffect } from "react";
-
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 export default function Home() {
   const { profile, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading && profile?.role === "DISPATCHER") {
-      router.replace("/carrier");
-    }
-  }, [profile, isLoading, router]);
 
   if (isLoading) {
-    return <div className="h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="h-[60vh] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+          <p className="text-xs font-black uppercase tracking-widest text-foreground/40 animate-pulse">
+            Verifying Node Identity...
+          </p>
+        </div>
+      </div>
+    );
   }
 
-  if (profile?.role === "DISPATCHER") {
-    return null;
-  }
+  // Show role-specific dashboard if available
+  if (profile?.role === "ADMIN") return <AdminDashboard />;
+  if (profile?.role === "OPERATOR") return <TerminalOpDashboard />;
+  if (profile?.role === "DISPATCHER") return <CarrierDashboard />;
 
   return (
     <div className="space-y-10 pb-20">
@@ -107,7 +112,7 @@ export default function Home() {
 
         {/* Filters */}
         <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground/5 hover:bg-foreground/10 transition-colors text-sm text-foreground/70">
+        <button className="flex items-center gap-2 px-4 y-2 rounded-lg bg-foreground/5 hover:bg-foreground/10 transition-colors text-sm text-foreground/70">
             <Calendar size={16} />
             <span>Today</span>
             <ChevronDown size={14} />
