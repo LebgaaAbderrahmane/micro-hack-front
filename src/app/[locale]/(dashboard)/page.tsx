@@ -13,7 +13,7 @@ function generateGrid(
   rows: number,
   cols: number,
   fillColor: TileState,
-  filledRows: number
+  filledRows: number,
 ): TileState[][] {
   const grid: TileState[][] = [];
   const emptyRowCount = rows - filledRows;

@@ -21,7 +21,7 @@ export const TerminalCard: React.FC<TerminalCardProps> = ({
     <div
       className={cn(
         "flex flex-col items-center gap-3 group cursor-pointer transition-transform hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-tile-blue focus-visible:ring-offset-2 outline-none",
-        className
+        className,
       )}
       onClick={onClick}
       tabIndex={0}

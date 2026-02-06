@@ -43,7 +43,7 @@ export const TileGrid: React.FC<TileGridProps> = ({ tiles, className }) => {
               key={`${rowIdx}-${colIdx}`}
               className={cn(
                 "rounded-[1px] transition-colors",
-                TILE_COLORS[state]
+                TILE_COLORS[state],
               )}
               style={{
                 width: `${TILE_WIDTH}px`,

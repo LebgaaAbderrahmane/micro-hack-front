@@ -29,7 +29,7 @@ export const GateIndicator: React.FC<GateIndicatorProps> = ({
     <div
       className={cn(
         "flex flex-col items-center gap-2 cursor-pointer group transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-tile-blue outline-none",
-        className
+        className,
       )}
       onClick={onClick}
       tabIndex={0}

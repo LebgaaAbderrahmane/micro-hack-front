@@ -81,7 +81,7 @@ export const Header = () => {
                 "relative px-5 py-2 text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-tile-blue focus-visible:ring-offset-2",
                 active
                   ? "text-white rounded-full"
-                  : "text-inactive-nav dark:text-foreground/70 hover:text-foreground rounded-full"
+                  : "text-inactive-nav dark:text-foreground/70 hover:text-foreground rounded-full",
               )}
               style={{
                 fontFamily: "var(--font-poppins), sans-serif",
