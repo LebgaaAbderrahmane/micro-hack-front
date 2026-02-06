@@ -30,40 +30,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  
+  // Use a stable reference for the Supabase client
+  const [supabase] = useState(() => createClient());
 
   const fetchProfile = useCallback( async (userId: string) => {
-    const { data, error } = await supabase
-      .from("users")
-      .select("*, organisation:organisations(*)")
-      .eq("id", userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*, organisation:organisations(*)")
+        .eq("id", userId)
+        .single();
 
-    if (error) {
-      console.error("Error fetching profile:", error);
+      if (error) {
+        console.error("[AuthProvider] Profile fetch error:", error);
+        return null;
+      }
+      return data as Profile;
+    } catch (err) {
+      console.error("[AuthProvider] Profile fetch exception:", err);
       return null;
     }
-    return data as Profile;
   }, [supabase]);
 
   useEffect(() => {
+    let mounted = true;
+
     const initializeAuth = async () => {
       try {
         const {
           data: { session: currentSession },
         } = await supabase.auth.getSession();
 
+        if (!mounted) return;
+
+        console.log("[AuthProvider] Boot session:", { 
+          hasSession: !!currentSession, 
+          userId: currentSession?.user?.id 
+        });
+
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
           const profileData = await fetchProfile(currentSession.user.id);
-          setProfile(profileData);
+          if (mounted) setProfile(profileData);
         }
       } catch (error) {
-        console.error("Auth initialization error:", error);
+        console.error("[AuthProvider] Initialization error:", error);
       } finally {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       }
     };
 
@@ -71,21 +87,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log(`[AuthProvider] State change: ${event}`, { 
+        userId: newSession?.user?.id 
+      });
+      
+      if (!mounted) return;
 
-      if (session?.user) {
-        const profileData = await fetchProfile(session.user.id);
-        setProfile(profileData);
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+
+      if (newSession?.user) {
+        const profileData = await fetchProfile(newSession.user.id);
+        if (mounted) setProfile(profileData);
       } else {
-        setProfile(null);
+        if (mounted) setProfile(null);
       }
-
-      setIsLoading(false);
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [supabase, fetchProfile]);
