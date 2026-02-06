@@ -2,16 +2,28 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { MessageSquare, X, Maximize2, Minimize2, Send, Bot, User, Sparkles } from "lucide-react";
+import { MessageSquare, X, Maximize2, Minimize2, Send, Bot, User, Sparkles, Cpu, Zap, ChevronRight, LayoutDashboard, FileText, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
 
 type ChatState = "closed" | "small" | "large";
+
+interface Message {
+  id: number;
+  role: "assistant" | "user";
+  text: string;
+  hasProposal?: boolean;
+}
+
+const RECOMMENDED_PROMPTS = [
+  { icon: <Activity size={14} />, text: "Analyze Terminal Yard" },
+  { icon: <LayoutDashboard size={14} />, text: "Optimize Fleet Path" },
+  { icon: <FileText size={14} />, text: "Generate KPI Report" },
+];
 
 export const AIChat = () => {
   const [chatState, setChatState] = useState<ChatState>("closed");
@@ -19,8 +31,8 @@ export const AIChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Mock messages for display
-  const [messages, setMessages] = useState([
-    { id: 1, role: "assistant", text: "Hello! I'm your PortFlow AI assistant. How can I help you optimize your terminal operations today?" }
+  const [messages, setMessages] = useState<Message[]>([
+    { id: 1, role: "assistant", text: "Hello! I'm your **PortFlow AI** assistant. How can I help you optimize your terminal operations today?" }
   ]);
 
   const toggleOpen = () => {
@@ -33,21 +45,31 @@ export const AIChat = () => {
     setChatState(chatState === "small" ? "large" : "small");
   };
 
-  const handleSend = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!inputValue.trim()) return;
+  const handleSend = (text?: string) => {
+    const messageText = text || inputValue;
+    if (!messageText.trim()) return;
 
-    const newUserMsg = { id: Date.now(), role: "user", text: inputValue };
+    const newUserMsg: Message = { id: Date.now(), role: "user", text: messageText };
     setMessages(prev => [...prev, newUserMsg]);
     setInputValue("");
     
     // Simulate generic response
     setTimeout(() => {
-        setMessages(prev => [...prev, { 
+        const isProposal = messageText.toLowerCase().includes("report") || messageText.toLowerCase().includes("analyze");
+        const response: Message = { 
             id: Date.now() + 1, 
             role: "assistant", 
-            text: "I'm processing your request regarding port operations..." 
-        }]);
+            text: isProposal 
+                ? "I've analyzed the current terminal metrics and generated a detailed **operational proposal** for you to review." 
+                : "I'm processing your request. Based on the real-time data from the terminal yard, everything seems to be within optimal parameters.",
+            hasProposal: isProposal
+        };
+        
+        setMessages(prev => [...prev, response]);
+        
+        if (isProposal) {
+            setChatState("large");
+        }
     }, 1000);
   };
 
@@ -60,7 +82,7 @@ export const AIChat = () => {
     closed: {
       width: "64px",
       height: "64px",
-      borderRadius: "18px",
+      borderRadius: "16px", // More square-ish
       bottom: "24px",
       right: "24px",
       transition: { 
@@ -71,23 +93,22 @@ export const AIChat = () => {
       }
     },
     small: {
-      width: "380px",
-      height: "580px",
-      borderRadius: "28px",
+      width: "400px",
+      height: "620px",
+      borderRadius: "24px",
       bottom: "32px",
       right: "32px",
       transition: { 
         type: "spring", 
         stiffness: 300, 
         damping: 25,
-        mass: 1,
-        staggerChildren: 0.1
+        mass: 1
       }
     },
     large: {
       width: "calc(100vw - 64px)",
       height: "calc(100vh - 64px)",
-      borderRadius: "32px",
+      borderRadius: "24px",
       bottom: "32px",
       right: "32px",
       transition: { 
@@ -96,6 +117,12 @@ export const AIChat = () => {
         damping: 28 
       }
     }
+  };
+
+  const formatText = (text: string) => {
+    return text.split("**").map((part, i) => 
+      i % 2 === 1 ? <strong key={i} className="text-primary font-bold">{part}</strong> : part
+    );
   };
 
   return (
@@ -120,9 +147,9 @@ export const AIChat = () => {
             animate={chatState}
             className={cn(
                 "fixed z-[100] overflow-hidden flex flex-col",
-                "bg-background/40 backdrop-blur-2xl border border-white/20 dark:border-white/10",
-                "shadow-[0_8px_32px_rgba(0,0,0,0.12)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/10 before:to-transparent before:pointer-events-none",
-                 chatState === "closed" ? "cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300 ring-4 ring-primary/5 hover:ring-primary/10" : ""
+                "bg-background/30 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-2xl",
+                "before:absolute before:inset-0 before:bg-gradient-to-tr before:from-primary/5 before:to-transparent before:pointer-events-none",
+                 chatState === "closed" ? "cursor-pointer hover:scale-105 active:scale-95 transition-all duration-500 hover:shadow-primary/20" : ""
             )}
             onClick={chatState === "closed" ? toggleOpen : undefined}
         >
@@ -130,73 +157,67 @@ export const AIChat = () => {
                 {chatState === "closed" ? (
                     <motion.div
                         key="icon"
-                        initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
-                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                        exit={{ opacity: 0, scale: 0.8, rotate: 20 }}
-                        className="w-full h-full flex items-center justify-center bg-primary text-primary-foreground relative"
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.2 }}
+                        className="w-full h-full flex items-center justify-center bg-primary text-primary-foreground relative group"
                     >
-                        <MessageSquare size={28} fill="currentColor" strokeWidth={1.5} />
-                        <span className="absolute top-4 right-4 flex h-3 w-3">
+                        <Cpu size={30} fill="currentColor" className="group-hover:animate-pulse" />
+                        <span className="absolute top-4 right-4 flex h-2.5 w-2.5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-primary"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
                         </span>
                     </motion.div>
                 ) : (
                     <motion.div
                         key="chat-content"
-                        initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
-                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                        exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
-                        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         className="flex flex-col h-full w-full relative z-10"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/5 backdrop-blur-md">
+                        <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/5 backdrop-blur-xl">
                             <div className="flex items-center gap-4">
                                 <div className="relative group">
-                                    <Avatar className="h-12 w-12 ring-2 ring-primary/20 ring-offset-2 ring-offset-transparent shadow-lg transition-transform group-hover:scale-105">
-                                        <AvatarFallback className="bg-gradient-to-br from-primary to-blue-600 text-primary-foreground">
-                                            <Bot size={24} />
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-background shadow-sm" />
+                                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-primary/20 to-blue-500/20 flex items-center justify-center border border-white/20 shadow-inner">
+                                        <Cpu size={26} className="text-primary" />
+                                    </div>
+                                    <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-green-500 border-4 border-background" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-base tracking-tight text-foreground/90">PortFlow Intelligence</h3>
-                                    <div className="flex items-center gap-2">
-                                        <span className="flex h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] opacity-80">System Online</p>
-                                    </div>
+                                    <h3 className="font-bold text-base tracking-tight text-foreground/90 leading-tight">PortFlow Intelligence</h3>
+                                    <p className="text-[10px] text-primary/80 font-bold uppercase tracking-[0.2em]">Neural Engine Active</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 font-bold">
                                 <Button
                                     variant="ghost"
                                     size="icon"
                                     onClick={toggleSize}
-                                    className="h-10 w-10 rounded-2xl hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all active:scale-90"
+                                    className="h-10 w-10 rounded-xl hover:bg-white/10 text-muted-foreground/50 hover:text-foreground transition-all"
                                 >
-                                    {chatState === "large" ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                                    {chatState === "large" ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
                                 </Button>
                                 <Button
                                     variant="ghost"
                                     size="icon"
                                     onClick={toggleOpen}
-                                    className="h-10 w-10 rounded-2xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-all active:scale-90"
+                                    className="h-10 w-10 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground/50 transition-all font-bold"
                                 >
-                                    <X size={20} />
+                                    <X size={18} strokeWidth={3} />
                                 </Button>
                             </div>
                         </div>
 
                         {/* Messages Area */}
-                        <ScrollArea className="flex-1 px-6 py-6 scroll-smooth">
-                            <div className="space-y-8">
+                        <ScrollArea className="flex-1 px-6 py-4">
+                            <div className="space-y-6 pb-4 pt-2">
                                 {messages.map((msg, idx) => (
                                     <motion.div
-                                        initial={{ opacity: 0, y: 15, x: msg.role === "user" ? 10 : -10 }}
-                                        animate={{ opacity: 1, y: 0, x: 0 }}
-                                        transition={{ duration: 0.4, delay: idx * 0.05 }}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.3, delay: idx * 0.05 }}
                                         key={msg.id}
                                         className={cn(
                                             "flex gap-4",
@@ -204,20 +225,29 @@ export const AIChat = () => {
                                         )}
                                     >
                                         <div className={cn(
-                                            "flex flex-col gap-2 max-w-[85%]",
+                                            "flex flex-col gap-1.5 max-w-[85%]",
                                             msg.role === "user" ? "items-end" : "items-start"
                                         )}>
                                             <div className={cn(
-                                                "p-4 rounded-[22px] text-sm leading-relaxed shadow-md transition-all",
+                                                "p-4 rounded-[22px] text-sm leading-relaxed shadow-sm transition-all",
                                                 msg.role === "assistant"
-                                                    ? "bg-white/50 dark:bg-white/5 text-foreground rounded-tl-none border border-white/20 backdrop-blur-sm"
-                                                    : "bg-gradient-to-br from-primary to-blue-600 text-primary-foreground rounded-tr-none shadow-[0_8px_16px_rgba(59,130,246,0.3)]"
+                                                    ? "bg-white/40 dark:bg-white/5 text-foreground rounded-tl-none border border-white/10"
+                                                    : "bg-primary text-primary-foreground rounded-tr-none shadow-lg shadow-primary/20"
                                             )}>
-                                                {msg.text}
+                                                {formatText(msg.text)}
                                             </div>
-                                            <span className="text-[10px] text-muted-foreground/50 font-bold uppercase tracking-widest px-2">
-                                                {msg.role === "assistant" ? "Assistant" : "User Account"}
-                                            </span>
+                                            {msg.hasProposal && (
+                                                <div className="mt-2 w-full p-4 border border-primary/20 bg-primary/5 rounded-2xl flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                       <div className="p-2 bg-primary/10 rounded-xl text-primary"><Activity size={18} /></div>
+                                                       <div>
+                                                           <p className="text-xs font-bold">Optimization Success</p>
+                                                           <p className="text-[10px] text-muted-foreground">Click to apply suggested routes</p>
+                                                       </div>
+                                                    </div>
+                                                    <Button size="sm" variant="outline" className="h-8 rounded-lg text-[10px] font-bold uppercase transition-all hover:bg-primary hover:text-white">Review</Button>
+                                                </div>
+                                            )}
                                         </div>
                                     </motion.div>
                                 ))}
@@ -226,24 +256,44 @@ export const AIChat = () => {
                         </ScrollArea>
 
                         {/* Input Area */}
-                        <div className="p-6 bg-white/5 border-t border-white/10 backdrop-blur-md">
+                        <div className="p-6 bg-white/5 border-t border-white/10 backdrop-blur-2xl">
+                            {/* Recommended Prompts Stack */}
+                            {messages.length <= 1 && (
+                                <div className="flex flex-col gap-2 mb-4">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-1">Suggested strategies</p>
+                                    {RECOMMENDED_PROMPTS.map((prompt, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => handleSend(prompt.text)}
+                                            className="flex items-center justify-between w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-primary/5 group transition-all"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-primary opacity-70 group-hover:opacity-100">{prompt.icon}</div>
+                                                <span className="text-[11px] font-medium text-muted-foreground group-hover:text-primary">{prompt.text}</span>
+                                            </div>
+                                            <ChevronRight size={14} className="text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
                             <form 
-                                onSubmit={handleSend}
-                                className="flex items-center gap-4"
+                                onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+                                className="flex items-center gap-3"
                             >
                                 <div className="flex-1 relative group">
                                     <Input
                                         value={inputValue}
                                         onChange={(e) => setInputValue(e.target.value)}
-                                        placeholder="Type your query..."
-                                        className="h-14 bg-white/5 dark:bg-black/40 border-white/10 focus-visible:ring-primary/40 focus-visible:border-primary/40 rounded-[20px] pr-14 pl-5 transition-all placeholder:text-muted-foreground/40 text-base"
+                                        placeholder="Type your strategic query..."
+                                        className="h-14 bg-white/5 dark:bg-black/10 border-white/10 focus-visible:ring-primary/20 focus-visible:border-primary/40 rounded-2xl pr-14 pl-5 transition-all placeholder:text-muted-foreground/30 text-sm backdrop-blur-lg"
                                     />
                                     <Button
                                         type="submit"
                                         disabled={!inputValue.trim()}
-                                        className="absolute right-2 top-2 h-10 w-10 rounded-[14px] transition-all shadow-lg active:scale-95 bg-primary hover:bg-primary/90"
+                                        className="absolute right-2 top-2 h-10 w-10 rounded-xl transition-all shadow-xl active:scale-90 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-white/5 disabled:text-white/20"
                                     >
-                                        <Send size={18} className={cn(inputValue.trim() ? "translate-x-0.5 -translate-y-0.5" : "")} />
+                                        <Send size={18} />
                                     </Button>
                                 </div>
                             </form>
