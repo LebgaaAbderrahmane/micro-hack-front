@@ -1,28 +1,44 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-primary: #3B82F6;
+  --color-primary: #3b82f6;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #0EA5E9;
+  --color-secondary: #0ea5e9;
   --color-secondary-foreground: #ffffff;
-  --color-accent: #F59E0B;
+  --color-accent: #f59e0b;
   --color-accent-foreground: #ffffff;
 
-  --color-success: #3B82F6;
-  --color-warning: #FBBF24;
-  --color-error: #EF4444;
-  --color-info: #0EA5E9;
+  --color-success: #3b82f6;
+  --color-warning: #fbbf24;
+  --color-error: #ef4444;
+  --color-info: #0ea5e9;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-glass-bg: var(--glass-bg);
   --color-glass-border: var(--glass-border);
 
+  /* Figma design tokens */
+  --color-tile-gray: #b5b5b5;
+  --color-tile-blue: #4b97fb;
+  --color-tile-amber: #e9ac29;
+  --color-tile-red: #f44336;
+  --color-card-bg: #eeeeee;
+  --color-canvas-bg: #f8f8f8;
+  --color-brand-text: #171717;
+  --color-content-title: #545454;
+  --color-card-label: #343434;
+  --color-inactive-nav: rgba(16, 16, 16, 0.7);
+
   --radius-card: 8px;
   --radius-modal: 12px;
   --radius-button: 9999px;
+  --radius-terminal-card: 3.536px;
+  --radius-nav-pill: 200px;
 
   --font-sans: var(--font-inter);
+  --font-poppins: var(--font-poppins);
+  --font-montserrat: var(--font-montserrat);
 }
 
 :root {
@@ -30,7 +46,7 @@
   --foreground: #0f172a;
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(0, 0, 0, 0.08);
-  /* Darker border for light mode visibility */
+  --nav-pill-bg: rgba(238, 238, 238, 0.6);
   --primary-glow: rgba(59, 130, 246, 0.1);
   --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
   --shadow-card-hover: 0 20px 40px -12px rgba(0, 0, 0, 0.12);
@@ -41,6 +57,7 @@
   --foreground: #f9fafb;
   --glass-bg: rgba(3, 7, 18, 0.4);
   --glass-border: rgba(255, 255, 255, 0.08);
+  --nav-pill-bg: rgba(40, 40, 40, 0.6);
   --primary-glow: rgba(59, 130, 246, 0.25);
   --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   --shadow-card-hover: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
@@ -49,7 +66,9 @@
 @layer base {
   body {
     @apply bg-background text-foreground selection:bg-primary/30;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 }
 
@@ -67,7 +86,9 @@ body {
 
 .glass-card {
   @apply bg-glass-bg backdrop-blur-2xl border border-glass-border rounded-[2.5rem] transition-all duration-500;
-  box-shadow: var(--shadow-card), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow:
+    var(--shadow-card),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .glass-card:hover {
