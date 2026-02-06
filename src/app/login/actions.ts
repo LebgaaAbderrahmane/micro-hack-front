@@ -29,8 +29,12 @@ export async function signup(formData: FormData) {
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const username = formData.get("username") as string;
+  const orgName = formData.get("orgName") as string;
+  const nif = formData.get("nif") as string;
 
-  const { error } = await supabase.auth.signUp({
+  // 1. Sign up user in Auth
+  const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -38,8 +42,38 @@ export async function signup(formData: FormData) {
     },
   });
 
-  if (error) {
-    redirect("/login?error=Could not authenticate user");
+  if (authError || !authData.user) {
+    redirect(`/login?error=${authError?.message || "Could not authenticate user"}`);
+  }
+
+  // 2. Create Carrier Organization
+  const { data: orgData, error: orgError } = await supabase
+    .from('organisations')
+    .insert({
+      name: orgName,
+      nif: nif,
+      type: 'CARRIER'
+    })
+    .select()
+    .single();
+
+  if (orgError) {
+    // Note: In production you might want to cleanup the auth user here
+    redirect(`/login?error=Failed to create organization: ${orgError.message}`);
+  }
+
+  // 3. Create User Profile
+  const { error: profileError } = await supabase
+    .from('users')
+    .insert({
+      id: authData.user.id,
+      username: username,
+      org_id: orgData.id,
+      role: 'DISPATCHER' // Default role for new carriers
+    });
+
+  if (profileError) {
+    redirect(`/login?error=Failed to create user profile: ${profileError.message}`);
   }
 
   revalidatePath("/", "layout");

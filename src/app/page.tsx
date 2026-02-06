@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuth } from "@/hooks/useAuth";
 import {
   BarChart3,
   TrendingUp,
@@ -77,10 +77,18 @@ const chartData = [
 ];
 
 export default function Home() {
-  const { user, isAuthenticated } = useAuthStore();
+  const { profile, isLoading } = useAuth();
   const { show } = useToast();
 
-  if (!isAuthenticated) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!profile) {
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] space-y-8 animate-in fade-in zoom-in duration-500">
         <div className="w-24 h-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center text-primary animate-pulse">
@@ -105,20 +113,25 @@ export default function Home() {
   }
 
   const renderDashboard = () => {
-    switch (user?.role) {
-      case "admin": return <AdminDashboard />;
-      case "terminal_op": return <TerminalOpDashboard />;
-      case "carrier": return <CarrierDashboard />;
+    if (!profile) return null;
+    switch (profile.role) {
+      case "ADMIN": return <AdminDashboard />;
+      case "OPERATOR": return <TerminalOpDashboard />;
+      case "DISPATCHER": return <CarrierDashboard />;
       default: return null;
     }
   };
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
+      {/* Role-Specific Dashboard Content */}
+      <section className="animate-in fade-in duration-1000">
+        {renderDashboard()}
+      </section>
 
       {/* Main Command Center Section - Full Width */}
       <section className="space-y-6">
-        {user?.role !== 'carrier' && (
+        {profile?.role !== 'DISPATCHER' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
@@ -320,16 +333,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Role-Specific Dashboard Content */}
-      <section className="animate-in fade-in duration-1000 pt-8 border-t border-foreground/5">
-        <div className="flex items-center gap-3 mb-10 text-foreground/20">
-          <div className="h-px flex-1 bg-current" />
-          <span className="text-[10px] font-black uppercase tracking-[0.5em]">Role-Based Environment</span>
-          <div className="h-px flex-1 bg-current" />
-        </div>
-        {renderDashboard()}
       </section>
     </div>
   );

@@ -1,32 +1,21 @@
 "use client";
 
-import React from "react";
-import { useAuthStore, Role } from "@/stores/useAuthStore";
+import React, { useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { Shield, Ship, Truck, LogIn } from "lucide-react";
-import { login, signup } from "./actions";
+import { login } from "./actions";
+import Link from "next/link";
 
 export default function LoginPage() {
-  const { login: storeLogin } = useAuthStore();
+  const { profile, isLoading } = useAuth();
   const router = useRouter();
 
-  const handleRoleSelect = (role: Role) => {
-    // ... kept for demo purposes
-    const mockUser = {
-      id: "1",
-      email: `${role}@ilacs.com`,
-      role: role,
-      firstName: role
-        .split("_")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" "),
-      lastName: "User",
-      company: role === "carrier" ? "TransGlobal Logistics" : undefined,
-      terminalId: role === "terminal_op" ? "T-001" : undefined,
-    };
-    storeLogin(mockUser);
-    router.push("/");
-  };
+  useEffect(() => {
+    if (!isLoading && profile) {
+      router.push("/");
+    }
+  }, [profile, isLoading, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-background via-background to-primary/10">
@@ -125,21 +114,22 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <div className="flex gap-4">
-              <button
-                formAction={login}
-                className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
-              >
-                Sign In
-              </button>
-              <button
-                formAction={signup}
-                className="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-xl border border-white/10 transition-all active:scale-95"
-              >
-                Sign Up
-              </button>
-            </div>
+            <button
+              formAction={login}
+              className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
+            >
+              Sign In
+            </button>
           </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-foreground/40 text-sm font-medium">
+              Are you a carrier?{" "}
+              <Link href="/register" className="text-primary hover:underline">
+                Register here
+              </Link>
+            </p>
+          </div>
 
           <div className="text-center">
             <a
