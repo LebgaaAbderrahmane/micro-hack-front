@@ -1,0 +1,82 @@
+
+> ilacs-frontend@0.1.0 lint
+> eslint --ignore-pattern .next/
+
+
+D:\micro hack\ilacs-frontend\public\mockServiceWorker.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+D:\micro hack\ilacs-frontend\src\app\bookings\page.tsx
+  11:5   warning  'ExternalLink' is defined but never used  @typescript-eslint/no-unused-vars
+  13:5   warning  'ShieldCheck' is defined but never used   @typescript-eslint/no-unused-vars
+  38:60  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\micro hack\ilacs-frontend\src\app\fleet\page.tsx
+   12:5   warning  'MapPin' is defined but never used        @typescript-eslint/no-unused-vars
+  280:64  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\micro hack\ilacs-frontend\src\app\page.tsx
+  11:3   warning  'ChevronRight' is defined but never used                         @typescript-eslint/no-unused-vars
+  17:64  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  84:49  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  84:56  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\micro hack\ilacs-frontend\src\components\booking\BookingCalendar.tsx
+  6:18  warning  'isBefore' is defined but never used  @typescript-eslint/no-unused-vars
+  7:10  warning  'cn' is defined but never used        @typescript-eslint/no-unused-vars
+
+D:\micro hack\ilacs-frontend\src\components\common\AIAssistant.tsx
+  10:5   warning  'Sparkles' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  11:5   warning  'ArrowRight' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  53:17  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\micro hack\ilacs-frontend\src\components\common\AIAssistant.tsx:53:17
+  51 |
+  52 |         const userMessage: Message = {
+> 53 |             id: Date.now().toString(),
+     |                 ^^^^^^^^^^ Cannot call impure function
+  54 |             role: "user",
+  55 |             content: inputValue,
+  56 |             timestamp: new Date(),  react-hooks/purity
+
+D:\micro hack\ilacs-frontend\src\components\dashboard\PortMap.tsx
+  16:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\micro hack\ilacs-frontend\src\components\fleet\DriverModal.tsx
+  31:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\micro hack\ilacs-frontend\src\components\fleet\TruckModal.tsx
+  29:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\micro hack\ilacs-frontend\src\components\layout\MainLayout.tsx
+  17:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\micro hack\ilacs-frontend\src\components\layout\MainLayout.tsx:17:9
+  15 |
+  16 |     useEffect(() => {
+> 17 |         setMounted(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  18 |     }, []);
+  19 |
+  20 |     // Simple auth check redirect  react-hooks/set-state-in-effect
+
+D:\micro hack\ilacs-frontend\src\components\layout\NotificationDropdown.tsx
+  12:5  warning  'MoreVertical' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\micro hack\ilacs-frontend\src\mocks\handlers.ts
+  6:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 24 problems (14 errors, 10 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

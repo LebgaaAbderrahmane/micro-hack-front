@@ -1,0 +1,1692 @@
+Product Requirements Document (PRD) - Revised
+Intelligent Logistics Access Control System (ILACS) - Frontend Phase
+1. Project Overview
+1.1 Project Name
+
+Intelligent Logistics Access Control System (ILACS) - Frontend Module
+1.2 Problem Statement
+
+Maritime port access suffers from congestion and lack of visibility. Current booking systems require complex interactions, leading to inefficiencies for carriers and terminal operators. The APCS needs to regulate truck flows through a booking system that manages time slots and terminal capacities while providing simple query interfaces without complex navigation.
+1.3 Solution
+
+A modern, role-based web application providing:
+
+    Multi-role logistics portal with distinct interfaces
+
+    Real-time interactive dashboards with animated yard representations
+
+    Intelligent booking and slot management system
+
+    Conversational AI assistant interface
+
+    Comprehensive notification system with priority-based alerts
+
+    QR code-based access validation
+
+1.4 Primary Objectives (Frontend Phase)
+
+    Develop intuitive, role-based user interfaces with clear role separation
+
+    Implement real-time data visualization with animated yard representations
+
+    Create modular, flexible architecture for future enhancements and feature additions/removals
+
+    Establish comprehensive design system with glass morphism effects
+
+    Build mock backend integration for development and testing
+
+1.5 Core Principles
+
+    Modularity: Component-based architecture allowing easy feature addition/removal
+
+    Flexibility: Design that accommodates future changes with minimal disruption
+
+    Real-time: Live updates for terminal status, truck movements, and notifications
+
+    Accessibility: WCAG 2.1 AA compliant with responsive design
+
+    User-Centric: Simplified interfaces reducing complex navigation
+
+2. User Roles & Personas
+2.1 System Administrator (Admin)
+
+Access Level: Global system access
+
+Primary Responsibilities:
+
+    User account management (create, disable, modify)
+
+    Terminal assignment to operators
+
+    Super management of terminal states and configurations
+
+    System-wide audit log monitoring and compliance
+
+    Performance analytics and reporting
+
+    Global configuration and system settings
+
+2.2 Terminal Operator (Terminal Op)
+
+Access Level: Terminal-specific (1 terminal per operator)
+
+Primary Responsibilities:
+
+    Real-time terminal monitoring and visualization
+
+    Booking request validation and management
+
+    Terminal capacity management and configuration
+
+    Truck movement tracking within assigned terminal
+
+    Issue resolution and incident reporting
+
+2.3 Carrier/Courier
+
+Access Level: Company-specific access
+
+Primary Responsibilities:
+
+    Slot booking creation, modification, and cancellation
+
+    Fleet status monitoring and management
+
+    QR code distribution to truck drivers
+
+    Booking history and performance tracking
+
+    Self-service status checks via natural language interface
+
+3. Functional Requirements
+3.1 Authentication & Authorization Module
+3.1.1 Registration Flow
+
+Type: Invite-only system (Admin creates all accounts)
+
+Process:
+
+    Admin creates user account via admin panel with temporary credentials
+
+    System sends invitation email with verification link and temporary password
+
+    User completes email verification process
+
+    User sets permanent password following security guidelines
+
+    Account becomes active and accessible
+
+Required Information (Minimum Set):
+
+    All Users: Full name, email address, phone number
+
+    Carrier: Company name, tax ID, fleet size, business address
+
+    Terminal Op: Assigned terminal, employee ID, shift information
+
+    Admin: Contact details, system role designation
+
+3.1.2 Login System
+
+Method: Simple email/password authentication
+
+Features:
+
+    "Forgot Password" flow with secure email reset
+
+    "Remember Me" functionality (optional)
+
+    Session management using JWT tokens
+
+    Auto-logout after 24 hours of inactivity (configurable)
+
+    Failed login attempt tracking and lockout
+
+3.1.3 Role-Based Access Control (RBAC)
+
+Three-tier permission system:
+
+    Admin: Full system access + user management + global configuration
+
+    Terminal Op: Terminal-specific operations + booking validation + capacity management
+
+    Carrier: Self-service booking + fleet management + status queries
+
+UI Adaptation:
+
+    Dynamic menu items based on role permissions
+
+    Dashboard components customized per role
+
+    Action buttons and features filtered by role
+
+    Data visibility restricted to authorized scope
+
+3.2 Dashboard Module
+3.2.1 Admin Dashboard
+
+Layout Components:
+
+Header Statistics Panel:
+
+    Total terminals (active/inactive count)
+
+    System-wide utilization percentage (real-time)
+
+    Pending approvals count (aggregated)
+
+    Active alerts count (priority-based)
+
+    Daily booking volume and trend
+
+Interactive Port Map (The "Hole"):
+
+    Schematic representation of entire port layout
+
+    Terminals as interactive, color-coded zones
+
+    Color Coding:
+
+        Green: <70% capacity (optimal)
+
+        Yellow: 70-90% capacity (warning)
+
+        Red: >90% capacity (critical)
+
+    Interactions:
+
+        Hover: Display terminal name, current utilization %, assigned operator
+
+        Click: Smooth zoom to terminal detailed view with transition animation
+
+    Animations:
+
+        Real-time truck movements (animated dots along predefined routes)
+
+        Pulsing alerts for congested terminals
+
+        Smooth color transitions for status changes
+
+        Entrance animations for new trucks/events
+
+System Overview Panel:
+
+    User activity timeline chart (24-hour window)
+
+    Booking trend graph with forecast (7-day view)
+
+    Incident log feed (real-time updates)
+
+    Quick action buttons (add user, configure terminal, system settings)
+
+    Performance metrics with comparison to previous period
+
+3.2.2 Terminal Operator Dashboard
+
+Layout Components:
+
+Terminal Control Panel:
+
+    Current capacity display: X/Y trucks (with progress bar)
+
+    Next 3 arriving trucks with countdown timers
+
+    Average wait time calculation and display
+
+    Gate status indicators (open/closed/maintenance)
+
+    Quick capacity adjustment controls
+
+Interactive Terminal Layout (Terminal Representation):
+
+    Visual Elements:
+
+        Gate icons with real-time queue length indicators
+
+        Parking bay occupancy with available/total counts
+
+        Loading zone status with activity indicators
+
+        Truck icons with status badges and license plate display
+
+    Color Coding for Trucks:
+
+        Blue: Booked (arriving within next 2 hours)
+
+        Green: Checked-in (physically present at terminal)
+
+        Orange: Active loading/unloading operation
+
+        Red: Delayed or requires attention
+
+        Gray: Departed or completed operation
+
+    Interactions:
+
+        Click truck icon: Open details modal with booking information
+
+        Drag truck icon: Reassign to different bay (with confirmation)
+
+        Right-click context menu: Quick actions (mark delayed, add note, escalate)
+
+        Hover: Show quick status and ETA information
+
+Booking Management Queue:
+
+    Pending requests list with filtering options
+
+    Quick approve/reject buttons with reason selection dropdown
+
+    Filter by: Time slot, carrier, priority level, cargo type
+
+    Bulk action capability for similar requests
+
+    Real-time updates as new requests arrive
+
+3.2.3 Carrier Dashboard
+
+Layout Components:
+
+Performance Statistics Cards:
+
+    Active bookings count (with status breakdown)
+
+    On-time arrival percentage (historical performance)
+
+    Fleet utilization rate (current period)
+
+    Upcoming booking countdown (next booking in X hours/minutes)
+
+    Quick booking creation button
+
+Booking Calendar & Management:
+
+    Month/week/day view toggle with smooth transitions
+
+    Color-coded bookings by status (pending/confirmed/consumed)
+
+    Click on booking slot to open details/edit modal
+
+    Quick add booking button with pre-filled frequent options
+
+    Filter by terminal, date range, booking status
+
+Fleet Status Overview:
+
+    List/grid view of trucks with current status indicators
+
+    Filter by location: At terminal, in transit, available, maintenance
+
+    Quick access to QR codes for active bookings
+
+    Driver information and contact details
+
+    Truck utilization metrics and history
+
+3.3 Booking System Module
+3.3.1 Booking Creation (Carrier Flow)
+
+Multi-step Guided Workflow:
+
+Step 1: Terminal Selection
+
+    Dropdown/list of available terminals with filtering
+
+    Filter by: Location, service type, current availability
+
+    Visual availability indicator (green/yellow/red)
+
+    Terminal details card with capacity, services, contact
+
+Step 2: Date & Time Slot Selection
+
+    Calendar component with availability overlay (heat map)
+
+    Visual Availability Indicators:
+
+        Green: Available slots (>2 slots available)
+
+        Yellow: Limited availability (1-2 slots available)
+
+        Red: Fully booked (0 slots available)
+
+    Time slot grid with 30/60 minute intervals (configurable)
+
+    Real-time availability updates via WebSocket
+
+    Date navigation with week/month views
+
+Step 3: Truck & Details Assignment
+
+    Dropdown selection from carrier's registered fleet
+
+    Driver information auto-fill from driver database
+
+    Cargo details form (optional): Type, weight, hazardous materials, description
+
+    Special requirements selection (if applicable)
+
+Step 4: Review & Confirmation
+
+    Summary page with all booking details
+
+    Estimated processing time display
+
+    Terms and conditions acceptance checkbox
+
+    Submit button with loading state and confirmation
+
+    Success modal with booking number and next steps
+
+Additional Features:
+
+    Recurring bookings: Daily, weekly, monthly patterns
+
+    Favorite terminals/slots for quick selection
+
+    Booking templates for frequent shipment types
+
+    Copy previous booking functionality
+
+3.3.2 Booking Management
+
+Carrier View:
+
+    List view with advanced filtering and sorting
+
+    Status badges: Pending / Confirmed / Rejected / Consumed / Cancelled
+
+    Action buttons: Modify / Cancel / View QR / View Details
+
+    Modification rules enforced via UI (time-based restrictions)
+
+    Cancellation workflow with reason selection and confirmation
+
+    Export functionality (CSV, PDF) for records
+
+Terminal Operator View:
+
+    Approval queue interface with bulk action support
+
+    Quick view modal with booking details and carrier information
+
+    Capacity override options with justification requirement
+
+    Drag-and-drop schedule adjustment on timeline view
+
+    Conflict detection and resolution suggestions
+
+    Historical approval/rejection patterns
+
+3.4 Slot Management Module
+3.4.1 Capacity Configuration Interface
+
+Terminal Operator Controls:
+
+    Simple slider or number input for max trucks per hour
+
+    Time-based rules configuration (peak vs off-peak hours)
+
+    Exception date management (holidays, maintenance days)
+
+    Visual capacity planner with calendar integration
+
+    Capacity history and trend analysis
+
+    Quick preset configurations (standard, peak season, weekend)
+
+3.4.2 Availability Display Systems
+
+Calendar View:
+
+    Month/week/day navigation with smooth transitions
+
+    Heat map overlay showing utilization percentages
+
+    Tooltip with detailed availability information
+
+    Color gradient indicating booking density
+
+    Quick navigation to available time slots
+
+List View:
+
+    Filterable by date range, terminal, time of day
+
+    Sort by availability percentage, time, terminal
+
+    Export to CSV functionality for planning
+
+    Side-by-side comparison of multiple terminals
+
+    Historical availability patterns
+
+3.5 Notification System
+3.5.1 Notification Types by Role
+
+Carrier Notifications:
+
+    Booking status changes (confirmation, rejection, modification)
+
+    Reminders: 24 hours and 2 hours before scheduled slot
+
+    Delay alerts and estimated new times
+
+    Capacity threshold warnings for preferred terminals
+
+    System announcements and maintenance schedules
+
+    Payment and invoice updates (if applicable)
+
+Terminal Operator Notifications:
+
+    New booking requests requiring validation
+
+    Capacity alerts: 80%, 90%, 100% thresholds
+
+    Real-time truck events: Check-in, check-out, delays
+
+    Incident reports and emergency notifications
+
+    Shift change reminders and handover requirements
+
+    System alerts and operational warnings
+
+Admin Notifications:
+
+    System health and performance alerts
+
+    New user registration and approval requests
+
+    Critical capacity breaches requiring intervention
+
+    Audit log anomalies and security alerts
+
+    Backup and maintenance status updates
+
+    License and subscription renewals
+
+3.5.2 Multi-Channel Delivery System
+
+1. In-App Notifications:
+
+    Bell icon with animated badge counter
+
+    Notification center with filtering and categorization
+
+    Mark as read/unread with bulk actions
+
+    Action buttons within notifications (Approve, View, Dismiss)
+
+    Notification history with search functionality
+
+2. Email Notifications:
+
+    Branded HTML templates per notification type
+
+    Unsubscribe and preference management links
+
+    Responsive design for mobile email clients
+
+    Action buttons with deep links back to application
+
+    Digest options for non-urgent notifications
+
+3. Browser Push Notifications:
+
+    Permission prompt on first login (configurable)
+
+    Priority-based delivery with urgency indicators
+
+    Click to navigate directly to relevant page/action
+
+    Smart grouping by type to reduce notification fatigue
+
+    Do-not-disturb scheduling options
+
+3.5.3 Priority & Escalation System
+
+    Low Priority: Informational updates, reminders, general announcements
+
+    Medium Priority: Status changes, capacity warnings, routine alerts
+
+    High Priority: System alerts, last-minute changes, incident reports
+
+    Critical Priority: System downtime, security breaches, emergency situations
+
+    Escalation Rules: Auto-escalation based on response time
+
+3.6 QR Code Access System
+
+Generation & Distribution:
+
+    Unique QR code generated upon booking confirmation
+
+    Display Locations: Carrier dashboard, email confirmation, mobile view
+
+    QR Code Features:
+
+        Unique identifier per booking with encryption
+
+        Configurable expiry time (default: 1 hour after slot end)
+
+        One-time regeneration option with invalidation of previous
+
+        Preview modal with booking details and validity period
+
+        Download options: PNG, PDF, SVG formats
+
+        Print-optimized version for drivers
+
+Usage Flow:
+
+    Carrier sends QR code to assigned truck driver
+
+    Driver displays QR on mobile device at terminal gate
+
+    Terminal operator scans via gate system (future integration)
+
+    System validates and updates booking status to "consumed"
+
+    Real-time update reflected across all dashboards
+
+3.7 Multi-Agent System Interface (Conversational AI)
+
+Initial Frontend Implementation:
+
+    Floating chat button (bottom right corner, fixed position)
+
+    Slide-out chat panel with conversation history
+
+    Core Features (Phase 1):
+
+        Text-based conversation interface
+
+        Persistent message history per user session
+
+        Typing indicator for simulated responses
+
+        Quick prompts: Predefined common questions
+
+        Placeholder responses indicating future AI integration
+
+        "Ask the assistant" input with example queries
+
+    UI Components:
+
+        Chat header with agent status indicator
+
+        Message bubbles with sender differentiation
+
+        Input field with send button and attachment placeholder
+
+        Clear conversation history option
+
+        Expand/collapse chat window controls
+
+Future-Ready Architecture:
+
+    API endpoint stubs for AI service integration
+
+    Message queue and state management structure
+
+    Context preservation mechanisms
+
+    Multi-step conversation flow support
+
+3.8 Audit & Traceability Features
+
+Frontend Logging:
+
+    User action logging for audit trails
+
+    Booking modification history with before/after states
+
+    AI interaction transcripts and queries
+
+    Error and exception tracking
+
+    Session activity timeline
+
+Compliance Features:
+
+    Data protection compliance indicators
+
+    User consent management interface
+
+    Data export for regulatory requirements
+
+    Access log visibility for users (own activity)
+
+4. Non-Functional Requirements
+4.1 Performance Requirements
+
+    Initial Page Load: < 3 seconds (first visit)
+
+    Subsequent Loads: < 1 second (cached resources)
+
+    Dashboard Updates: Real-time via WebSocket with < 2 second latency
+
+    Animation Performance: 60fps smooth animations, no jank
+
+    Mobile/Tablet Performance: Full functionality on tablets with < 4s load time
+
+    Concurrent Users: Support for 1000+ simultaneous connections
+
+4.2 Security Requirements
+
+Frontend Security Measures:
+
+    XSS protection via content sanitization
+
+    CSRF tokens for all mutating operations
+
+    Secure HTTP headers (CSP, HSTS)
+
+    Input validation and sanitization on all forms
+
+    JWT token management with refresh rotation
+
+    Secure password policies enforcement
+
+Data Protection:
+
+    Role-based data filtering at UI level
+
+    Secure WebSocket connections (wss://)
+
+    Encrypted local storage for tokens only
+
+    No sensitive data in URLs or client-side storage
+
+    Session timeout and auto-logout
+
+4.3 Usability & Accessibility
+
+    WCAG 2.1 AA Compliance: Full accessibility support
+
+    Internationalization: RTL support, date/number localization
+
+    Error Handling: User-friendly messages with recovery guidance
+
+    Help System: Context-sensitive tooltips, guided tours, documentation
+
+    Keyboard Navigation: Full keyboard accessibility
+
+    Screen Reader Support: ARIA labels and semantic HTML
+
+4.4 Maintainability & Modularity
+
+    Component Architecture: Modular, reusable components
+
+    Code Quality: TypeScript strict mode, ESLint, Prettier
+
+    Testing Strategy: Component tests, integration tests, E2E tests
+
+    Documentation: Component storybook, API contracts, setup guides
+
+    Feature Flags: Ability to enable/disable features without deployment
+
+    Configuration: Externalized configuration for easy changes
+
+4.5 Scalability Requirements
+
+    Modular Design: Independent feature modules
+
+    Lazy Loading: Code splitting for optimal performance
+
+    State Management: Efficient state updates for real-time data
+
+    Asset Optimization: Image optimization, font subsetting
+
+    Caching Strategy: Smart caching for static and dynamic content
+
+5. Technical Specifications
+5.1 Technology Stack
+
+Core Framework:
+
+    Primary: Next.js 14+ (App Router for better performance)
+
+    Language: TypeScript 5+ (strict mode enabled)
+
+    Styling: Tailwind CSS v3+ with CSS Modules for component isolation
+
+    Component Library: ShadCN/ui (headless, customizable components)
+
+    State Management:
+
+        Global state: Zustand (lightweight, scalable)
+
+        Server state: TanStack Query (React Query) for API data
+
+    Form Management: React Hook Form + Zod validation schemas
+
+Visualization & UI Libraries:
+
+    Charts & Graphs: Recharts (lightweight, customizable)
+
+    Maps & Geospatial: Leaflet.js + React Leaflet (port map visualization)
+
+    Animations: Framer Motion (production-ready animations)
+
+    Date/Time: date-fns (modern date utilities)
+
+    Icons: Lucide React (consistent icon set)
+
+    Tables: TanStack Table (headless table utilities)
+
+Real-time Communication:
+
+    WebSocket: Socket.io-client (with fallback polling)
+
+    Mocking: Mock Service Worker (MSW) for development
+
+Development & Quality:
+
+    Testing:
+
+        Unit: Jest + React Testing Library
+
+        E2E: Cypress or Playwright
+
+        Visual: Percy or Chromatic
+
+    Documentation: Storybook for component documentation
+
+    Code Quality: ESLint, Prettier, Husky pre-commit hooks
+
+    Bundle Analysis: Webpack Bundle Analyzer, Lighthouse CI
+
+    Performance: Web Vitals monitoring, Speed Curve integration
+
+5.2 Project Structure (Modular Architecture)
+text
+
+src/
+├── app/                    # Next.js 14 App Router
+│   ├── (auth)/            # Authentication routes group
+│   ├── (dashboard)/       # Dashboard routes group
+│   ├── (booking)/         # Booking routes group
+│   ├── admin/             # Admin-only routes
+│   ├── terminal-op/       # Terminal operator routes
+│   └── carrier/           # Carrier routes
+├── components/
+│   ├── common/            # Shared components (Button, Card, Modal)
+│   ├── dashboard/         # Dashboard-specific components
+│   │   ├── admin/         # Admin dashboard components
+│   │   ├── terminal-op/   # Terminal operator components
+│   │   └── carrier/       # Carrier dashboard components
+│   ├── booking/           # Booking system components
+│   ├── layout/            # Layout components (Header, Sidebar)
+│   ├── maps/              # Map visualization components
+│   └── notifications/     # Notification components
+├── hooks/                 # Custom React hooks
+├── lib/                   # Utilities, configurations, constants
+├── stores/                # Zustand stores (global state)
+├── services/              # API services, WebSocket service
+├── types/                 # TypeScript type definitions
+├── styles/                # Global styles, Tailwind config
+├── mocks/                 # Mock data and API handlers
+└── __tests__/             # Test files
+
+5.3 Design System
+5.3.1 Color Palette
+
+    Primary Color: Green (#10B981) - Port/Terminal theme (configurable)
+
+    Secondary Colors:
+
+        Blue (#3B82F6) - Information, water theme
+
+        Orange (#F59E0B) - Warning, attention required
+
+        Purple (#8B5CF6) - Highlights, special features
+
+    Neutral Scale:
+
+        Background: #0F172A (dark), #F8FAFC (light)
+
+        Surface: #1E293B (dark), #FFFFFF (light)
+
+        Text: #F1F5F9 (dark), #0F172A (light)
+
+    Status Colors:
+
+        Success: #10B981 (green)
+
+        Warning: #FBBF24 (yellow)
+
+        Error: #EF4444 (red)
+
+        Info: #3B82F6 (blue)
+
+5.3.2 Typography System
+
+    Primary Font: Inter (Google Fonts, sans-serif)
+
+    Scale (modular):
+
+        xs: 12px (0.75rem)
+
+        sm: 14px (0.875rem)
+
+        base: 16px (1rem)
+
+        lg: 18px (1.125rem)
+
+        xl: 20px (1.25rem)
+
+        2xl: 24px (1.5rem)
+
+        3xl: 30px (1.875rem)
+
+        4xl: 36px (2.25rem)
+
+    Weights: 400 (Regular), 500 (Medium), 600 (SemiBold), 700 (Bold)
+
+    Line Heights: 1.5 (body), 1.2 (headings)
+
+5.3.3 Component Design Principles
+
+    Glass Morphism: Applied to cards, modals, sidebars (backdrop blur, transparency)
+
+    Shadows: Layered shadow system for depth hierarchy
+
+    Border Radius: 8px (cards), 12px (modals), 9999px (buttons, pills)
+
+    Transitions: 200ms ease-in-out (standard), 300ms (complex animations)
+
+    Spacing: 4px base unit system (0.25rem increments)
+
+    Breakpoints: Mobile-first responsive design
+
+5.4 API Mocking Strategy
+
+Development Phase (Frontend-First):
+
+    Mock Service Worker (MSW): Intercept API calls during development
+
+    Faker.js: Generate realistic mock data for all entities
+
+    Local JSON Files: Static data for configurations, terminals
+
+    WebSocket Mock: Simulated real-time events and updates
+
+API Endpoints to Mock:
+typescript
+
+// Authentication & Users
+/auth/login
+/auth/register
+/auth/forgot-password
+/auth/reset-password
+/users/*
+/users/{id}/profile
+
+// Terminals & Capacity
+/terminals/*
+/terminals/{id}/capacity
+/terminals/{id}/layout
+/terminals/{id}/status
+
+// Bookings & Slots
+/bookings/*
+/bookings/{id}/status
+/bookings/{id}/qr
+/slots/availability
+/slots/reserve
+
+// Notifications
+/notifications/*
+/notifications/{id}/read
+/notifications/preferences
+
+// AI Assistant
+/ai/chat
+/ai/query
+/ai/history
+
+// System & Admin
+/system/health
+/system/config
+/admin/users
+/admin/terminals
+/admin/audit-logs
+
+5.5 Real-time Implementation
+
+WebSocket Event Architecture:
+typescript
+
+// Server → Client Events (Real-time updates)
+const SERVER_EVENTS = {
+  TERMINAL_UPDATE: 'terminal:update',        // Terminal status changes
+  BOOKING_UPDATE: 'booking:update',         // Booking state changes
+  TRUCK_MOVEMENT: 'truck:movement',         // Truck location updates
+  NOTIFICATION_NEW: 'notification:new',     // New notifications
+  CAPACITY_ALERT: 'capacity:alert',         // Capacity threshold alerts
+  SYSTEM_ALERT: 'system:alert',             // System-wide alerts
+  USER_ACTIVITY: 'user:activity',           // User presence updates
+  CHAT_MESSAGE: 'chat:message',             // AI chat messages
+};
+
+// Client → Server Events (User actions)
+const CLIENT_EVENTS = {
+  SUBSCRIBE_TERMINAL: 'subscribe:terminal',     // Subscribe to terminal updates
+  UNSUBSCRIBE_TERMINAL: 'unsubscribe:terminal', // Unsubscribe from terminal
+  ACK_NOTIFICATION: 'ack:notification',         // Acknowledge notification
+  SEND_CHAT_MESSAGE: 'chat:message:send',       // Send chat message
+  UPDATE_PRESENCE: 'presence:update',           // Update user presence
+};
+
+// WebSocket Connection Management
+- Auto-reconnect with exponential backoff
+- Connection state indicators in UI
+- Heartbeat mechanism for connection health
+- Fallback to polling if WebSocket unavailable
+
+5.6 Containerization & DevOps
+
+Docker Configuration:
+dockerfile
+
+# Multi-stage build for optimization
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:18-alpine AS runner
+WORKDIR /app
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+EXPOSE 3000
+CMD ["npm", "start"]
+
+CI/CD Pipeline (GitHub Actions):
+yaml
+
+name: CI/CD Pipeline
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - run: npm run test
+      - run: npm run build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+      - run: docker build -t ilacs-frontend .
+      - run: docker push $REGISTRY/ilacs-frontend
+
+6. Data Models (Frontend)
+6.1 User Model
+typescript
+
+interface User {
+  id: string;
+  email: string;
+  role: 'admin' | 'terminal_op' | 'carrier';
+  firstName: string;
+  lastName: string;
+  avatar?: string;
+  
+  // Role-specific fields
+  company?: string;           // For carriers
+  terminalId?: string;        // For terminal operators
+  assignedTerminals?: string[]; // For future multi-terminal support
+  
+  // Status & metadata
+  isActive: boolean;
+  lastLogin: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  
+  // Preferences
+  preferences: {
+    notifications: {
+      email: boolean;
+      push: boolean;
+      inApp: boolean;
+    };
+    theme: 'light' | 'dark' | 'system';
+    language: string;
+    timezone: string;
+  };
+}
+
+6.2 Booking Model
+typescript
+
+interface Booking {
+  id: string;
+  bookingNumber: string;      // Human-readable: BK-2024-00123
+  carrierId: string;
+  carrierName: string;
+  terminalId: string;
+  terminalName: string;
+  
+  // Time slot
+  slot: {
+    date: string;            // ISO date
+    startTime: string;       // "14:30"
+    endTime: string;         // "15:30"
+    duration: number;        // Minutes
+  };
+  
+  // Truck details
+  truck: {
+    id: string;
+    licensePlate: string;
+    driverName: string;
+    driverPhone: string;
+    driverLicense?: string;
+  };
+  
+  // Cargo details (optional)
+  cargo?: {
+    type: string;
+    weight: number;          // Kilograms
+    description?: string;
+    hazardous: boolean;
+    specialRequirements?: string[];
+  };
+  
+  // Status tracking
+  status: 'pending' | 'confirmed' | 'rejected' | 'consumed' | 'cancelled' | 'delayed';
+  statusHistory: Array<{
+    status: string;
+    timestamp: Date;
+    changedBy: string;
+    reason?: string;
+  }>;
+  
+  // Access & verification
+  qrCode: string;
+  verificationCode?: string;  // For manual entry
+  
+  // Metadata
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  
+  // Flags
+  isRecurring: boolean;
+  recurrencePattern?: string; // "weekly", "monthly"
+  parentBookingId?: string;   // For recurring series
+}
+
+6.3 Terminal Model
+typescript
+
+interface Terminal {
+  id: string;
+  name: string;
+  code: string;              // Short code: "T1", "T2"
+  
+  // Location
+  location: {
+    lat: number;
+    lng: number;
+    address: string;
+    zone: string;            // Port zone/area
+  };
+  
+  // Capacity configuration
+  capacity: {
+    maxPerHour: number;
+    currentUtilization: number;  // Real-time %
+    peakHours: string[];         // ["08:00-10:00", "14:00-16:00"]
+    slotDuration: number;        // Default: 60 minutes
+    bufferTime: number;          // Minutes between slots
+  };
+  
+  // Physical layout
+  layout: {
+    gates: Array<{
+      id: string;
+      name: string;
+      type: 'entry' | 'exit' | 'both';
+      status: 'open' | 'closed' | 'maintenance';
+      queueLength: number;
+    }>;
+    
+    parkingBays: Array<{
+      id: string;
+      name: string;
+      type: 'standard' | 'oversized' | 'hazardous';
+      status: 'available' | 'occupied' | 'reserved' | 'maintenance';
+      currentTruck?: string;     // Booking ID
+    }>;
+    
+    loadingZones: Array<{
+      id: string;
+      name: string;
+      equipment: string[];       // ["crane", "forklift"]
+      status: 'available' | 'occupied' | 'maintenance';
+    }>;
+  };
+  
+  // Operational status
+  status: 'active' | 'maintenance' | 'inactive' | 'emergency';
+  operatorId?: string;
+  operatorName?: string;
+  
+  // Services & features
+  services: string[];            // ["container", "bulk", "ro-ro"]
+  restrictions?: string[];       // ["no-hazardous", "max-weight-40t"]
+  
+  // Statistics
+  stats: {
+    dailyAverage: number;
+    weeklyVolume: number;
+    onTimeRate: number;          // Percentage
+    averageWaitTime: number;     // Minutes
+  };
+}
+
+6.4 Notification Model
+typescript
+
+interface Notification {
+  id: string;
+  userId: string;                // Target user
+  userRole: 'admin' | 'terminal_op' | 'carrier';
+  
+  // Content
+  type: 'info' | 'warning' | 'error' | 'success' | 'alert';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  title: string;
+  message: string;
+  icon?: string;                 // Icon name for display
+  
+  // Actionability
+  action?: {
+    label: string;
+    url: string;                 // Deep link within app
+    method?: 'GET' | 'POST';
+    payload?: Record<string, any>;
+  };
+  
+  // Metadata
+  source: 'system' | 'booking' | 'terminal' | 'user';
+  sourceId?: string;             // Related entity ID
+  category: 'booking' | 'capacity' | 'system' | 'chat' | 'security';
+  
+  // Delivery status
+  channels: Array<'inApp' | 'email' | 'push'>;
+  read: boolean;
+  acknowledged: boolean;
+  
+  // Timestamps
+  createdAt: Date;
+  expiresAt?: Date;              // Auto-dismiss after
+  readAt?: Date;
+  acknowledgedAt?: Date;
+  
+  // Grouping
+  groupKey?: string;             // For grouping related notifications
+  parentNotificationId?: string; // For notification threads
+}
+
+6.5 Chat/Conversation Model
+typescript
+
+interface ChatMessage {
+  id: string;
+  conversationId: string;
+  
+  // Participants
+  sender: {
+    type: 'user' | 'agent' | 'system';
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  
+  // Content
+  content: string;
+  type: 'text' | 'quick_reply' | 'table' | 'card';
+  payload?: any;                 // For structured responses
+  
+  // Metadata
+  timestamp: Date;
+  read: boolean;
+  delivered: boolean;
+  
+  // Context
+  context?: {
+    terminalId?: string;
+    bookingId?: string;
+    queryType?: string;          // "slot_availability", "booking_status"
+    intent?: string;             // NLU intent classification
+  };
+  
+  // Quick replies (for agent messages)
+  quickReplies?: Array<{
+    text: string;
+    payload: string;
+  }>;
+}
+
+interface Conversation {
+  id: string;
+  userId: string;
+  agentType: 'logistics_assistant';
+  
+  // Status
+  status: 'active' | 'closed' | 'archived';
+  
+  // Metadata
+  createdAt: Date;
+  updatedAt: Date;
+  lastMessageAt: Date;
+  
+  // Context
+  context: {
+    currentTerminal?: string;
+    currentBooking?: string;
+    recentQueries: string[];
+  };
+  
+  // Messages (paginated)
+  messageCount: number;
+  hasMoreMessages: boolean;
+}
+
+7. Implementation Phases
+Phase 1: Foundation & Setup (Weeks 1-2)
+
+Deliverables:
+
+    ✅ Next.js 14+ project with TypeScript configuration
+
+    ✅ Tailwind CSS setup with design system variables
+
+    ✅ Authentication flow with mock API (invite-only, email verification)
+
+    ✅ Basic layout components (Header, Sidebar, Navigation)
+
+    ✅ Role-based routing structure and permission middleware
+
+    ✅ Project documentation and development environment setup
+
+    ✅ Component storybook initialization
+
+Success Criteria:
+
+    All team members can run project locally
+
+    Authentication flows work with mock data
+
+    Basic layout renders correctly for all roles
+
+    TypeScript compilation without errors
+
+    ESLint/Prettier configured and enforced
+
+Phase 2: Dashboard Development (Weeks 3-4)
+
+Deliverables:
+
+    ✅ Role-specific dashboard skeletons and layouts
+
+    ✅ Interactive port map component (Leaflet integration)
+
+    ✅ Terminal layout visualization with SVG/Canvas
+
+    ✅ Real-time WebSocket setup with mock events
+
+    ✅ Dashboard widgets and statistics components
+
+    ✅ Glass morphism effects and animations (Framer Motion)
+
+    ✅ Responsive design for tablet/mobile views
+
+Success Criteria:
+
+    All three dashboards render with role-specific data
+
+    Port map shows terminals with interactive features
+
+    Real-time updates work via WebSocket mock
+
+    Animations are smooth at 60fps
+
+    Design system consistently applied
+
+Phase 3: Booking System Core (Weeks 5-6)
+
+Deliverables:
+
+    ✅ Calendar component with availability visualization
+
+    ✅ Multi-step booking form with validation
+
+    ✅ Slot selection interface with real-time availability
+
+    ✅ Booking management interfaces (list, details, actions)
+
+    ✅ QR code generation and display components
+
+    ✅ Booking status tracking and history
+
+    ✅ Recurring booking patterns support
+
+Success Criteria:
+
+    Complete booking flow works end-to-end
+
+    Real-time slot availability updates correctly
+
+    QR codes generate and display properly
+
+    All booking statuses are represented correctly
+
+    Form validation provides clear user feedback
+
+Phase 4: Enhanced Features (Weeks 7-8)
+
+Deliverables:
+
+    ✅ Notification system with priority handling
+
+    ✅ Chat assistant interface and conversation UI
+
+    ✅ Advanced filtering, search, and data tables
+
+    ✅ Export/import functionality (CSV, PDF)
+
+    ✅ User preferences and settings management
+
+    ✅ Audit log interface for admin users
+
+    ✅ Bulk actions and administrative tools
+
+Success Criteria:
+
+    Notifications deliver via multiple channels
+
+    Chat interface supports basic conversation flow
+
+    All filtering and search works correctly
+
+    Exports generate correct file formats
+
+    User preferences persist across sessions
+
+Phase 5: Polish, Testing & Deployment (Weeks 9-10)
+
+Deliverables:
+
+    ✅ Comprehensive testing suite (unit, integration, E2E)
+
+    ✅ Performance optimization and bundle analysis
+
+    ✅ Accessibility audit and WCAG compliance
+
+    ✅ Browser compatibility testing
+
+    ✅ Documentation completion (user guides, API docs)
+
+    ✅ Docker containerization and CI/CD pipeline
+
+    ✅ Production deployment preparation
+
+Success Criteria:
+
+    Test coverage > 80%
+
+    Lighthouse score > 90
+
+    WCAG 2.1 AA compliance verified
+
+    Application works on all target browsers
+
+    Docker container builds and runs successfully
+
+    Deployment pipeline triggers correctly
+
+8. Success Metrics & KPIs
+8.1 Development Metrics
+
+    Code Quality: < 5% TypeScript errors, ESLint warnings addressed
+
+    Test Coverage: > 80% line coverage, critical paths 100%
+
+    Performance: Lighthouse score > 90, Core Web Vitals in green
+
+    Bundle Size: Initial load < 500KB, optimized lazy loading
+
+    Component Reusability: > 60% components in shared/common directory
+
+    Build Time: Development build < 30s, production build < 2min
+
+8.2 User Experience Metrics
+
+    Task Completion Rate: > 90% for primary user journeys
+
+    Error Rate: < 2% form submission errors, < 1% runtime errors
+
+    Load Performance: < 3s initial load, < 1s subsequent interactions
+
+    User Satisfaction: > 4/5 in usability testing, < 10% support tickets
+
+    Adoption Rate: > 75% target users actively using within 30 days
+
+    Feature Usage: > 60% using advanced features (chat, exports, filters)
+
+8.3 Business & System Metrics
+
+    Modularity Score: Ability to add/remove features with < 1 day effort
+
+    Flexibility Index: Support for configuration changes without redeployment
+
+    Scalability: Support for 1000+ concurrent users, 100+ terminals
+
+    Maintainability: Clear documentation, < 4 hours onboarding for new devs
+
+    Uptime: > 99.5% availability during business hours
+
+    Security: Zero critical security vulnerabilities reported
+
+8.4 Port Operation Metrics
+
+    Terminal Utilization: Increased utilization by 15-20%
+
+    Booking Accuracy: > 95% booking accuracy, < 5% no-shows
+
+    Processing Time: Reduced booking processing from hours to minutes
+
+    Congestion Reduction: Decreased gate congestion by 25-30%
+
+    Operator Efficiency: Increased operator throughput by 20-25%
+
+    Carrier Satisfaction: Improved carrier satisfaction scores by 30%
+
+9. Risk Mitigation Strategy
+9.1 Technical Risks
+Risk	Impact	Probability	Mitigation Strategy
+Real-time performance issues	High	Medium	WebSocket connection pooling, debounced updates, virtual scrolling for large datasets
+Large dataset visualization lag	High	Medium	Pagination, virtualization, progressive loading, WebGL for complex animations
+Browser compatibility issues	Medium	Low	Progressive enhancement, feature detection, polyfills for critical features
+State management complexity	High	High	Clear separation of concerns, dedicated stores per domain, comprehensive testing
+Animation performance on low-end devices	Medium	Medium	Reduced motion preferences, performance budgets, fallback static views
+9.2 Project Risks
+Risk	Impact	Probability	Mitigation Strategy
+Requirement changes during development	High	High	Modular architecture, feature flags, iterative delivery with stakeholder reviews
+Timeline pressure and scope creep	High	Medium	Prioritized backlog, MVP definition, weekly progress reviews, scope freeze periods
+Team coordination and knowledge sharing	Medium	Medium	Daily standups, pair programming, comprehensive documentation, code reviews
+Quality assurance and testing coverage	High	Medium	Automated testing pipeline, QA integration from start, user acceptance testing cycles
+Integration with future backend systems	Medium	High	Clear API contracts, mock services, integration tests, backward compatibility planning
+9.3 Operational Risks
+Risk	Impact	Probability	Mitigation Strategy
+User adoption resistance	High	Medium	User training materials, phased rollout, super user program, feedback incorporation
+Data migration from legacy systems	High	Low	Parallel run period, data validation tools, rollback plan, incremental migration
+System downtime during deployment	High	Low	Blue-green deployment, feature flags, gradual rollout, comprehensive rollback procedures
+Security vulnerabilities	Critical	Low	Security audits, penetration testing, bug bounty program, regular dependency updates
+Scalability limitations	Medium	Low	Load testing, performance monitoring, horizontal scaling design, caching strategies
+10. Future Considerations & Roadmap
+10.1 Immediate Extensions (Next 3-6 Months)
+
+    Multi-terminal Operator Support:
+
+        Operators managing multiple terminals simultaneously
+
+        Terminal switching interface with unified dashboard
+
+        Cross-terminal coordination features
+
+    Carrier Sub-account Management:
+
+        Hierarchical user accounts for large carriers
+
+        Role delegation (dispatcher, driver, manager)
+
+        Fleet management with driver assignment
+
+    Advanced Analytics Dashboard:
+
+        Predictive analytics for capacity planning
+
+        Machine learning for congestion prediction
+
+        Custom report builder and data visualization
+
+    Mobile Application:
+
+        React Native mobile app for drivers
+
+        Offline capability for rural/remote areas
+
+        Push notifications for arrival/departure
+
+10.2 Medium-term Enhancements (6-12 Months)
+
+    AI Assistant Full Integration:
+
+        Natural language processing for complex queries
+
+        Predictive suggestions and proactive alerts
+
+        Multi-language support for international carriers
+
+        Voice interface for hands-free operation
+
+    IoT & Sensor Integration:
+
+        Real-time truck GPS tracking integration
+
+        Terminal sensor data (weight, temperature, etc.)
+
+        Automated check-in via license plate recognition
+
+        Equipment status monitoring
+
+    Blockchain for Audit & Compliance:
+
+        Immutable audit trail for regulatory compliance
+
+        Smart contracts for automated payments
+
+        Digital twin of port operations
+
+        Supply chain transparency features
+
+    API Marketplace & Integration:
+
+        Public API for third-party integrations
+
+        App marketplace for extensions and plugins
+
+        ERP system integrations (SAP, Oracle, etc.)
+
+        Customs and border control system integration
+
+10.3 Long-term Vision (12-24 Months)
+
+    Multi-port Federation:
+
+        Cross-port booking and coordination
+
+        Regional capacity optimization
+
+        Standardized API across multiple ports
+
+        Port-to-port truck movement tracking
+
+    Autonomous Vehicle Integration:
+
+        API for autonomous truck scheduling
+
+        Digital infrastructure for V2X communication
+
+        Integration with smart city systems
+
+        Predictive maintenance scheduling
+
+    Sustainability Features:
+
+        Carbon footprint calculation and optimization
+
+        Electric vehicle charging station integration
+
+        Noise and emission monitoring
+
+        Green route optimization
+
+    Global Supply Chain Integration:
+
+        End-to-end supply chain visibility
+
+        Integration with shipping lines and rail operators
+
+        Predictive ETAs based on multiple data sources
+
+        Risk management and contingency planning
+
+10.4 Technology Evolution
+
+    Architecture Evolution:
+
+        Micro-frontends for independent feature development
+
+        Edge computing for real-time processing
+
+        Serverless functions for scalable operations
+
+        GraphQL for flexible data querying
+
+    UI/UX Innovations:
+
+        AR/VR interfaces for terminal visualization
+
+        Haptic feedback for critical alerts
+
+        Adaptive interfaces based on user behavior
+
+        Personalized dashboards with AI recommendations
+
+    Data & Analytics:
+
+        Real-time data streaming and processing
+
+        Advanced predictive analytics and simulation
+
+        Natural language query interface for data
+
+        Automated anomaly detection and alerting

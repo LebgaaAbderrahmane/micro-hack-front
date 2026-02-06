@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-primary: #3B82F6;
+  --color-secondary: #0EA5E9;
+  --color-accent: #F59E0B;
+
+  --color-success: #3B82F6;
+  --color-warning: #FBBF24;
+  --color-error: #EF4444;
+  --color-info: #0EA5E9;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-glass-bg: var(--glass-bg);
+  --color-glass-border: var(--glass-border);
+
+  --radius-card: 8px;
+  --radius-modal: 12px;
+  --radius-button: 9999px;
+
+  --font-sans: var(--font-inter);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  /* Darker border for light mode visibility */
+  --primary-glow: rgba(59, 130, 246, 0.1);
+  --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 20px 40px -12px rgba(0, 0, 0, 0.12);
+}
+
+.dark {
+  --background: #030712;
+  --foreground: #f9fafb;
+  --glass-bg: rgba(3, 7, 18, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --primary-glow: rgba(59, 130, 246, 0.25);
+  --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground selection:bg-primary/30;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), sans-serif;
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+}
+
+.glass {
+  @apply bg-glass-bg backdrop-blur-3xl border border-glass-border;
+}
+
+.glass-card {
+  @apply bg-glass-bg backdrop-blur-2xl border border-glass-border rounded-[2.5rem] transition-all duration-500;
+  box-shadow: var(--shadow-card), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-card:hover {
+  @apply border-primary/20 bg-background/[0.03];
+  box-shadow:
+    0 0 50px -10px var(--primary-glow),
+    var(--shadow-card-hover);
+}
+
+.animate-truck {
+  animation: truck-move 2s ease-in-out infinite alternate;
+}
+
+@keyframes truck-move {
+  from {
+    transform: translateX(-5px);
+  }
+
+  to {
+    transform: translateX(5px);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/20 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary/40;
+}
