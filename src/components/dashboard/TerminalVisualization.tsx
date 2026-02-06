@@ -21,7 +21,7 @@ import { Activity } from "lucide-react";
 
 const TerminalNode = ({ data }: { data: any }) => {
     return (
-        <div className="glass-card p-5 border border-border/50 w-[240px] group transition-all duration-500 hover:border-primary/50 hover:shadow-lg bg-card/40 backdrop-blur-xl relative overflow-hidden">
+        <div className="glass-card-geo p-5 border border-border/50 w-[240px] group transition-all duration-500 hover:border-primary/50 hover:shadow-lg backdrop-blur-xl relative overflow-hidden">
             <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-primary !border-none" />
 
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-primary/10 transition-all duration-1000"></div>
@@ -83,7 +83,7 @@ const TerminalNode = ({ data }: { data: any }) => {
 
 const GateNode = ({ data }: { data: any }) => {
     return (
-        <div className="glass-card p-6 border-2 border-primary/40 w-[300px] group transition-all duration-500 hover:border-primary bg-background/60 backdrop-blur-2xl relative overflow-hidden">
+        <div className="glass-card-geo p-6 border-2 border-primary/40 w-[300px] group transition-all duration-500 hover:border-primary backdrop-blur-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-20 h-20 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/20 transition-all"></div>
 
             <div className="flex items-center justify-between mb-3 relative z-10">
@@ -281,7 +281,7 @@ export const TerminalVisualization = () => {
     if (user?.role === 'DISPATCHER') return null;
 
     return (
-        <div className="h-[750px] w-full glass-card border-none overflow-hidden relative group bg-background/50 dark:bg-foreground/5 transition-colors duration-500">
+        <div className="h-[750px] w-full glass-card-geo border-none overflow-hidden relative group transition-colors duration-500">
             {/* Background Architecture */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_30%,var(--color-primary),transparent_50%)] opacity-[0.05]"></div>

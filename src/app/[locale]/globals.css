@@ -121,9 +121,9 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.20 0 0); /* Lighter gray, not black */
   --foreground: oklch(0.985 0 0);
-  --glass-bg: rgba(3, 7, 18, 0.4);
+  --glass-bg: rgba(30, 41, 59, 0.15); /* More transparent grayish glass */
   --glass-border: rgba(255, 255, 255, 0.08);
   --nav-pill-bg: rgba(40, 40, 40, 0.6);
   --primary-glow: rgba(59, 130, 246, 0.25);
@@ -268,7 +268,7 @@ body {
 
 /* Glass card with triangle corner cut */
 .glass-card-geo {
-  @apply bg-glass-bg backdrop-blur-md border border-glass-border shadow-card transition-all duration-300;
+  @apply bg-glass-bg backdrop-blur-2xl border border-glass-border shadow-card transition-all duration-300;
   border-radius: var(--radius-card);
 }
 

@@ -28,9 +28,9 @@ export const ChartCard: React.FC<ChartCardProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: delay * 0.1 }}
-      className={cn("glass-card-geo p-6 relative overflow-hidden", className)}
+      className={cn("glass-card-geo p-6 relative overflow-hidden h-full flex flex-col", className)}
     >
-      <div className="flex items-center justify-between mb-4 relative z-10">
+      <div className="flex items-center justify-between mb-4 relative z-10 shrink-0">
         <div>
           <h3 className="font-bold text-sm flex items-center gap-2 text-foreground">
             <span className={cn("w-1 h-5 rounded-full", accentColor)} />
@@ -43,7 +43,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         {headerRight}
       </div>
 
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10 flex-1">{children}</div>
     </motion.div>
   );
 };

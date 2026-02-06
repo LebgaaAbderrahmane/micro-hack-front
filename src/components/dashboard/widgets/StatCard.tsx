@@ -53,10 +53,10 @@ export const StatCard: React.FC<StatCardProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: delay * 0.1 }}
-      className="relative"
+      className="relative h-full"
     >
       <div className={cn(
-        "glass-card-geo p-5 relative overflow-hidden group border",
+        "glass-card-geo p-5 relative overflow-hidden group border h-full flex flex-col justify-between",
         `border-${color}/20`
       )}>
         

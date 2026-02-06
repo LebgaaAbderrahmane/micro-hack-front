@@ -223,7 +223,7 @@ export const AdminDashboard = () => {
           <PortMap mode="ADMIN" />
         </ChartCard>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden">
+        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
           <NotificationFeed userId={profile?.id} maxItems={6} />
         </div>
       </div>
@@ -289,7 +289,7 @@ export const AdminDashboard = () => {
           </div>
         </ChartCard>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden">
+        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Recommendations</p>
           <div className="space-y-2">
             <RecommendationCard
@@ -315,7 +315,7 @@ export const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden">
+        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
           <QuickActionsGrid
             title="Quick Actions"
             actions={[
@@ -450,7 +450,7 @@ export const TerminalOpDashboard = () => {
           <PortMap mode="OPERATOR" />
         </ChartCard>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden">
+        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Booking Queue</p>
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
@@ -526,11 +526,11 @@ export const TerminalOpDashboard = () => {
 
       {/* Notifications + Recommendations + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="glass-card p-5 border border-foreground/5 relative overflow-hidden">
+        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
           <div className="absolute -top-1 -right-1 w-14 h-14 opacity-10 bg-info" style={{ clipPath: "polygon(100% 0, 0 0, 100% 100%)" }} />
           <NotificationFeed userId={profile?.id} maxItems={5} />
-        </div>-geo p-5 border border-foreground/5 relative overflow-hidden"
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden">
+        </div>
+        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Recommendations</p>
           <div className="space-y-2">
             <RecommendationCard title="Open Additional Lane" description={`Queue length is ${kpis.totalQueue}. Consider opening a bidirectional lane for faster processing.`} type="optimization" delay={0} />
@@ -538,7 +538,7 @@ export const TerminalOpDashboard = () => {
           </div>
         </div>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden">
+        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
           <QuickActionsGrid
             title="Quick Actions"
             actions={[
@@ -698,7 +698,7 @@ export const CarrierDashboard = () => {
           </div>
         </ChartCard>
 
-        <div className="glass-card p-5 border border-foreground/5 relative overflow-hidden">
+        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
           <div className="absolute -top-1 -right-1 w-14 h-14 opacity-10 bg-accent" style={{ clipPath: "polygon(100% 0, 0 0, 100% 100%)" }} />
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3 flex items-center gap-2">
             <Calendar size={12} />
@@ -817,7 +817,7 @@ export const CarrierDashboard = () => {
         </ChartCard>
 
         <div className="space-y-4">
-          <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden">
+          <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
             <QuickActionsGrid
               title="Quick Actions"
               actions={[
@@ -828,7 +828,7 @@ export const CarrierDashboard = () => {
             />
           </div>
 
-          <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden">
+          <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Suggestions</p>
             <RecommendationCard
               title="Optimal Booking Window"
@@ -844,11 +844,11 @@ export const CarrierDashboard = () => {
 
       {/* Notification Feed */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden">
+        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
           <NotificationFeed userId={profile?.id} maxItems={5} />
         </div>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden">
+        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Driver Status</p>
           <div className="space-y-2">
             {kpis.drivers.slice(0, 4).map((driver) => {

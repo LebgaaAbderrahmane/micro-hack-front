@@ -18,7 +18,7 @@ export const BookingCalendar = ({ onDateSelect, selectedDate }: BookingCalendarP
   };
 
   return (
-    <div className="glass-card p-6 border border-foreground/5 inline-block">
+    <div className="glass-card-geo p-6 border border-foreground/5 inline-block">
       <style>{`
         .rdp {
           --rdp-cell-size: 40px;
