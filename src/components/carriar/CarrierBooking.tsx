@@ -73,9 +73,9 @@ import {
 import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { createClient } from "@/utils/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import type { Database, Tables } from "@/types/database.types";
+// import { createClient } from "@/utils/supabase/client";
+// import { useAuth } from "@/hooks/useAuth";
+// import type { Database, Tables } from "@/types/database.types";
 
 // ---------- TYPES ----------
 
