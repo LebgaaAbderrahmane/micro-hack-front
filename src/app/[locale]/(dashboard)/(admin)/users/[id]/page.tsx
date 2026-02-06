@@ -16,7 +16,8 @@ import {
     Unlock,
     Activity,
     Smartphone,
-    MapPin
+    MapPin,
+    CheckCircle2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/common/Toast";
@@ -41,7 +42,7 @@ export default function UserDetailPage() {
                 .single();
             
             if (error) {
-                show("Error", "Could not fetch user details", "error");
+                show("Could not fetch user details", "error");
             } else {
                 setUser(data);
             }
@@ -65,7 +66,7 @@ export default function UserDetailPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
                 <Shield className="w-16 h-16 text-error opacity-50" />
-                <h1 className="text-2xl font-bold text-white">Access Denied</h1>
+                <h1 className="text-2xl font-bold text-foreground">Access Denied</h1>
                 <p className="text-foreground/50">Only administrators can access this secure identity node.</p>
             </div>
         );
@@ -83,13 +84,13 @@ export default function UserDetailPage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 text-white">
+        <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 text-foreground">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2 border-b border-foreground/5">
                 <div className="flex items-center gap-6">
                     <button 
                         onClick={() => router.back()}
-                        className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all"
+                        className="p-3 bg-foreground/5 hover:bg-foreground/10 rounded-2xl border border-foreground/5 transition-all"
                     >
                         <ArrowLeft size={20} />
                     </button>
@@ -103,7 +104,7 @@ export default function UserDetailPage() {
                 <div className="flex gap-3">
                     <button 
                         onClick={() => show("Resetting security tokens...", "info")}
-                        className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/5"
+                        className="px-6 py-3 bg-foreground/5 hover:bg-foreground/10 text-foreground rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-foreground/5"
                     >
                         Reset Password
                     </button>
@@ -119,7 +120,7 @@ export default function UserDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Identity Summary */}
                 <div className="space-y-8 lg:col-span-1">
-                    <div className="glass-card border border-white/10 overflow-hidden bg-white/5 rounded-3xl p-8 text-center relative">
+                    <div className="glass-card border border-foreground/10 overflow-hidden bg-foreground/5 rounded-3xl p-8 text-center relative">
                         <div className="absolute top-0 right-0 p-4">
                              <div className={cn(
                                 "px-2.5 py-1 rounded-lg border text-[8px] font-black uppercase tracking-widest",
@@ -131,25 +132,25 @@ export default function UserDetailPage() {
                         <div className="w-24 h-24 rounded-3xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-4xl font-black text-primary mx-auto mb-6 shadow-2xl shadow-primary/20">
                             {(user.username || 'U').charAt(0).toUpperCase()}
                         </div>
-                        <h2 className="text-2xl font-black text-white">{user.username}</h2>
+                        <h2 className="text-2xl font-black text-foreground">{user.username}</h2>
                         <p className="text-foreground/40 text-sm font-medium mt-1">{user.email}</p>
                         
                         <div className="mt-8 flex justify-center gap-2">
-                             <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-foreground/40 hover:text-primary transition-colors">
+                             <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground/40 hover:text-primary transition-colors">
                                 <Activity size={18} />
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-foreground/40 hover:text-primary transition-colors">
+                            <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground/40 hover:text-primary transition-colors">
                                 <MapPin size={18} />
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-foreground/40 hover:text-primary transition-colors">
+                            <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground/40 hover:text-primary transition-colors">
                                 <Smartphone size={18} />
                             </div>
                         </div>
                     </div>
 
-                    <div className="glass-card p-6 border border-white/5 rounded-3xl bg-white/5">
+                    <div className="glass-card p-6 border border-foreground/5 rounded-3xl bg-foreground/5">
                         <h3 className="text-xs font-black uppercase tracking-widest text-foreground/40 mb-4">Organizational context</h3>
-                        <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-4">
+                        <div className="p-4 rounded-2xl bg-foreground/5 border border-foreground/5 flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center text-accent shrink-0">
                                 <Building size={20} />
                             </div>
@@ -163,14 +164,14 @@ export default function UserDetailPage() {
 
                 {/* Secure Auth Details */}
                 <div className="lg:col-span-2 space-y-8">
-                    <div className="glass-card p-8 border border-white/5 rounded-3xl bg-white/5">
+                    <div className="glass-card p-8 border border-foreground/5 rounded-3xl bg-foreground/5">
                         <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
                             <Lock className="text-primary" size={20} />
                             Authentication Node Attributes
                         </h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 space-y-4">
+                            <div className="p-6 rounded-2xl bg-foreground/[0.03] border border-foreground/5 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Login Security</span>
                                     <CheckCircle2 size={16} className="text-success" />
@@ -181,7 +182,7 @@ export default function UserDetailPage() {
                                 </div>
                             </div>
 
-                             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 space-y-4">
+                             <div className="p-6 rounded-2xl bg-foreground/[0.03] border border-foreground/5 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Active Sessions</span>
                                     <span className="text-[10px] px-2 py-0.5 bg-primary/20 text-primary border border-primary/20 rounded-full font-black uppercase">2 Active</span>
@@ -192,7 +193,7 @@ export default function UserDetailPage() {
                                 </div>
                             </div>
 
-                             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 space-y-4">
+                             <div className="p-6 rounded-2xl bg-foreground/[0.03] border border-foreground/5 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Access Expiry</span>
                                     <Unlock size={16} className="text-primary" />
@@ -203,7 +204,7 @@ export default function UserDetailPage() {
                                 </div>
                             </div>
 
-                             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 space-y-4">
+                             <div className="p-6 rounded-2xl bg-foreground/[0.03] border border-foreground/5 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Last Activity</span>
                                     <Activity size={16} className="text-primary" />
@@ -216,7 +217,7 @@ export default function UserDetailPage() {
                         </div>
                     </div>
 
-                    <div className="glass-card p-8 border border-white/5 rounded-3xl bg-white/5">
+                    <div className="glass-card p-8 border border-foreground/5 rounded-3xl bg-foreground/5">
                         <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
                             <Mail className="text-primary" size={20} />
                             Communication Logs
@@ -226,12 +227,12 @@ export default function UserDetailPage() {
                                 { date: "Feb 04, 2026", subject: "Port Authority System Update", status: "Delivered" },
                                 { date: "Jan 12, 2026", subject: "Password Reset Confirmation", status: "Opened" },
                              ].map((log, i) => (
-                                <div key={i} className="flex justify-between items-center p-4 bg-white/5 rounded-xl border border-white/5">
+                                <div key={i} className="flex justify-between items-center p-4 bg-foreground/5 rounded-xl border border-foreground/5">
                                     <div>
                                         <p className="text-xs font-bold">{log.subject}</p>
                                         <p className="text-[10px] text-foreground/40">{log.date}</p>
                                     </div>
-                                    <span className="text-[10px] font-black text-foreground/30 uppercase border border-white/10 px-2 py-0.5 rounded-md">{log.status}</span>
+                                    <span className="text-[10px] font-black text-foreground/30 uppercase border border-foreground/10 px-2 py-0.5 rounded-md">{log.status}</span>
                                 </div>
                              ))}
                         </div>

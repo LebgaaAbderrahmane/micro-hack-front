@@ -56,15 +56,15 @@ export const DriverModal = ({ isOpen, onClose, driver }: DriverModalProps) => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}></div>
 
-            <div className="glass-card w-full max-w-lg border border-white/10 relative z-10 animate-in fade-in zoom-in duration-300">
-                <div className="flex items-center justify-between p-6 border-b border-white/5">
+            <div className="glass-card w-full max-w-lg border border-foreground/10 relative z-10 animate-in fade-in zoom-in duration-300">
+                <div className="flex items-center justify-between p-6 border-b border-foreground/5">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                             <User size={20} />
                         </div>
                         <h3 className="font-bold text-lg">{driver ? "Edit Driver" : "Add New Driver"}</h3>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-foreground/5 rounded-lg transition-colors">
                         <X size={20} className="text-foreground/40" />
                     </button>
                 </div>
@@ -76,7 +76,7 @@ export const DriverModal = ({ isOpen, onClose, driver }: DriverModalProps) => {
                             <input
                                 {...register("firstName")}
                                 className={cn(
-                                    "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
+                                    "w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
                                     errors.firstName && "border-error/50 ring-error/20"
                                 )}
                                 placeholder="John"
@@ -87,7 +87,7 @@ export const DriverModal = ({ isOpen, onClose, driver }: DriverModalProps) => {
                             <input
                                 {...register("lastName")}
                                 className={cn(
-                                    "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
+                                    "w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
                                     errors.lastName && "border-error/50 ring-error/20"
                                 )}
                                 placeholder="Doe"
@@ -102,7 +102,7 @@ export const DriverModal = ({ isOpen, onClose, driver }: DriverModalProps) => {
                             <input
                                 {...register("email")}
                                 className={cn(
-                                    "w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
+                                    "w-full bg-foreground/5 border border-foreground/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
                                     errors.email && "border-error/50 ring-error/20"
                                 )}
                                 placeholder="john.doe@logistics.com"
@@ -118,7 +118,7 @@ export const DriverModal = ({ isOpen, onClose, driver }: DriverModalProps) => {
                                 <input
                                     {...register("phone")}
                                     className={cn(
-                                        "w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
+                                        "w-full bg-foreground/5 border border-foreground/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
                                         errors.phone && "border-error/50 ring-error/20"
                                     )}
                                     placeholder="+1..."
@@ -132,7 +132,7 @@ export const DriverModal = ({ isOpen, onClose, driver }: DriverModalProps) => {
                                 <input
                                     {...register("licenseNumber")}
                                     className={cn(
-                                        "w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
+                                        "w-full bg-foreground/5 border border-foreground/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
                                         errors.licenseNumber && "border-error/50 ring-error/20"
                                     )}
                                     placeholder="L-000000"
@@ -145,7 +145,7 @@ export const DriverModal = ({ isOpen, onClose, driver }: DriverModalProps) => {
                         <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest ml-1">Status</label>
                         <select
                             {...register("status")}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none"
+                            className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none"
                         >
                             <option value="active">Active</option>
                             <option value="on_leave">On Leave</option>
@@ -157,7 +157,7 @@ export const DriverModal = ({ isOpen, onClose, driver }: DriverModalProps) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold transition-all"
+                            className="flex-1 py-3 bg-foreground/5 hover:bg-foreground/10 rounded-xl font-bold transition-all"
                         >
                             Cancel
                         </button>

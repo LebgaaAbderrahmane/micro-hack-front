@@ -2,8 +2,11 @@
 
 @theme inline {
   --color-primary: #3B82F6;
+  --color-primary-foreground: #ffffff;
   --color-secondary: #0EA5E9;
+  --color-secondary-foreground: #ffffff;
   --color-accent: #F59E0B;
+  --color-accent-foreground: #ffffff;
 
   --color-success: #3B82F6;
   --color-warning: #FBBF24;

@@ -32,7 +32,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <div className="bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-xl shadow-2xl">
+        <div className="bg-foreground/5 border border-foreground/10 p-8 rounded-3xl backdrop-blur-xl shadow-2xl">
           <form className="space-y-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-foreground/40 px-1">
@@ -44,7 +44,7 @@ export default function RegisterPage() {
                   name="username"
                   type="text"
                   placeholder="johndoe"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full bg-foreground/5 border border-foreground/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
                 />
               </div>
@@ -60,7 +60,7 @@ export default function RegisterPage() {
                   name="email"
                   type="email"
                   placeholder="name@company.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full bg-foreground/5 border border-foreground/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
                 />
               </div>
@@ -74,7 +74,7 @@ export default function RegisterPage() {
                 name="password"
                 type="password"
                 placeholder="••••••••"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                 required
               />
             </div>
@@ -90,7 +90,7 @@ export default function RegisterPage() {
                     name="orgName"
                     type="text"
                     placeholder="Logistics Co."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full bg-foreground/5 border border-foreground/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                     required
                   />
                 </div>
@@ -105,7 +105,7 @@ export default function RegisterPage() {
                     name="nif"
                     type="text"
                     placeholder="12345678"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full bg-foreground/5 border border-foreground/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                     required
                   />
                 </div>

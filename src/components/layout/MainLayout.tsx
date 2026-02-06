@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { Navbar } from "./Navbar";
-import { usePathname } from "next/navigation";
+import { usePathname } from "@/i18n/routing";
 import { AIAssistant } from "../common/AIAssistant";
+import { Sidebar } from "./Sidebar";
 
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
@@ -16,21 +17,24 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
 
     if (!mounted) return null;
 
-    const isAuthPage = pathname === "/login";
+    const isAuthPage = pathname?.includes("/login");
 
     if (isAuthPage) {
         return <main className="min-h-screen bg-background">{children}</main>;
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background flex flex-col">
             <Navbar />
-
-            <main className="pt-20 min-h-screen transition-all duration-300">
-                <div className="max-w-[1600px] mx-auto p-8">
-                    {children}
-                </div>
-            </main>
+            
+            <div className="flex flex-1">
+                <Sidebar />
+                <main className="flex-1 lg:ml-64 pt-20 min-h-screen transition-all duration-300">
+                    <div className="max-w-[1600px] mx-auto p-4 md:p-8">
+                        {children}
+                    </div>
+                </main>
+            </div>
 
             <AIAssistant />
         </div>

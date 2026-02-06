@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 interface Message {
     id: string;
@@ -21,6 +22,7 @@ interface Message {
 }
 
 export const AIAssistant = () => {
+    const t = useTranslations("AI");
     const [isOpen, setIsOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const [inputValue, setInputValue] = useState("");
@@ -28,7 +30,7 @@ export const AIAssistant = () => {
         {
             id: "1",
             role: "assistant",
-            content: "Hello! I'm your ILACS AI assistant. How can I help you manage your terminal access or fleet today?",
+            content: t("welcome"),
             timestamp: new Date(),
         }
     ]);
@@ -92,32 +94,32 @@ export const AIAssistant = () => {
                             width: isMinimized ? "200px" : "380px"
                         }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="glass-card shadow-2xl border border-white/10 flex flex-col overflow-hidden bg-background/95 backdrop-blur-xl"
+                        className="glass-card shadow-2xl border border-foreground/10 flex flex-col overflow-hidden bg-background/95 backdrop-blur-xl"
                     >
                         {/* Header */}
-                        <div className="p-4 border-b border-white/5 bg-primary/10 flex items-center justify-between">
+                        <div className="p-4 border-b border-foreground/5 bg-primary/10 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
                                     <Bot size={18} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-sm tracking-tight text-foreground">ILACS Assistant</h4>
+                                    <h4 className="font-bold text-sm tracking-tight text-foreground">{t("title")}</h4>
                                     {!isMinimized && <div className="flex items-center gap-1.5">
                                         <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                                        <span className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">AI Online</span>
+                                        <span className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">{t("online")}</span>
                                     </div>}
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">
                                 <button
                                     onClick={() => setIsMinimized(!isMinimized)}
-                                    className="p-1.5 hover:bg-white/5 rounded-md transition-colors text-foreground/40 hover:text-foreground"
+                                    className="p-1.5 hover:bg-foreground/5 rounded-md transition-colors text-foreground/40 hover:text-foreground"
                                 >
                                     {isMinimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
                                 </button>
                                 <button
                                     onClick={() => setIsOpen(false)}
-                                    className="p-1.5 hover:bg-white/5 rounded-md transition-colors text-foreground/40 hover:text-foreground"
+                                    className="p-1.5 hover:bg-foreground/5 rounded-md transition-colors text-foreground/40 hover:text-foreground"
                                 >
                                     <X size={16} />
                                 </button>
@@ -127,7 +129,7 @@ export const AIAssistant = () => {
                         {!isMinimized && (
                             <>
                                 {/* Chat Body */}
-                                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/5 scrollbar-track-transparent">
+                                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-foreground/10 scrollbar-track-transparent">
                                     {messages.map((m) => (
                                         <div
                                             key={m.id}
@@ -137,16 +139,16 @@ export const AIAssistant = () => {
                                             )}
                                         >
                                             <div className={cn(
-                                                "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border border-white/5",
-                                                m.role === "assistant" ? "bg-primary/10 text-primary" : "bg-white/10 text-foreground/60"
+                                                "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border border-foreground/5",
+                                                m.role === "assistant" ? "bg-primary/10 text-primary" : "bg-foreground/10 text-primary-foreground/60"
                                             )}>
                                                 {m.role === "assistant" ? <Bot size={16} /> : <User size={16} />}
                                             </div>
                                             <div className={cn(
                                                 "p-3 rounded-2xl text-sm max-w-[80%] shadow-sm",
                                                 m.role === "assistant"
-                                                    ? "bg-white/5 text-foreground leading-relaxed border border-white/5"
-                                                    : "bg-primary text-white font-medium"
+                                                    ? "bg-foreground/5 text-foreground leading-relaxed border border-foreground/5"
+                                                    : "bg-primary text-primary-foreground font-medium"
                                             )}>
                                                 {m.content}
                                             </div>
@@ -156,41 +158,41 @@ export const AIAssistant = () => {
                                 </div>
 
                                 {/* Quick Prompts */}
-                                <div className="px-4 py-2 flex gap-2 overflow-x-auto no-scrollbar border-t border-white/5">
+                                <div className="px-4 py-2 flex gap-2 overflow-x-auto no-scrollbar border-t border-foreground/5">
                                     <button
-                                        onClick={() => setInputValue("Check capacity North")}
-                                        className="whitespace-nowrap px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-[10px] font-bold text-foreground/60 border border-white/5 transition-colors"
+                                        onClick={() => setInputValue(t("queryCapacity"))}
+                                        className="whitespace-nowrap px-3 py-1.5 rounded-full bg-foreground/5 hover:bg-foreground/10 text-[10px] font-bold text-foreground/60 border border-foreground/5 transition-colors"
                                     >
-                                        Capacity North?
+                                        {t("promptCapacity")}
                                     </button>
                                     <button
-                                        onClick={() => setInputValue("Maintenance schedule")}
-                                        className="whitespace-nowrap px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-[10px] font-bold text-foreground/60 border border-white/5 transition-colors"
+                                        onClick={() => setInputValue(t("queryMaintenance"))}
+                                        className="whitespace-nowrap px-3 py-1.5 rounded-full bg-foreground/5 hover:bg-foreground/10 text-[10px] font-bold text-foreground/60 border border-foreground/5 transition-colors"
                                     >
-                                        Truck Maintenance
+                                        {t("promptMaintenance")}
                                     </button>
                                     <button
-                                        onClick={() => setInputValue("Next available slot")}
-                                        className="whitespace-nowrap px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-[10px] font-bold text-foreground/60 border border-white/5 transition-colors"
+                                        onClick={() => setInputValue(t("queryNextSlot"))}
+                                        className="whitespace-nowrap px-3 py-1.5 rounded-full bg-foreground/5 hover:bg-foreground/10 text-[10px] font-bold text-foreground/60 border border-foreground/5 transition-colors"
                                     >
-                                        Next Slot?
+                                        {t("promptNextSlot")}
                                     </button>
                                 </div>
 
                                 {/* Input Area */}
-                                <div className="p-4 border-t border-white/5">
+                                <div className="p-4 border-t border-foreground/5">
                                     <div className="relative group">
                                         <input
                                             value={inputValue}
                                             onChange={(e) => setInputValue(e.target.value)}
                                             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                                            placeholder="Ask the assistant..."
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-foreground/20"
+                                            placeholder={t("placeholder")}
+                                            className="w-full bg-foreground/5 border border-foreground/10 rounded-xl py-3 pl-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-foreground/20"
                                         />
                                         <button
                                             onClick={handleSend}
                                             disabled={!inputValue.trim()}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center transition-all disabled:opacity-50 disabled:grayscale hover:scale-105 active:scale-95"
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center transition-all disabled:opacity-50 disabled:grayscale hover:scale-105 active:scale-95"
                                         >
                                             <Send size={16} />
                                         </button>

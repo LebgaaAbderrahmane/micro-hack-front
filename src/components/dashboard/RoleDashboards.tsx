@@ -24,7 +24,7 @@ export const AdminDashboard = () => (
                 { label: "Total Handled", value: "45.2k", color: "text-success" },
                 { label: "System Uptime", value: "99.9%", color: "text-primary" }
             ].map((stat, idx) => (
-                <div key={idx} className="glass-card p-6 border border-white/5">
+                <div key={idx} className="glass-card p-6 border border-foreground/5">
                     <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-1">{stat.label}</p>
                     <p className={cn("text-2xl font-black", stat.color)}>{stat.value}</p>
                 </div>
@@ -51,7 +51,7 @@ export const TerminalOpDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 glass-card p-6 min-h-[500px] flex flex-col border border-white/5">
+                <div className="lg:col-span-2 glass-card p-6 min-h-[500px] flex flex-col border border-foreground/5">
                     <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
                         <span className="w-1.5 h-6 bg-secondary rounded-full"></span>
                         Gate & Yard Visualization
@@ -61,14 +61,14 @@ export const TerminalOpDashboard = () => {
                     </div>
                 </div>
 
-                <div className="glass-card p-6 border border-white/5">
+                <div className="glass-card p-6 border border-foreground/5">
                     <h3 className="font-bold text-lg mb-6">Booking Queue</h3>
                     <div className="space-y-4">
                         {[1, 2, 3, 4].map((i) => (
                             <div
                                 key={i}
                                 onClick={() => show(`Directing Truck ${i} to Lane B`, "info")}
-                                className="p-4 rounded-xl bg-white/5 border border-white/5 hover:border-secondary/30 transition-all cursor-pointer hover:bg-white/10"
+                                className="p-4 rounded-xl bg-foreground/5 border border-foreground/5 hover:border-secondary/30 transition-all cursor-pointer hover:bg-foreground/10"
                             >
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-[10px] font-bold text-secondary uppercase tracking-widest leading-none">Booked</span>
@@ -101,7 +101,7 @@ export const CarrierDashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
-                    <div className="glass-card p-6 border border-white/5">
+                    <div className="glass-card p-6 border border-foreground/5">
                         <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
                             <span className="w-1.5 h-6 bg-accent rounded-full"></span>
                             Active Fleet Status
@@ -135,7 +135,7 @@ export const CarrierDashboard = () => {
                     </div>
                 </div>
 
-                <div className="glass-card p-6 border border-white/5">
+                <div className="glass-card p-6 border border-foreground/5">
                     <h3 className="font-bold text-lg mb-6">Upcoming Bookings</h3>
                     <p className="text-foreground/30 text-sm text-center py-12">No bookings for today.</p>
                     <button

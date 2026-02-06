@@ -51,9 +51,9 @@ export default function NewBookingPage() {
             </div>
 
             {/* Stepper */}
-            <div className="glass-card p-6 border border-white/5">
+            <div className="glass-card p-6 border border-foreground/5">
                 <div className="flex items-center justify-between relative max-w-3xl mx-auto">
-                    <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-white/5 -translate-y-1/2 -z-10"></div>
+                    <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-foreground/5 -translate-y-1/2 -z-10"></div>
                     {steps.map((step) => {
                         const Icon = step.icon;
                         const isCompleted = currentStep > step.id;
@@ -64,9 +64,9 @@ export default function NewBookingPage() {
                                 <div
                                     className={cn(
                                         "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 border-2",
-                                        isCompleted ? "bg-primary border-primary text-white" :
+                                        isCompleted ? "bg-primary border-primary text-primary-foreground" :
                                             isActive ? "bg-background border-primary text-primary shadow-[0_0_15px_rgba(59,130,246,0.3)]" :
-                                                "bg-background border-white/10 text-foreground/30"
+                                                "bg-background border-foreground/10 text-foreground/30"
                                     )}
                                 >
                                     {isCompleted ? <Check size={20} strokeWidth={3} /> : <Icon size={20} />}
@@ -101,7 +101,7 @@ export default function NewBookingPage() {
                                     onClick={() => { setSelectedTerminal(t.id); nextStep(); }}
                                     className={cn(
                                         "glass-card p-8 border hover:border-primary/50 text-left transition-all group",
-                                        selectedTerminal === t.id ? "border-primary bg-primary/5" : "border-white/5"
+                                        selectedTerminal === t.id ? "border-primary bg-primary/5" : "border-foreground/5"
                                     )}
                                 >
                                     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
@@ -138,7 +138,7 @@ export default function NewBookingPage() {
                     )}
 
                     {currentStep === 3 && (
-                        <div className="max-w-2xl mx-auto glass-card p-8 border border-white/5 space-y-8">
+                        <div className="max-w-2xl mx-auto glass-card p-8 border border-foreground/5 space-y-8">
                             <div className="space-y-6">
                                 <h3 className="font-bold text-lg flex items-center gap-2">
                                     <Truck size={20} className="text-primary" />
@@ -147,11 +147,11 @@ export default function NewBookingPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-foreground/40 uppercase tracking-wider">License Plate</label>
-                                        <input type="text" placeholder="TX-992-BK" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none" />
+                                        <input type="text" placeholder="TX-992-BK" className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none" />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-foreground/40 uppercase tracking-wider">Truck Type</label>
-                                        <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none">
+                                        <select className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none">
                                             <option>Semi-Trailer</option>
                                             <option>Flatbed</option>
                                             <option>Refrigerator</option>
@@ -160,7 +160,7 @@ export default function NewBookingPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-6 pt-6 border-t border-white/5">
+                            <div className="space-y-6 pt-6 border-t border-foreground/5">
                                 <h3 className="font-bold text-lg flex items-center gap-2">
                                     <User size={20} className="text-primary" />
                                     Driver Information
@@ -168,11 +168,11 @@ export default function NewBookingPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-foreground/40 uppercase tracking-wider">Full Name</label>
-                                        <input type="text" placeholder="John Doe" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none" />
+                                        <input type="text" placeholder="John Doe" className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none" />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-foreground/40 uppercase tracking-wider">Contact Phone</label>
-                                        <input type="text" placeholder="+1 234 567 890" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none" />
+                                        <input type="text" placeholder="+1 234 567 890" className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none" />
                                     </div>
                                 </div>
                             </div>
@@ -182,7 +182,7 @@ export default function NewBookingPage() {
                     {currentStep === 4 && !isConfirmed && (
                         <div className="max-w-2xl mx-auto space-y-6">
                             <div className="glass-card p-12 border-2 border-primary/20 bg-primary/5 flex flex-col items-center text-center space-y-6">
-                                <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20">
+                                <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-xl shadow-primary/20">
                                     <Check size={40} strokeWidth={3} />
                                 </div>
                                 <div className="space-y-2">
@@ -191,12 +191,12 @@ export default function NewBookingPage() {
                                 </div>
 
                                 <div className="w-full grid grid-cols-2 gap-4 pt-6">
-                                    <div className="bg-white/5 p-4 rounded-2xl text-left border border-white/10">
+                                    <div className="bg-foreground/5 p-4 rounded-2xl text-left border border-foreground/10">
                                         <span className="text-[10px] font-bold text-foreground/30 uppercase block mb-1">Schedule</span>
                                         <p className="font-bold">{selectedDate ? format(selectedDate, "MMM do") : "TBD"}</p>
                                         <p className="text-xs text-primary font-bold">14:00 - 15:00</p>
                                     </div>
-                                    <div className="bg-white/5 p-4 rounded-2xl text-left border border-white/10">
+                                    <div className="bg-foreground/5 p-4 rounded-2xl text-left border border-foreground/10">
                                         <span className="text-[10px] font-bold text-foreground/30 uppercase block mb-1">Vehicle</span>
                                         <p className="font-bold">TX-992-BK</p>
                                         <p className="text-xs text-foreground/40 font-medium">Semi-Trailer</p>
@@ -205,7 +205,7 @@ export default function NewBookingPage() {
                             </div>
                             <button
                                 onClick={() => setIsConfirmed(true)}
-                                className="w-full bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] uppercase tracking-widest"
+                                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] uppercase tracking-widest"
                             >
                                 Confirm Booking & Generate QR
                             </button>
@@ -232,13 +232,13 @@ export default function NewBookingPage() {
                             <div className="flex gap-4">
                                 <Link
                                     href="/bookings"
-                                    className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl font-bold transition-all"
+                                    className="px-8 py-4 bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 rounded-2xl font-bold transition-all"
                                 >
                                     Go to My Bookings
                                 </Link>
                                 <button
                                     onClick={() => window.print()}
-                                    className="px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+                                    className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
                                 >
                                     Print Permit
                                 </button>
@@ -250,11 +250,11 @@ export default function NewBookingPage() {
 
             {/* Navigation Controls */}
             {!isConfirmed && (
-                <div className="flex items-center justify-between pt-8 border-t border-white/5">
+                <div className="flex items-center justify-between pt-8 border-t border-foreground/5">
                     <button
                         onClick={prevStep}
                         disabled={currentStep === 1}
-                        className="flex items-center gap-2 px-6 py-3 rounded-xl border border-white/10 hover:bg-white/5 disabled:opacity-30 disabled:pointer-events-none transition-all"
+                        className="flex items-center gap-2 px-6 py-3 rounded-xl border border-foreground/10 hover:bg-foreground/5 disabled:opacity-30 disabled:pointer-events-none transition-all"
                     >
                         <ChevronLeft size={20} />
                         <span className="font-bold text-sm">Previous Step</span>
@@ -263,7 +263,7 @@ export default function NewBookingPage() {
                     {currentStep < 4 && currentStep > 1 && (
                         <button
                             onClick={nextStep}
-                            className="flex items-center gap-2 px-8 py-3 rounded-xl bg-primary text-white font-bold hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95"
+                            className="flex items-center gap-2 px-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95"
                         >
                             <span className="font-bold text-sm">Continue</span>
                             <ChevronRight size={20} />

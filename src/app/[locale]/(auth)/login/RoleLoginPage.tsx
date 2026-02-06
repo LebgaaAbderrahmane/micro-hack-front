@@ -68,7 +68,7 @@ export const RoleLoginPage = ({
           </div>
         </div>
 
-        <div className="glass-card p-8 space-y-6 bg-white/5 border border-white/10 rounded-[2rem] shadow-2xl relative overflow-hidden group">
+        <div className="glass-card p-8 space-y-6 bg-foreground/5 border border-foreground/10 rounded-[2rem] shadow-2xl relative overflow-hidden group">
           <div
             className={cn(
               "absolute top-0 right-0 w-32 h-32 blur-[60px] opacity-10 group-hover:opacity-20 transition-opacity",
@@ -94,7 +94,7 @@ export const RoleLoginPage = ({
                 name="email"
                 type="email"
                 placeholder="identity@portflow.dz"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-white/10 transition-all text-sm font-medium"
+                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-white/10 transition-all text-sm font-medium"
                 required
               />
             </div>
@@ -115,7 +115,7 @@ export const RoleLoginPage = ({
                 name="password"
                 type="password"
                 placeholder="••••••••••••"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-white/10 transition-all text-sm font-medium"
+                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-white/10 transition-all text-sm font-medium"
                 required
               />
             </div>
@@ -132,7 +132,7 @@ export const RoleLoginPage = ({
           </form>
 
           {role === "DISPATCHER" && (
-            <div className="pt-4 border-t border-white/5 text-center">
+            <div className="pt-4 border-t border-foreground/5 text-center">
               <p className="text-foreground/30 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
                 Are you a new carrier? <br />
                 <Link

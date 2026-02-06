@@ -74,7 +74,7 @@ export default function FleetPage() {
             case "on_leave":
                 return "text-warning bg-warning/10 border-warning/20";
             default:
-                return "text-foreground/40 bg-white/5 border-white/10";
+                return "text-foreground/40 bg-foreground/5 border-foreground/10";
         }
     };
 
@@ -87,7 +87,7 @@ export default function FleetPage() {
                 </div>
                 <button
                     onClick={() => activeTab === "trucks" ? openTruckModal() : openDriverModal()}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
                 >
                     <Plus size={18} />
                     Add {activeTab === "trucks" ? "Vehicle" : "Driver"}
@@ -102,15 +102,15 @@ export default function FleetPage() {
                 <StatCard title="Maintenance" value={mockTrucks.filter(t => t.status === "maintenance").length.toString()} icon={Wrench} change="2 urgent" trend="down" />
             </div>
 
-            <div className="glass-card border border-white/5 overflow-hidden">
+            <div className="glass-card border border-foreground/5 overflow-hidden">
                 {/* Tabs & Search */}
-                <div className="p-4 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex p-1 bg-white/5 rounded-xl w-fit">
+                <div className="p-4 border-b border-foreground/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex p-1 bg-foreground/5 rounded-xl w-fit">
                         <button
                             onClick={() => setActiveTab("trucks")}
                             className={cn(
                                 "px-6 py-2 rounded-lg text-sm font-bold transition-all",
-                                activeTab === "trucks" ? "bg-primary text-white shadow-md shadow-primary/20" : "text-foreground/40 hover:text-foreground"
+                                activeTab === "trucks" ? "bg-primary text-foreground shadow-md shadow-primary/20" : "text-foreground/40 hover:text-primary-foreground"
                             )}
                         >
                             Vehicles
@@ -119,7 +119,7 @@ export default function FleetPage() {
                             onClick={() => setActiveTab("drivers")}
                             className={cn(
                                 "px-6 py-2 rounded-lg text-sm font-bold transition-all",
-                                activeTab === "drivers" ? "bg-primary text-white shadow-md shadow-primary/20" : "text-foreground/40 hover:text-foreground"
+                                activeTab === "drivers" ? "bg-primary text-foreground shadow-md shadow-primary/20" : "text-foreground/40 hover:text-primary-foreground"
                             )}
                         >
                             Drivers
@@ -134,12 +134,12 @@ export default function FleetPage() {
                                 placeholder={`Search ${activeTab}...`}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                             />
                         </div>
                         <button
                             onClick={() => show("Advanced filters coming soon", "info")}
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/5 transition-colors text-sm font-medium"
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-foreground/10 hover:bg-foreground/5 transition-colors text-sm font-medium"
                         >
                             <Filter size={16} />
                             Filter
@@ -153,7 +153,7 @@ export default function FleetPage() {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="border-b border-white/5 bg-white/[0.02]">
+                                    <tr className="border-b border-foreground/5 bg-foreground/[0.02]">
                                         <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-foreground/40">Vehicle Info</th>
                                         <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-foreground/40">Status</th>
                                         <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-foreground/40">Performance</th>
@@ -163,10 +163,10 @@ export default function FleetPage() {
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {filteredTrucks.map((truck) => (
-                                        <tr key={truck.id} className="group hover:bg-white/[0.02] transition-colors">
+                                        <tr key={truck.id} className="group hover:bg-foreground/[0.02] transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-primary border border-white/5 group-hover:scale-110 transition-transform">
+                                                    <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-primary border border-foreground/5 group-hover:scale-110 transition-transform">
                                                         <TruckIcon size={20} />
                                                     </div>
                                                     <div>
@@ -186,7 +186,7 @@ export default function FleetPage() {
                                                         <span className="text-foreground/40">Fuel</span>
                                                         <span className={truck.fuelLevel! < 20 ? "text-error" : "text-foreground/60"}>{truck.fuelLevel}%</span>
                                                     </div>
-                                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                                    <div className="h-1 bg-foreground/5 rounded-full overflow-hidden">
                                                         <div className={cn("h-full transition-all duration-500", truck.fuelLevel! < 20 ? "bg-error" : "bg-primary")} style={{ width: `${truck.fuelLevel}%` }}></div>
                                                     </div>
                                                 </div>
@@ -201,7 +201,7 @@ export default function FleetPage() {
                                             <td className="px-6 py-4 text-right">
                                                 <button
                                                     onClick={() => openTruckModal(truck)}
-                                                    className="p-2 rounded-lg hover:bg-white/10 text-foreground/40 hover:text-foreground transition-colors"
+                                                    className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-colors"
                                                 >
                                                     <MoreVertical size={16} />
                                                 </button>
@@ -214,12 +214,12 @@ export default function FleetPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
                             {filteredDrivers.map((driver) => (
-                                <div key={driver.id} className="glass-card p-6 border border-white/5 hover:border-primary/30 transition-all group relative overflow-hidden">
+                                <div key={driver.id} className="glass-card p-6 border border-foreground/5 hover:border-primary/30 transition-all group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors"></div>
 
                                     <div className="flex items-start justify-between relative z-10">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors overflow-hidden">
+                                            <div className="w-14 h-14 rounded-2xl bg-foreground/5 border border-foreground/5 flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors overflow-hidden">
                                                 <UserIcon size={28} />
                                             </div>
                                             <div>
@@ -253,7 +253,7 @@ export default function FleetPage() {
                                         </div>
                                     </div>
 
-                                    <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between relative z-10">
+                                    <div className="mt-6 pt-4 border-t border-foreground/5 flex items-center justify-between relative z-10">
                                         <div className="text-xs text-foreground/40 font-medium">{driver.totalTrips} Total Trips</div>
                                         <button className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
                                             View Profile
@@ -282,7 +282,7 @@ export default function FleetPage() {
 }
 
 const StatCard = ({ title, value, icon: Icon, change, trend }: { title: string, value: string, icon: any, change: string, trend: "up" | "down" | "neutral" }) => (
-    <div className="glass-card p-6 border border-white/5 relative overflow-hidden group">
+    <div className="glass-card p-6 border border-foreground/5 relative overflow-hidden group">
         <div className="flex items-start justify-between">
             <div className="space-y-3">
                 <span className="text-xs font-bold text-foreground/40 uppercase tracking-widest block">{title}</span>
@@ -295,7 +295,7 @@ const StatCard = ({ title, value, icon: Icon, change, trend }: { title: string, 
                     {change}
                 </p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+            <div className="w-12 h-12 rounded-2xl bg-foreground/5 flex items-center justify-center text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                 <Icon size={24} />
             </div>
         </div>

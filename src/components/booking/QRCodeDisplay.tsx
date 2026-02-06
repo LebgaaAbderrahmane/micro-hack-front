@@ -12,7 +12,7 @@ interface QRCodeDisplayProps {
 
 export const QRCodeDisplay = ({ value, bookingNumber, terminalName }: QRCodeDisplayProps) => {
     return (
-        <div className="glass-card p-8 border border-white/10 flex flex-col items-center space-y-8 max-w-sm mx-auto shadow-2xl relative overflow-hidden group">
+        <div className="glass-card p-8 border border-foreground/10 flex flex-col items-center space-y-8 max-w-sm mx-auto shadow-2xl relative overflow-hidden group">
             {/* Decorative Background */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors"></div>
 
@@ -37,7 +37,7 @@ export const QRCodeDisplay = ({ value, bookingNumber, terminalName }: QRCodeDisp
             </div>
 
             <div className="w-full space-y-4 relative z-10">
-                <div className="flex items-center justify-between px-2 pt-4 border-t border-white/5">
+                <div className="flex items-center justify-between px-2 pt-4 border-t border-foreground/5">
                     <div>
                         <span className="text-[10px] font-bold text-foreground/30 uppercase block">Terminal</span>
                         <p className="text-sm font-bold">{terminalName}</p>
@@ -49,15 +49,15 @@ export const QRCodeDisplay = ({ value, bookingNumber, terminalName }: QRCodeDisp
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                    <button className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors text-foreground/60 hover:text-foreground">
+                    <button className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-foreground/5 hover:bg-foreground/10 transition-colors text-foreground/60 hover:text-foreground">
                         <Download size={18} />
                         <span className="text-[8px] font-black uppercase tracking-widest">Save</span>
                     </button>
-                    <button className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors text-foreground/60 hover:text-foreground">
+                    <button className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-foreground/5 hover:bg-foreground/10 transition-colors text-foreground/60 hover:text-foreground">
                         <Printer size={18} />
                         <span className="text-[8px] font-black uppercase tracking-widest">Print</span>
                     </button>
-                    <button className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors text-foreground/60 hover:text-foreground">
+                    <button className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-foreground/5 hover:bg-foreground/10 transition-colors text-foreground/60 hover:text-foreground">
                         <Share2 size={18} />
                         <span className="text-[8px] font-black uppercase tracking-widest">Share</span>
                     </button>

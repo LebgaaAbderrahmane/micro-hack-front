@@ -9,39 +9,32 @@ import {
     Settings,
     Search
 } from "lucide-react";
-import { useAuthStore, Role } from "@/stores/useAuthStore";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { Logo } from "../common/Logo";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/routing";
 import { motion } from "framer-motion";
-
-// Assuming 'cn' is a utility function for conditional class names,
-// similar to 'clsx' or 'classnames'. It's not defined in the provided snippet,
-// but is used in the instruction's code. For this task, we'll assume it's available.
-// If not, it would need to be imported or defined.
-const cn = (...classes: string[]) => classes.filter(Boolean).join(' ');
-
-
-
-
-const navItems = [
-    { label: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "terminal_op", "carrier"] },
-    { label: "Bookings", href: "/bookings", icon: Calendar, roles: ["terminal_op", "carrier"] },
-    { label: "Fleet", href: "/fleet", icon: Truck, roles: ["carrier", "terminal_op"] },
-    { label: "Users", href: "/users", icon: Users, roles: ["admin"] },
-];
+import { useTranslations } from "next-intl";
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
 export const Navbar = () => {
-    const { user } = useAuthStore();
+    const { profile: user } = useAuth();
     const pathname = usePathname();
+    const t = useTranslations('Dashboard');
+
+    const navItems = [
+        { label: t('overview'), href: "/", icon: LayoutDashboard, roles: ["ADMIN", "OPERATOR", "DISPATCHER"] },
+        { label: t('bookings'), href: "/bookings", icon: Calendar, roles: ["OPERATOR", "DISPATCHER"] },
+        { label: t('fleet'), href: "/fleet", icon: Truck, roles: ["DISPATCHER", "OPERATOR"] },
+        { label: t('users'), href: "/users", icon: Users, roles: ["ADMIN"] },
+    ];
 
     const filteredItems = navItems.filter(item =>
-        user ? item.roles.includes(user.role as Role) : false
+        user ? item.roles.includes(user.role) : false
     );
 
     return (
-        <nav className="h-20 glass fixed top-0 left-0 right-0 z-50 px-8 border-b border-white/5 flex items-center justify-between">
+        <nav className="h-20 glass fixed top-0 left-0 right-0 z-50 px-8 border-b border-foreground/5 flex items-center justify-between">
             <div className="flex items-center gap-12">
                 <Link href="/">
                     <Logo />
@@ -82,7 +75,7 @@ export const Navbar = () => {
                     <Search size={18} className="text-foreground/20 group-hover:text-primary transition-colors" />
                     <input
                         type="text"
-                        placeholder="Search system..."
+                        placeholder={t("searchPlaceholder")}
                         className="bg-transparent border-none outline-none text-sm placeholder:text-foreground/20 w-40 text-foreground"
                     />
                 </div>
@@ -96,8 +89,8 @@ export const Navbar = () => {
                 <div className="w-px h-6 bg-foreground/10 mx-2"></div>
 
                 <Link href="/profile" className="relative group">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 border border-foreground/10 flex items-center justify-center text-white font-black text-sm shadow-xl shadow-primary/10 group-hover:scale-105 transition-all group-active:scale-95">
-                        {user?.firstName?.[0]}
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 border border-foreground/10 flex items-center justify-center text-primary-foreground font-black text-sm shadow-xl shadow-primary/10 group-hover:scale-105 transition-all group-active:scale-95">
+                        {user?.username?.[0]?.toUpperCase()}
                     </div>
                 </Link>
             </div>

@@ -16,7 +16,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuth } from "@/hooks/useAuth";
 import { Activity } from "lucide-react";
 
 const TerminalNode = ({ data }: { data: any }) => {
@@ -246,7 +246,7 @@ const initialEdges: Edge[] = [
 import { X, Layers, Box, Calendar as CalendarIcon, MapPin } from "lucide-react";
 
 export const TerminalVisualization = () => {
-    const { user } = useAuthStore();
+    const { profile: user } = useAuth();
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [selectedTerminal, setSelectedTerminal] = React.useState<any>(null);
@@ -254,11 +254,11 @@ export const TerminalVisualization = () => {
     React.useEffect(() => {
         if (!user) return;
 
-        if (user.role === 'terminal_op') {
-            const targetTerminalId = user.terminalId || "T-001";
+        if (user.role === 'OPERATOR') {
+            const targetTerminalId = (user as any).terminalId || "T-001";
             const relevantNodes = initialNodes.filter(n =>
                 n.type === 'gate' ||
-                n.data.terminalId === targetTerminalId
+                (n.data as any).terminalId === targetTerminalId
             );
             const nodeIds = new Set(relevantNodes.map(n => n.id));
             const relevantEdges = initialEdges.filter(e =>
@@ -266,7 +266,7 @@ export const TerminalVisualization = () => {
             );
             setNodes(relevantNodes);
             setEdges(relevantEdges);
-        } else if (user.role === 'admin') {
+        } else if (user.role === 'ADMIN') {
             setNodes(initialNodes);
             setEdges(initialEdges);
         }
@@ -278,7 +278,7 @@ export const TerminalVisualization = () => {
         }
     };
 
-    if (user?.role === 'carrier') return null;
+    if (user?.role === 'DISPATCHER') return null;
 
     return (
         <div className="h-[750px] w-full glass-card border-none overflow-hidden relative group bg-background/50 dark:bg-foreground/5 transition-colors duration-500">

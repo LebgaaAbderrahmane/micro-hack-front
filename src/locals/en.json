@@ -1,0 +1,112 @@
+{
+  "Common": {
+    "welcome": "Welcome",
+    "login": "Login",
+    "logout": "Logout",
+    "settings": "Settings",
+    "profile": "Profile"
+  },
+  "Auth": {
+    "loginTitle": "Login to PortFlow",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign In"
+  },
+  "Dashboard": {
+    "overview": "Overview",
+    "fleet": "Fleet",
+    "bookings": "Bookings",
+    "terminals": "Terminals",
+    "users": "Users",
+    "accessRestricted": "Access Restricted",
+    "pleaseLogin": "Please log in to access the Intelligent Logistics Access Control System.",
+    "goToLogin": "Go to Login",
+    "liveTerminalMatrix": "Live Terminal Matrix",
+    "geospatialOrchestration": "Real-time geospatial node orchestration",
+    "activeNodes": "{count} Active Nodes",
+    "searchPlaceholder": "Search system...",
+    "vesselThroughput": "Vessel Throughput",
+    "gateEfficiency": "Gate Efficiency"
+  },
+  "Settings": {
+    "title": "System Settings",
+    "accountIntegrity": "Account Integrity",
+    "primaryEmail": "Primary Email",
+    "recoveryPhone": "Recovery Phone",
+    "systemShield": "System Shield",
+    "securityKeys": "Security Keys",
+    "mfa": "Multi-Factor Auth",
+    "activityLogs": "Activity Logs",
+    "preferenceHub": "Preference Hub",
+    "nodeNotifications": "Node Notifications",
+    "neuralInterface": "Neural Interface (Dark)",
+    "standardInterface": "Standard Interface (Light)",
+    "telemetryRegion": "Telemetry Region",
+    "dangerZone": "Danger Zone",
+    "resetTerminal": "Reset Terminal Matrix",
+    "terminateSession": "Terminate Session",
+    "editProfile": "Edit Profile",
+    "mfaEnabled": "MFA Enabled",
+    "mfaDisabled": "MFA Disabled",
+    "notifyUpdated": "Notify settings updated",
+    "switchedTo": "Switched to {mode} mode"
+  },
+  "Users": {
+    "title": "Access Control",
+    "subtitle": "Orchestrate system permissions and audit logs",
+    "addUser": "Add Operator",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "create": "Create Operator Account",
+    "noUsers": "No users found in organization.",
+    "identity": "User Identity",
+    "accessLevel": "Access Level",
+    "org": "Associated Org",
+    "actions": "Actions",
+    "independent": "Independent",
+    "success": "Success",
+    "added": "Operator added successfully",
+    "error": "Error"
+  },
+  "Theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "toggle": "Toggle Theme",
+      "switchLocale": "Switch to {language}"
+  },
+  "AI": {
+    "welcome": "Hello! I'm your ILACS AI assistant. How can I help you manage your terminal access or fleet today?",
+    "placeholder": "Ask the assistant...",
+    "title": "ILACS Assistant",
+    "online": "AI Online",
+    "promptCapacity": "Capacity North?",
+    "promptMaintenance": "Truck Maintenance",
+    "promptNextSlot": "Next Slot?",
+    "queryCapacity": "Check capacity North",
+    "queryMaintenance": "Maintenance schedule",
+    "queryNextSlot": "Next available slot"
+  },
+  "Login": {
+    "title": "Access Gateway",
+    "subtitle": "Secure node entry & identity verification",
+    "admin": "Port Admin",
+    "adminDesc": "System-level node orchestration",
+    "operator": "Terminal Op",
+    "operatorDesc": "Yard & berth management",
+    "carrier": "Carrier Portal",
+    "carrierDesc": "Fleet sync & slot reservation",
+    "footer": "Protected by ILACS Quantum Encryption Node A-14"
+  },
+  "Sidebar": {
+    "dashboard": "Dashboard",
+    "bookings": "Bookings",
+    "fleet": "Fleet Status",
+    "terminals": "Terminal Yards",
+    "users": "User Identity",
+    "profile": "My Profile",
+    "settings": "System Settings",
+    "logout": "Logout"
+  }
+}

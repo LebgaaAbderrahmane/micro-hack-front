@@ -13,15 +13,15 @@ const TerminalYard = () => {
     ];
 
     return (
-        <div className="w-full h-full min-h-[400px] bg-neutral-900 rounded-2xl p-8 relative overflow-hidden border border-white/10 shadow-inner">
+        <div className="w-full h-full min-h-[400px] bg-neutral-900 rounded-2xl p-8 relative overflow-hidden border border-foreground/10 shadow-inner">
             {/* Yard Lines */}
             <div className="absolute inset-0 flex flex-col justify-between py-12 px-20">
                 {lanes.map((lane) => (
-                    <div key={lane} className="h-20 border-y border-dashed border-white/10 flex items-center relative">
+                    <div key={lane} className="h-20 border-y border-dashed border-foreground/10 flex items-center relative">
                         <span className="absolute -left-12 text-[10px] font-bold text-foreground/20 uppercase tracking-widest">
                             Lane 0{lane}
                         </span>
-                        <div className="w-full h-[1px] bg-white/5"></div>
+                        <div className="w-full h-[1px] bg-foreground/5"></div>
                         {/* Gate Area */}
                         <div className="absolute right-0 top-0 bottom-0 w-32 bg-primary/5 border-l border-primary/20 flex items-center justify-center">
                             <span className="text-[8px] font-bold text-primary/40 rotate-90 uppercase tracking-[0.2em]">Gate 0{lane}</span>

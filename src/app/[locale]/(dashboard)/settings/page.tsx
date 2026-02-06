@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/common/Toast";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "@/i18n/routing";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
@@ -26,7 +26,7 @@ import { useTranslations } from "next-intl";
 const SettingSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div className="space-y-4">
         <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30 px-2">{title}</h3>
-        <div className="glass-card border border-white/5 overflow-hidden divide-y divide-white/5 bg-gray-950/20">
+        <div className="glass-card border border-foreground/5 overflow-hidden divide-y divide-foreground/5 bg-foreground/[0.02]">
             {children}
         </div>
     </div>
@@ -53,15 +53,15 @@ const SettingItem = ({ icon: Icon, title, description, badge, onClick, danger, v
     return (
         <div
             className={cn(
-                "flex items-center justify-between p-5 transition-all group hover:bg-white/[0.02]",
+                "flex items-center justify-between p-5 transition-all group hover:bg-foreground/[0.02]",
                 onClick && "cursor-pointer"
             )}
             onClick={onClick ? handleClick : undefined}
         >
             <div className="flex items-center gap-5">
                 <div className={cn(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-all border border-white/5",
-                    danger ? "bg-error/10 text-error group-hover:bg-error/20" : "bg-white/5 text-foreground/40 group-hover:text-primary group-hover:bg-primary/10"
+                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-all border border-foreground/5",
+                    danger ? "bg-error/10 text-error group-hover:bg-error/20" : "bg-foreground/5 text-white/40 group-hover:text-primary group-hover:bg-primary/10"
                 )}>
                     <Icon size={20} />
                 </div>
@@ -81,11 +81,11 @@ const SettingItem = ({ icon: Icon, title, description, badge, onClick, danger, v
                         onClick={(e) => { e.stopPropagation(); handleClick(); }}
                         className={cn(
                             "w-12 h-6 rounded-full p-1 transition-all duration-300 relative",
-                            value ? "bg-primary" : "bg-white/10"
+                            value ? "bg-primary" : "bg-foreground/10"
                         )}
                     >
                         <div className={cn(
-                            "w-4 h-4 bg-white rounded-full shadow-lg transition-all duration-300",
+                            "w-4 h-4 bg-background rounded-full shadow-lg transition-all duration-300",
                             value ? "translate-x-6" : "translate-x-0"
                         )} />
                     </button>
@@ -102,7 +102,7 @@ export default function SettingsPage() {
     const [mfa, setMfa] = useState(true);
     const [notifications, setNotifications] = useState(true);
     const { theme, setTheme, resolvedTheme } = useTheme();
-    const { logout } = useAuthStore();
+    const { signOut: logout, profile } = useAuth();
     const router = useRouter();
     const t = useTranslations('Common');
 
@@ -117,16 +117,16 @@ export default function SettingsPage() {
     return (
         <div className="max-w-4xl mx-auto space-y-12 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
-            <div className="flex items-center justify-between bg-gray-950/40 p-10 rounded-[3rem] border border-white/5 relative overflow-hidden backdrop-blur-3xl">
+            <div className="flex items-center justify-between bg-foreground/5 p-10 rounded-[3rem] border border-foreground/5 relative overflow-hidden backdrop-blur-3xl">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
                 <div className="flex items-center gap-8 relative z-10">
                     <div className="relative group">
                         <div className="w-24 h-24 rounded-[2rem] bg-gradient-to-br from-primary to-accent p-1 shadow-2xl transition-transform group-hover:scale-105">
-                            <div className="w-full h-full rounded-[1.8rem] bg-gray-950 flex items-center justify-center overflow-hidden">
+                            <div className="w-full h-full rounded-[1.8rem] bg-background flex items-center justify-center overflow-hidden">
                                 <User size={40} className="text-foreground/80" />
                             </div>
                         </div>
-                        <button className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center border-4 border-gray-950 shadow-xl hover:scale-110 transition-all">
+                        <button className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center border-4 border-background shadow-xl hover:scale-110 transition-all">
                             <CheckCircle2 size={16} />
                         </button>
                     </div>
@@ -140,7 +140,7 @@ export default function SettingsPage() {
                 </div>
                 <button
                     onClick={() => show("Updating profile profile...", "success")}
-                    className="px-8 py-3 bg-white text-black rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-xl relative z-10"
+                    className="px-8 py-3 bg-foreground text-background rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-xl relative z-10"
                 >
                     Edit Profile
                 </button>
@@ -212,7 +212,7 @@ export default function SettingsPage() {
                     />
                 </SettingSection>
 
-                <div className="pt-8 border-t border-white/5 mx-2">
+                <div className="pt-8 border-t border-foreground/5 mx-2">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-error mb-4">Danger Zone</h3>
                     <div className="glass-card border border-error/20 bg-error/5 rounded-[2rem]">
                         <SettingItem
@@ -236,9 +236,9 @@ export default function SettingsPage() {
             {/* Footer Links */}
             <div className="flex justify-center gap-10 pt-10">
                 <button onClick={() => show("Displaying Terms of Service...", "info")} className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30 hover:text-primary transition-colors">Terms of Service</button>
-                <div className="w-1.5 h-1.5 rounded-full bg-white/5 mt-1.5"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-foreground/5 mt-1.5"></div>
                 <button onClick={() => show("Displaying Privacy Policy...", "info")} className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30 hover:text-primary transition-colors">Privacy Policy</button>
-                <div className="w-1.5 h-1.5 rounded-full bg-white/5 mt-1.5"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-foreground/5 mt-1.5"></div>
                 <button onClick={() => show("Opening Support Portal...", "info")} className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30 hover:text-primary transition-colors">Support</button>
             </div>
         </div>

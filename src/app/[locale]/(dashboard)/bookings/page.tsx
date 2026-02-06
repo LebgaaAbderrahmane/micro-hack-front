@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { QRCodeDisplay } from "@/components/booking/QRCodeDisplay";
 
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/common/Toast";
 
 const carrierBookings = [
@@ -33,11 +33,11 @@ const queueBookings = [
 ];
 
 export default function BookingsPage() {
-    const { user } = useAuthStore();
+    const { profile: user } = useAuth();
     const [selectedBooking, setSelectedBooking] = useState<{ id: string; terminal: string; date: string; time: string; truck: string; status: string; color: string } | null>(null);
     const { show } = useToast();
 
-    const isCarrier = user?.role === "carrier";
+    const isCarrier = user?.role === "DISPATCHER";
     const displayBookings = isCarrier ? carrierBookings : queueBookings;
 
     return (
@@ -67,18 +67,18 @@ export default function BookingsPage() {
             <div className="grid lg:grid-cols-3 gap-8 items-start">
                 {/* Bookings List */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="glass-card p-4 border border-white/5 flex flex-wrap gap-4 items-center">
+                    <div className="glass-card p-4 border border-foreground/5 flex flex-wrap gap-4 items-center">
                         <div className="flex-1 relative min-w-[200px]">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" size={16} />
                             <input
                                 type="text"
                                 placeholder="Search by ID, truck or terminal..."
-                                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                             />
                         </div>
                         <button
                             onClick={() => show("Advanced filters for bookings coming soon", "info")}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 transition-colors text-sm font-medium"
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-foreground/10 hover:bg-foreground/5 transition-colors text-sm font-medium"
                         >
                             <Filter size={16} className="text-primary" />
                             Filter
@@ -92,10 +92,10 @@ export default function BookingsPage() {
                                 onClick={() => setSelectedBooking(booking)}
                                 className={cn(
                                     "p-5 rounded-2xl glass-card border flex items-center gap-6 cursor-pointer group transition-all duration-300",
-                                    selectedBooking?.id === booking.id ? "border-primary bg-primary/5 shadow-primary/10" : "border-white/5 hover:border-white/20"
+                                    selectedBooking?.id === booking.id ? "border-primary bg-primary/5 shadow-primary/10" : "border-foreground/5 hover:border-white/20"
                                 )}
                             >
-                                <div className="w-14 h-14 rounded-2xl bg-white/5 flex flex-col items-center justify-center border border-white/10 group-hover:scale-105 transition-transform">
+                                <div className="w-14 h-14 rounded-2xl bg-foreground/5 flex flex-col items-center justify-center border border-foreground/10 group-hover:scale-105 transition-transform">
                                     <span className="text-[10px] font-black uppercase text-foreground/30 leading-none mb-1">
                                         {booking.date.includes(' ') ? booking.date.split(' ')[0] : 'NOW'}
                                     </span>
@@ -126,12 +126,12 @@ export default function BookingsPage() {
 
                                     <div className="flex items-center md:justify-end gap-3">
                                         <span
-                                            className="text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest bg-white/5"
+                                            className="text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest bg-foreground/5"
                                             style={{ color: booking.color, border: `1px solid ${booking.color}30` }}
                                         >
                                             {booking.status}
                                         </span>
-                                        <button className="p-2 rounded-lg hover:bg-white/10 text-foreground/40 hover:text-foreground transition-colors">
+                                        <button className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-colors">
                                             <MoreVertical size={16} />
                                         </button>
                                     </div>
@@ -158,8 +158,8 @@ export default function BookingsPage() {
                                 terminalName={selectedBooking.terminal}
                             />
 
-                            <div className="glass-card p-6 border border-white/5 space-y-6">
-                                <h3 className="font-bold border-b border-white/5 pb-4">Booking Details</h3>
+                            <div className="glass-card p-6 border border-foreground/5 space-y-6">
+                                <h3 className="font-bold border-b border-foreground/5 pb-4">Booking Details</h3>
                                 <div className="grid grid-cols-2 gap-y-4">
                                     <div className="space-y-1">
                                         <span className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest block">Cargo Type</span>
@@ -182,7 +182,7 @@ export default function BookingsPage() {
                                 <div className="flex gap-2 pt-2">
                                     <button
                                         onClick={() => show("Reschedule request sent to operator", "success")}
-                                        className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold transition-colors"
+                                        className="flex-1 py-2.5 bg-foreground/5 hover:bg-foreground/10 rounded-xl text-xs font-bold transition-colors"
                                     >
                                         Modify Slot
                                     </button>
@@ -196,8 +196,8 @@ export default function BookingsPage() {
                             </div>
                         </div>
                     ) : (
-                        <div className="glass-card p-12 border border-white/5 flex flex-col items-center text-center space-y-4 opacity-50 border-dashed">
-                            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-foreground/20">
+                        <div className="glass-card p-12 border border-foreground/5 flex flex-col items-center text-center space-y-4 opacity-50 border-dashed">
+                            <div className="w-16 h-16 rounded-full bg-foreground/5 flex items-center justify-center text-foreground/20">
                                 <Eye size={32} />
                             </div>
                             <p className="text-sm font-medium text-foreground/40">Select a booking to view its QR permit and details.</p>

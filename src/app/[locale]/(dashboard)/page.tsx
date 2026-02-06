@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 import { AdminDashboard, TerminalOpDashboard, CarrierDashboard } from "@/components/dashboard/RoleDashboards";
 import { TerminalVisualization } from "@/components/dashboard/TerminalVisualization";
 import { useToast } from "@/components/common/Toast";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/routing";
 
 interface StatCardProps {
   title: string;
@@ -31,7 +33,7 @@ interface StatCardProps {
 }
 
 const StatCard = ({ title, value, change, icon: Icon, trend }: StatCardProps) => (
-  <div className="glass-card p-6 border border-white/5 relative overflow-hidden group hover:border-primary/50 transition-all duration-500">
+  <div className="glass-card p-6 border border-foreground/5 relative overflow-hidden group hover:border-primary/50 transition-all duration-500">
     <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors"></div>
     <div className="flex items-center justify-between mb-4 relative z-10">
       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
@@ -41,7 +43,7 @@ const StatCard = ({ title, value, change, icon: Icon, trend }: StatCardProps) =>
         "text-xs font-bold px-2 py-1 rounded-lg",
         trend === "up" ? "text-primary bg-primary/10" :
           trend === "down" ? "text-error bg-error/10" :
-            "text-foreground/40 bg-white/5"
+            "text-foreground/40 bg-foreground/5"
       )}>
         {change}
       </span>
@@ -79,6 +81,8 @@ const chartData = [
 export default function Home() {
   const { profile, isLoading } = useAuth();
   const { show } = useToast();
+  const t = useTranslations('Dashboard');
+  const router = useRouter();
 
   if (isLoading) {
     return (
@@ -97,16 +101,16 @@ export default function Home() {
           </svg>
         </div>
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight">Access Restricted</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">{t('accessRestricted')}</h1>
           <p className="text-foreground/50 max-w-sm">
-            Please log in to access the Intelligent Logistics Access Control System.
+            {t('pleaseLogin')}
           </p>
         </div>
         <button
-          onClick={() => window.location.href = "/login"}
-          className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
+          onClick={() => router.push("/login")}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
         >
-          Go to Login
+          {t('goToLogin')}
         </button>
       </div>
     );
@@ -137,15 +141,15 @@ export default function Home() {
               <div>
                 <h3 className="text-2xl font-black uppercase tracking-[0.2em] text-foreground flex items-center gap-4">
                   <Activity className="text-primary" size={28} />
-                  Live Terminal Matrix
+                  {t('liveTerminalMatrix')}
                 </h3>
-                <p className="text-xs text-foreground/40 font-bold uppercase tracking-widest mt-2 ml-10">Real-time geospatial node orchestration</p>
+                <p className="text-xs text-foreground/40 font-bold uppercase tracking-widest mt-2 ml-10">{t('geospatialOrchestration')}</p>
               </div>
               <div className="flex gap-3">
                 <div className="px-4 py-2 bg-primary/10 rounded-2xl border border-primary/20 flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-primary animate-ping" />
                   <span className="text-[10px] font-black text-primary uppercase tracking-widest">
-                    7 Active Nodes
+                    {t('activeNodes', { count: 7 })}
                   </span>
                 </div>
                 <div className="px-4 py-2 bg-foreground/5 rounded-2xl border border-foreground/5 flex items-center gap-3">
@@ -166,8 +170,8 @@ export default function Home() {
         <div className="lg:col-span-2 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              { label: "Vessel Throughput", value: "842 TEU/h", trend: "+12.5%", color: "text-primary", data: [30, 45, 35, 60, 55, 75, 80] },
-              { label: "Gate Efficiency", value: "98.2%", trend: "+2.1%", color: "text-success", data: [85, 88, 92, 90, 95, 97, 98] },
+              { label: t('vesselThroughput'), value: "842 TEU/h", trend: "+12.5%", color: "text-primary", data: [30, 45, 35, 60, 55, 75, 80] },
+              { label: t('gateEfficiency'), value: "98.2%", trend: "+2.1%", color: "text-success", data: [85, 88, 92, 90, 95, 97, 98] },
             ].map((stat, idx) => (
               <div key={idx} className="glass-card p-8 border border-foreground/10 relative overflow-hidden group bg-background/50 hover:bg-background/80 transition-all duration-500">
                 <div className="relative z-10">

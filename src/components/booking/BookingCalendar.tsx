@@ -18,7 +18,7 @@ export const BookingCalendar = ({ onDateSelect, selectedDate }: BookingCalendarP
   };
 
   return (
-    <div className="glass-card p-6 border border-white/5 inline-block">
+    <div className="glass-card p-6 border border-foreground/5 inline-block">
       <style>{`
         .rdp {
           --rdp-cell-size: 40px;
@@ -61,7 +61,7 @@ export const BookingCalendar = ({ onDateSelect, selectedDate }: BookingCalendarP
         className="font-sans"
       />
       {selectedDate && (
-        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+        <div className="mt-4 pt-4 border-t border-foreground/5 flex items-center justify-between">
           <span className="text-xs text-foreground/40 font-medium uppercase tracking-wider">Selected Date</span>
           <span className="text-sm font-bold text-primary">{format(selectedDate, "PPP")}</span>
         </div>

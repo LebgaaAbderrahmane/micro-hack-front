@@ -52,7 +52,7 @@ export const NotificationDropdown = () => {
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
                     "relative p-2 rounded-xl transition-all",
-                    isOpen ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-white/5"
+                    isOpen ? "bg-primary/10 text-primary" : "text-primary-foreground/70 hover:bg-foreground/5"
                 )}
             >
                 <Bell size={20} />
@@ -71,20 +71,20 @@ export const NotificationDropdown = () => {
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute right-0 mt-3 w-80 sm:w-96 glass-card border border-white/10 shadow-2xl overflow-hidden z-[60]"
+                            className="absolute right-0 mt-3 w-80 sm:w-96 glass-card border border-foreground/10 shadow-2xl overflow-hidden z-[60]"
                         >
-                            <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                            <div className="p-4 border-b border-foreground/5 flex items-center justify-between">
                                 <h3 className="font-bold text-sm uppercase tracking-widest text-foreground/40">Notifications</h3>
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={markAllRead}
-                                        className="p-1.5 hover:bg-white/5 rounded-lg text-primary transition-colors flex items-center gap-1.5"
+                                        className="p-1.5 hover:bg-foreground/5 rounded-lg text-primary transition-colors flex items-center gap-1.5"
                                         title="Mark all as read"
                                     >
                                         <CheckCheck size={14} />
                                         <span className="text-[10px] font-bold uppercase">All Read</span>
                                     </button>
-                                    <button className="p-1.5 hover:bg-white/5 rounded-lg text-foreground/40 transition-colors">
+                                    <button className="p-1.5 hover:bg-foreground/5 rounded-lg text-foreground/40 transition-colors">
                                         <Settings size={14} />
                                     </button>
                                 </div>
@@ -96,12 +96,12 @@ export const NotificationDropdown = () => {
                                         <div
                                             key={n.id}
                                             className={cn(
-                                                "px-4 py-4 hover:bg-white/[0.02] transition-colors border-l-2 mb-1 cursor-pointer",
+                                                "px-4 py-4 hover:bg-foreground/[0.02] transition-colors border-l-2 mb-1 cursor-pointer",
                                                 n.read ? "border-transparent opacity-60" : "border-primary bg-primary/[0.03]"
                                             )}
                                         >
                                             <div className="flex gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+                                                <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center shrink-0 border border-foreground/5">
                                                     {getIcon(n.type)}
                                                 </div>
                                                 <div className="flex-1 space-y-1">
@@ -127,7 +127,7 @@ export const NotificationDropdown = () => {
                                 )}
                             </div>
 
-                            <div className="p-3 border-t border-white/5 text-center bg-white/[0.01]">
+                            <div className="p-3 border-t border-foreground/5 text-center bg-foreground/[0.01]">
                                 <button className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline transition-all">
                                     View All Notifications
                                 </button>

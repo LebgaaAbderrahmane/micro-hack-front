@@ -50,15 +50,15 @@ export const TruckModal = ({ isOpen, onClose, truck }: TruckModalProps) => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}></div>
 
-            <div className="glass-card w-full max-w-lg border border-white/10 relative z-10 animate-in fade-in zoom-in duration-300">
-                <div className="flex items-center justify-between p-6 border-b border-white/5">
+            <div className="glass-card w-full max-w-lg border border-foreground/10 relative z-10 animate-in fade-in zoom-in duration-300">
+                <div className="flex items-center justify-between p-6 border-b border-foreground/5">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                             <TruckIcon size={20} />
                         </div>
                         <h3 className="font-bold text-lg">{truck ? "Edit Vehicle" : "Add New Vehicle"}</h3>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-foreground/5 rounded-lg transition-colors">
                         <X size={20} className="text-foreground/40" />
                     </button>
                 </div>
@@ -70,7 +70,7 @@ export const TruckModal = ({ isOpen, onClose, truck }: TruckModalProps) => {
                             <input
                                 {...register("licensePlate")}
                                 className={cn(
-                                    "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
+                                    "w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
                                     errors.licensePlate && "border-error/50 ring-error/20"
                                 )}
                                 placeholder="TX-000-XX"
@@ -81,7 +81,7 @@ export const TruckModal = ({ isOpen, onClose, truck }: TruckModalProps) => {
                             <input
                                 {...register("model")}
                                 className={cn(
-                                    "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
+                                    "w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
                                     errors.model && "border-error/50 ring-error/20"
                                 )}
                                 placeholder="Volvo FH16"
@@ -96,7 +96,7 @@ export const TruckModal = ({ isOpen, onClose, truck }: TruckModalProps) => {
                                 type="number"
                                 {...register("year", { valueAsNumber: true })}
                                 className={cn(
-                                    "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
+                                    "w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all",
                                     errors.year && "border-error/50 ring-error/20"
                                 )}
                             />
@@ -105,7 +105,7 @@ export const TruckModal = ({ isOpen, onClose, truck }: TruckModalProps) => {
                             <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest ml-1">Initial Status</label>
                             <select
                                 {...register("status")}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none"
+                                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none"
                             >
                                 <option value="active">Active</option>
                                 <option value="idle">Idle</option>
@@ -119,7 +119,7 @@ export const TruckModal = ({ isOpen, onClose, truck }: TruckModalProps) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold transition-all"
+                            className="flex-1 py-3 bg-foreground/5 hover:bg-foreground/10 rounded-xl font-bold transition-all"
                         >
                             Cancel
                         </button>

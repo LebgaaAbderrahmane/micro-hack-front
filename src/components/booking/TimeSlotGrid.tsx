@@ -34,7 +34,7 @@ export const TimeSlotGrid = ({ slots, onSlotSelect, selectedSlotId }: TimeSlotGr
                             "p-4 rounded-2xl border transition-all duration-200 text-left relative overflow-hidden group",
                             isSelected
                                 ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                                : "bg-white/5 border-white/10 hover:border-primary/50 text-foreground",
+                                : "bg-foreground/5 border-foreground/10 hover:border-primary/50 text-foreground",
                             isFull && "opacity-40 cursor-not-allowed grayscale"
                         )}
                     >
@@ -58,7 +58,7 @@ export const TimeSlotGrid = ({ slots, onSlotSelect, selectedSlotId }: TimeSlotGr
                                     {slot.available}/{slot.total}
                                 </span>
                             </div>
-                            <div className={cn("w-full h-1 rounded-full", isSelected ? "bg-white/20" : "bg-white/5")}>
+                            <div className={cn("w-full h-1 rounded-full", isSelected ? "bg-white/20" : "bg-foreground/5")}>
                                 <div
                                     className={cn(
                                         "h-full rounded-full transition-all duration-500",

@@ -36,10 +36,10 @@ const TerminalCard = ({ terminal }: { terminal: Terminal }) => {
     };
 
     return (
-        <div className="glass-card p-6 border border-white/5 hover:border-white/10 transition-all group relative overflow-hidden">
+        <div className="glass-card p-6 border border-foreground/5 hover:border-foreground/10 transition-all group relative overflow-hidden">
             <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-2xl bg-foreground/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                         <ShieldCheck size={24} />
                     </div>
                     <div>
@@ -61,7 +61,7 @@ const TerminalCard = ({ terminal }: { terminal: Terminal }) => {
                         <span className="text-foreground/40 font-medium">Utilization</span>
                         <span className="font-bold">{terminal.utilization}%</span>
                     </div>
-                    <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-foreground/5 rounded-full overflow-hidden">
                         <div
                             className={cn(
                                 "h-full rounded-full transition-all duration-500",
@@ -72,7 +72,7 @@ const TerminalCard = ({ terminal }: { terminal: Terminal }) => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-foreground/5">
                     <div>
                         <span className="text-[10px] text-foreground/30 font-bold uppercase block">Capacity</span>
                         <span className="text-sm font-bold">{terminal.capacity} Slot/hr</span>
@@ -87,13 +87,13 @@ const TerminalCard = ({ terminal }: { terminal: Terminal }) => {
             <div className="mt-6 flex gap-2">
                 <button
                     onClick={() => show(`Opening configuration for ${terminal.name}`, "info")}
-                    className="flex-1 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold transition-colors"
+                    className="flex-1 py-2 rounded-xl bg-foreground/5 hover:bg-foreground/10 text-xs font-bold transition-colors"
                 >
                     Edit Settings
                 </button>
                 <button
                     onClick={() => show("More options coming soon", "info")}
-                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-foreground/40 hover:text-foreground transition-colors"
+                    className="p-2 rounded-xl bg-foreground/5 hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-colors"
                 >
                     <MoreHorizontal size={18} />
                 </button>
@@ -139,7 +139,7 @@ export default function TerminalsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="glass-card p-6 border border-white/5 flex flex-col justify-between overflow-hidden relative group">
+                <div className="glass-card p-6 border border-foreground/5 flex flex-col justify-between overflow-hidden relative group">
                     <div className="flex justify-between items-start">
                         <div className="bg-primary/10 p-3 rounded-2xl text-primary">
                             <Activity size={24} />
@@ -153,7 +153,7 @@ export default function TerminalsPage() {
                     <BarChart2 className="absolute bottom-[-10px] right-[-10px] w-24 h-24 text-primary/5 -rotate-12 group-hover:text-primary/10 transition-colors" />
                 </div>
 
-                <div className="glass-card p-6 border border-white/5 flex flex-col justify-between overflow-hidden relative group">
+                <div className="glass-card p-6 border border-foreground/5 flex flex-col justify-between overflow-hidden relative group">
                     <div className="flex justify-between items-start">
                         <div className="bg-accent/10 p-3 rounded-2xl text-accent">
                             <AlertTriangle size={24} />
@@ -167,7 +167,7 @@ export default function TerminalsPage() {
                     <AlertTriangle className="absolute bottom-[-10px] right-[-10px] w-24 h-24 text-accent/5 -rotate-12 group-hover:text-accent/10 transition-colors" />
                 </div>
 
-                <div className="glass-card p-6 border border-white/5 flex flex-col justify-between overflow-hidden relative group">
+                <div className="glass-card p-6 border border-foreground/5 flex flex-col justify-between overflow-hidden relative group">
                     <div className="flex justify-between items-start">
                         <div className="bg-primary/10 p-3 rounded-2xl text-primary">
                             <CheckCircle2 size={24} />
@@ -181,9 +181,9 @@ export default function TerminalsPage() {
                     <CheckCircle2 className="absolute bottom-[-10px] right-[-10px] w-24 h-24 text-primary/5 -rotate-12 group-hover:text-primary/10 transition-colors" />
                 </div>
 
-                <div className="glass-card p-6 border border-white/5 flex flex-col justify-between overflow-hidden relative group">
+                <div className="glass-card p-6 border border-foreground/5 flex flex-col justify-between overflow-hidden relative group">
                     <div className="flex justify-between items-start">
-                        <div className="bg-white/5 p-3 rounded-2xl text-foreground">
+                        <div className="bg-foreground/5 p-3 rounded-2xl text-foreground">
                             <Users size={24} />
                         </div>
                         <span className="text-xs font-bold text-foreground/40">12 Pending</span>
@@ -196,18 +196,18 @@ export default function TerminalsPage() {
                 </div>
             </div>
 
-            <div className="flex items-center gap-4 py-2 border-b border-white/5">
+            <div className="flex items-center gap-4 py-2 border-b border-foreground/5">
                 <div className="relative flex-1">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/30" size={18} />
                     <input
                         type="text"
                         placeholder="Search terminals by name, location or ID..."
-                        className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-primary/50 transition-colors placeholder:text-foreground/20"
+                        className="w-full bg-foreground/5 border border-foreground/5 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-primary/50 transition-colors placeholder:text-foreground/20"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <button className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors text-sm font-bold">
+                <button className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-foreground/5 border border-foreground/5 hover:bg-foreground/10 transition-colors text-sm font-bold">
                     <Settings size={18} />
                     Filters
                 </button>
@@ -221,7 +221,7 @@ export default function TerminalsPage() {
 
             {filteredTerminals.length === 0 && (
                 <div className="py-20 flex flex-col items-center text-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-foreground/20">
+                    <div className="w-16 h-16 rounded-full bg-foreground/5 flex items-center justify-center text-foreground/20">
                         <Search size={32} />
                     </div>
                     <div>
