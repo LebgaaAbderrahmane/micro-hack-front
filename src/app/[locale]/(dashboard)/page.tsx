@@ -112,7 +112,7 @@ export default function Home() {
 
         {/* Filters */}
         <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground/5 hover:bg-foreground/10 transition-colors text-sm text-foreground/70">
+        <button className="flex items-center gap-2 px-4 y-2 rounded-lg bg-foreground/5 hover:bg-foreground/10 transition-colors text-sm text-foreground/70">
             <Calendar size={16} />
             <span>Today</span>
             <ChevronDown size={14} />
