@@ -10,14 +10,50 @@ export async function login(formData: FormData) {
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const requiredRole = formData.get("requiredRole") as string;
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  const getRedirectPath = (role: string) => {
+    switch (role) {
+      case "ADMIN":
+        return "/login/admin";
+      case "OPERATOR":
+        return "/login/operator";
+      case "DISPATCHER":
+        return "/login/carrier";
+      default:
+        return "/login";
+    }
+  };
 
-  if (error) {
-    redirect("/login?error=Could not authenticate user");
+  const redirectPath = getRedirectPath(requiredRole);
+
+  const { data: authData, error: authError } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+  if (authError || !authData.user) {
+    redirect(`${redirectPath}?error=Invalid credentials`);
+  }
+
+  // Verify Role and Organization
+  const { data: profile, error: profileError } = await supabase
+    .from("users")
+    .select("*, organisation:organisations(*)")
+    .eq("id", authData.user.id)
+    .single();
+
+  if (profileError || !profile) {
+    await supabase.auth.signOut();
+    redirect(`${redirectPath}?error=Profile not found`);
+  }
+
+  if (requiredRole && profile.role !== requiredRole) {
+    await supabase.auth.signOut();
+    redirect(
+      `${redirectPath}?error=Unauthorized access: This account is registered as a ${profile.role}`,
+    );
   }
 
   revalidatePath("/", "layout");
@@ -43,16 +79,18 @@ export async function signup(formData: FormData) {
   });
 
   if (authError || !authData.user) {
-    redirect(`/login?error=${authError?.message || "Could not authenticate user"}`);
+    redirect(
+      `/login?error=${authError?.message || "Could not authenticate user"}`,
+    );
   }
 
   // 2. Create Carrier Organization
   const { data: orgData, error: orgError } = await supabase
-    .from('organisations')
+    .from("organisations")
     .insert({
       name: orgName,
       nif: nif,
-      type: 'CARRIER'
+      type: "CARRIER",
     })
     .select()
     .single();
@@ -63,17 +101,17 @@ export async function signup(formData: FormData) {
   }
 
   // 3. Create User Profile
-  const { error: profileError } = await supabase
-    .from('users')
-    .insert({
-      id: authData.user.id,
-      username: username,
-      org_id: orgData.id,
-      role: 'DISPATCHER' // Default role for new carriers
-    });
+  const { error: profileError } = await supabase.from("users").insert({
+    id: authData.user.id,
+    username: username,
+    org_id: orgData.id,
+    role: "DISPATCHER", // Default role for new carriers
+  });
 
   if (profileError) {
-    redirect(`/login?error=Failed to create user profile: ${profileError.message}`);
+    redirect(
+      `/login?error=Failed to create user profile: ${profileError.message}`,
+    );
   }
 
   revalidatePath("/", "layout");
