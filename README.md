@@ -2,16 +2,35 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+You can run the application in different modes using the provided helper script:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Run locally with local Supabase (.env.local)
+./run-app.sh local dev
+
+# Run locally with remote Supabase (.env.production)
+./run-app.sh remote dev
+
+# Build for production with remote Supabase
+./run-app.sh remote build
+```
+
+Alternatively, use the following npm scripts:
+
+```bash
+npm run dev:local    # Dev mode + .env.local
+npm run dev:remote   # Dev mode + .env.production
+npm run build:local  # Build + .env.local
+npm run build:remote # Build + .env.production
+```
+
+## Docker
+
+To run the container with a specific environment:
+
+```bash
+# Example: Local build
+docker compose --env-file .env.local up --build
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
