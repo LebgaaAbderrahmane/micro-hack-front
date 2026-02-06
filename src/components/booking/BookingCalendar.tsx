@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { DayPicker } from "react-day-picker";
-import "react-day-picker/dist/style.css";
+import "react-day-picker/style.css";
 import { format, startOfToday } from "date-fns";
 
 interface BookingCalendarProps {
@@ -26,14 +26,14 @@ export const BookingCalendar = ({ onDateSelect, selectedDate }: BookingCalendarP
           --rdp-background-color: rgba(59, 130, 246, 0.1);
           margin: 0;
         }
-        .rdp-day_today {
+        .rdp-today {
           font-weight: bold;
           color: var(--rdp-accent-color);
         }
-        .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+        .rdp-button:hover:not([disabled]):not(.rdp-selected) {
           background-color: var(--rdp-background-color);
         }
-        .rdp-day_selected {
+        .rdp-selected {
           background-color: var(--rdp-accent-color) !important;
           color: white !important;
         }
