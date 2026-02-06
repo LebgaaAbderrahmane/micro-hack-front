@@ -65,10 +65,31 @@ const gatesData: { label: string; segments: TileState[] }[] = [
   { label: "gate 6", segments: ["gray", "gray", "gray", "gray"] },
 ];
 
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "@/i18n/routing";
+import { useEffect } from "react";
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 export default function Home() {
+  const { profile, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && profile?.role === "DISPATCHER") {
+      router.replace("/carrier");
+    }
+  }, [profile, isLoading, router]);
+
+  if (isLoading) {
+    return <div className="h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (profile?.role === "DISPATCHER") {
+    return null;
+  }
+
   return (
     <div className="space-y-10 pb-20">
       {/* Header row */}
