@@ -53,7 +53,7 @@ export const SidebarContent = () => {
                         className={cn(
                             "flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group",
                             isActive
-                                ? "bg-primary text-white shadow-lg shadow-primary/20"
+                                ? "bg-primary text-white shadow-md shadow-primary/10"
                                 : "text-foreground/60 hover:bg-white/5 hover:text-foreground"
                         )}
                     >

@@ -20,8 +20,38 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased text-foreground bg-background`}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const storage = localStorage.getItem('theme-storage');
+                  const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  
+                  if (storage) {
+                    const { state } = JSON.parse(storage);
+                    if (state && state.theme === 'dark') {
+                      document.documentElement.classList.add('dark');
+                    } else if (state && state.theme === 'light') {
+                      document.documentElement.classList.remove('dark');
+                    } else {
+                      if (supportDarkMode) document.documentElement.classList.add('dark');
+                    }
+                  } else {
+                    if (supportDarkMode) document.documentElement.classList.add('dark');
+                    else document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {
+                  document.documentElement.classList.add('dark');
+                }
+              })()
+            `,
+          }}
+        />
+      </head>
+      <body className={`${inter.variable} font-sans antialiased text-foreground bg-background`} suppressHydrationWarning>
         <Providers>
           <MainLayout>{children}</MainLayout>
         </Providers>

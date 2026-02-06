@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export const AdminDashboard = () => (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <ShieldCheck size={28} />
             </div>
             <div>
@@ -41,7 +41,7 @@ export const TerminalOpDashboard = () => {
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
+                <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
                     <Ship size={28} />
                 </div>
                 <div>
@@ -90,7 +90,7 @@ export const CarrierDashboard = () => {
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
+                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
                     <TruckIcon size={28} />
                 </div>
                 <div>

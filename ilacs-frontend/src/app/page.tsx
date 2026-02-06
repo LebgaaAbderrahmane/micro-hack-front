@@ -83,7 +83,7 @@ export default function Home() {
   if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] space-y-8 animate-in fade-in zoom-in duration-500">
-        <div className="w-24 h-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center text-primary animate-pulse">
+        <div className="w-24 h-24 bg-primary/10 rounded-3xl flex items-center justify-center text-primary animate-pulse">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-truck">
             <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
           </svg>
@@ -96,7 +96,7 @@ export default function Home() {
         </div>
         <button
           onClick={() => window.location.href = "/login"}
-          className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
+          className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/10 transition-all active:scale-95"
         >
           Go to Login
         </button>
@@ -156,7 +156,7 @@ export default function Home() {
               { label: "Vessel Throughput", value: "842 TEU/h", trend: "+12.5%", color: "text-primary", data: [30, 45, 35, 60, 55, 75, 80] },
               { label: "Gate Efficiency", value: "98.2%", trend: "+2.1%", color: "text-success", data: [85, 88, 92, 90, 95, 97, 98] },
             ].map((stat, idx) => (
-              <div key={idx} className="glass-card p-8 border border-foreground/10 relative overflow-hidden group bg-background/50 hover:bg-background/80 transition-all duration-500">
+              <div key={idx} className="glass-card p-8 border border-foreground/10 relative overflow-hidden group bg-background/80 hover:bg-background transition-all duration-500" style={{ minHeight: '320px' }}>
                 <div className="relative z-10">
                   <p className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.3em] mb-2">{stat.label}</p>
                   <div className="flex items-end justify-between">
@@ -166,15 +166,47 @@ export default function Home() {
                     </span>
                   </div>
                 </div>
-                <div className="absolute inset-x-0 bottom-0 h-32 w-full translate-y-12">
+                <div className="absolute inset-x-0 bottom-0 h-80 w-full translate-y-24">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={stat.data.map((v, i) => ({ value: v, id: i }))}>
+                    <AreaChart
+                      data={stat.data.map((v, i) => ({ value: v, id: i }))}
+                      margin={{ top: 0, right: 0, left: -60, bottom: 0 }}
+                    >
                       <defs>
                         <linearGradient id={`gradient-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.15} />
+                          <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.2} />
                           <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
                         </linearGradient>
                       </defs>
+                      <XAxis
+                        dataKey="id"
+                        hide={false}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 8, fontWeight: 900, fill: 'currentColor' }}
+                        className="opacity-20"
+                        dy={-35}
+                      />
+                      <YAxis
+                        hide={false}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 8, fontWeight: 900, fill: 'currentColor' }}
+                        className="opacity-20"
+                        dx={25}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'var(--background)',
+                          border: '1px solid var(--glass-border)',
+                          borderRadius: '12px',
+                          fontSize: '10px',
+                          fontWeight: '900',
+                          textTransform: 'uppercase'
+                        }}
+                        itemStyle={{ color: 'var(--color-primary)' }}
+                        cursor={{ stroke: 'var(--color-primary)', strokeWidth: 1, strokeDasharray: '4 4' }}
+                      />
                       <Area
                         type="monotone"
                         dataKey="value"
@@ -212,7 +244,11 @@ export default function Home() {
                     tickLine={false}
                     tick={{ fill: "currentColor", opacity: 0.3, fontSize: 10, fontWeight: 900 }}
                   />
-                  <YAxis hide />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "currentColor", opacity: 0.3, fontSize: 10, fontWeight: 900 }}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "var(--background)",
@@ -235,7 +271,7 @@ export default function Home() {
 
           <button
             onClick={() => show("Launching system diagnostic...", "info")}
-            className="w-full py-5 bg-primary text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.4em] transition-all shadow-xl shadow-primary/20 hover:scale-[1.01] active:scale-95 border border-primary/20"
+            className="w-full py-5 bg-primary text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.4em] transition-all shadow-lg shadow-primary/10 hover:scale-[1.01] active:scale-95 border border-primary/20"
           >
             Run System Diagnostics
           </button>
@@ -320,17 +356,17 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Role-Specific Dashboard Content */}
-      <section className="animate-in fade-in duration-1000 pt-8 border-t border-foreground/5">
+      < section className="animate-in fade-in duration-1000 pt-8 border-t border-foreground/5" >
         <div className="flex items-center gap-3 mb-10 text-foreground/20">
           <div className="h-px flex-1 bg-current" />
           <span className="text-[10px] font-black uppercase tracking-[0.5em]">Role-Based Environment</span>
           <div className="h-px flex-1 bg-current" />
         </div>
         {renderDashboard()}
-      </section>
-    </div>
+      </section >
+    </div >
   );
 }

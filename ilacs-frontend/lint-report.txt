@@ -1,0 +1,67 @@
+
+D:\micro hack\ilacs-frontend\public\mockServiceWorker.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+D:\micro hack\ilacs-frontend\src\app\fleet\page.tsx
+  284:102  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\micro hack\ilacs-frontend\src\app\page.tsx
+   6:3   warning  'BarChart3' is defined but never used          @typescript-eslint/no-unused-vars
+   7:3   warning  'TrendingUp' is defined but never used         @typescript-eslint/no-unused-vars
+   8:3   warning  'Clock' is defined but never used              @typescript-eslint/no-unused-vars
+   9:3   warning  'AlertTriangle' is defined but never used      @typescript-eslint/no-unused-vars
+  10:3   warning  'ChevronRight' is defined but never used       @typescript-eslint/no-unused-vars
+  11:12  warning  'TruckIcon' is defined but never used          @typescript-eslint/no-unused-vars
+  29:9   error    Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  33:7   warning  'StatCard' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\micro hack\ilacs-frontend\src\app\profile\page.tsx
+  5:10  warning  'User' is defined but never used  @typescript-eslint/no-unused-vars
+  6:10  warning  'cn' is defined but never used    @typescript-eslint/no-unused-vars
+
+D:\micro hack\ilacs-frontend\src\app\settings\page.tsx
+  35:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\micro hack\ilacs-frontend\src\components\common\AIAssistant.tsx
+  52:24  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\micro hack\ilacs-frontend\src\components\common\AIAssistant.tsx:52:24
+  50 |
+  51 |         const userMessage: Message = {
+> 52 |             id: `msg-${Date.now()}-${prevId.current++}`,
+     |                        ^^^^^^^^^^ Cannot call impure function
+  53 |             role: "user",
+  54 |             content: inputValue,
+  55 |             timestamp: new Date(),  react-hooks/purity
+
+D:\micro hack\ilacs-frontend\src\components\dashboard\TerminalVisualization.tsx
+    7:5   warning  'Controls' is defined but never used      @typescript-eslint/no-unused-vars
+   22:41  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   84:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  246:38  warning  'CalendarIcon' is defined but never used  @typescript-eslint/no-unused-vars
+  252:68  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  301:40  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\micro hack\ilacs-frontend\src\components\layout\MainLayout.tsx
+  14:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\micro hack\ilacs-frontend\src\components\layout\MainLayout.tsx:14:9
+  12 |
+  13 |     useEffect(() => {
+> 14 |         setMounted(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  15 |     }, []);
+  16 |
+  17 |     if (!mounted) return null;  react-hooks/set-state-in-effect
+
+✖ 21 problems (9 errors, 12 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

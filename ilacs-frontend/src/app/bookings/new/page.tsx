@@ -205,7 +205,7 @@ export default function NewBookingPage() {
                             </div>
                             <button
                                 onClick={() => setIsConfirmed(true)}
-                                className="w-full bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] uppercase tracking-widest"
+                                className="w-full bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/10 transition-all active:scale-[0.98] uppercase tracking-widest"
                             >
                                 Confirm Booking & Generate QR
                             </button>
@@ -224,9 +224,8 @@ export default function NewBookingPage() {
                             </div>
 
                             <QRCodeDisplay
-                                value="BK-2401-998"
-                                bookingNumber="BK-2401-998"
-                                terminalName="Terminal North"
+                                bookingId="BK-2401-998"
+                                data="BK-2401-998"
                             />
 
                             <div className="flex gap-4">
@@ -238,7 +237,7 @@ export default function NewBookingPage() {
                                 </Link>
                                 <button
                                     onClick={() => window.print()}
-                                    className="px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+                                    className="px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-md shadow-primary/10 transition-all hover:scale-105 active:scale-95"
                                 >
                                     Print Permit
                                 </button>

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import {
     Search,
     Filter,
@@ -14,31 +13,39 @@ import {
     Eye
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { QRCodeDisplay } from "@/components/booking/QRCodeDisplay";
+import { QRCodeDisplay, generateBookingQR } from "@/components/booking/QRCodeDisplay";
+import { BookingWizard } from "@/components/booking/BookingWizard";
 
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useToast } from "@/components/common/Toast";
 
 const carrierBookings = [
-    { id: "BK-2401-001", terminal: "Terminal North", date: "Feb 12, 2024", time: "14:00 - 15:00", truck: "TX-992-BK", status: "confirmed", color: "#3B82F6" },
-    { id: "BK-2401-002", terminal: "Terminal South", date: "Feb 12, 2024", time: "09:00 - 10:00", truck: "TX-881-AL", status: "pending", color: "#FBBF24" },
-    { id: "BK-2401-003", terminal: "Terminal North", date: "Feb 10, 2024", time: "11:00 - 12:00", truck: "TX-773-MN", status: "consumed", color: "#3B82F6" },
-    { id: "BK-2401-004", terminal: "Terminal West", date: "Feb 09, 2024", time: "16:00 - 17:00", truck: "TX-441-CA", status: "cancelled", color: "#EF4444" },
+    { id: "BK-2401-001", terminal: "Terminal North", terminalId: "T-001", date: "Feb 12, 2024", time: "14:00 - 15:00", truck: "TX-992-BK", status: "confirmed", color: "#3B82F6", expiresAt: new Date(Date.now() + 3600000) },
+    { id: "BK-2401-002", terminal: "Terminal South", terminalId: "T-002", date: "Feb 12, 2024", time: "09:00 - 10:00", truck: "TX-881-AL", status: "pending", color: "#FBBF24" },
+    { id: "BK-2401-003", terminal: "Terminal North", terminalId: "T-001", date: "Feb 10, 2024", time: "11:00 - 12:00", truck: "TX-773-MN", status: "consumed", color: "#3B82F6" },
+    { id: "BK-2401-004", terminal: "Terminal West", terminalId: "T-004", date: "Feb 09, 2024", time: "16:00 - 17:00", truck: "TX-441-CA", status: "cancelled", color: "#EF4444" },
 ];
 
 const queueBookings = [
-    { id: "BK-2401-001", terminal: "Terminal North", date: "Today", time: "14:00", truck: "TX-992-BK", carrier: "TransGlobal", status: "arriving", color: "#3B82F6" },
-    { id: "BK-2401-005", terminal: "Terminal North", date: "Today", time: "14:15", truck: "TX-221-OP", carrier: "PortExpress", status: "at_gate", color: "#FBBF24" },
-    { id: "BK-2401-006", terminal: "Terminal North", date: "Today", time: "14:30", truck: "TX-551-ZZ", carrier: "Oceanic", status: "loading", color: "#3B82F6" },
+    { id: "BK-2401-001", terminal: "Terminal North", terminalId: "T-001", date: "Today", time: "14:00", truck: "TX-992-BK", carrier: "TransGlobal", status: "arriving", color: "#3B82F6" },
+    { id: "BK-2401-005", terminal: "Terminal North", terminalId: "T-001", date: "Today", time: "14:15", truck: "TX-221-OP", carrier: "PortExpress", status: "at_gate", color: "#FBBF24" },
+    { id: "BK-2401-006", terminal: "Terminal North", terminalId: "T-001", date: "Today", time: "14:30", truck: "TX-551-ZZ", carrier: "Oceanic", status: "loading", color: "#3B82F6" },
 ];
 
 export default function BookingsPage() {
     const { user } = useAuthStore();
-    const [selectedBooking, setSelectedBooking] = useState<{ id: string; terminal: string; date: string; time: string; truck: string; status: string; color: string } | null>(null);
+    const [selectedBooking, setSelectedBooking] = useState<typeof carrierBookings[0] | null>(null);
+    const [showWizard, setShowWizard] = useState(false);
     const { show } = useToast();
 
     const isCarrier = user?.role === "carrier";
     const displayBookings = isCarrier ? carrierBookings : queueBookings;
+
+    const handleBookingComplete = (bookingData: any) => {
+        console.log("New booking created:", bookingData);
+        // This would normally send to API
+        show("Booking created successfully!", "success", "Success");
+    };
 
     return (
         <div className="space-y-8 pb-12">
@@ -54,15 +61,22 @@ export default function BookingsPage() {
                     </p>
                 </div>
                 {isCarrier && (
-                    <Link
-                        href="/bookings/new"
+                    <button
+                        onClick={() => setShowWizard(true)}
                         className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
                     >
                         <Plus size={18} />
-                        Record New Booking
-                    </Link>
+                        Create New Booking
+                    </button>
                 )}
             </div>
+
+            {showWizard && (
+                <BookingWizard
+                    onClose={() => setShowWizard(false)}
+                    onComplete={handleBookingComplete}
+                />
+            )}
 
             <div className="grid lg:grid-cols-3 gap-8 items-start">
                 {/* Bookings List */}
@@ -153,9 +167,16 @@ export default function BookingsPage() {
                     {selectedBooking ? (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-8">
                             <QRCodeDisplay
-                                value={selectedBooking.id}
-                                bookingNumber={selectedBooking.id}
-                                terminalName={selectedBooking.terminal}
+                                bookingId={selectedBooking.id}
+                                data={generateBookingQR(selectedBooking.id, selectedBooking.terminalId, selectedBooking.time)}
+                                expiresAt={selectedBooking.expiresAt}
+                                status={
+                                    selectedBooking.status === "confirmed" || selectedBooking.status === "pending" || selectedBooking.status === "arriving" || selectedBooking.status === "at_gate" || selectedBooking.status === "loading"
+                                        ? "active"
+                                        : selectedBooking.status === "consumed" || selectedBooking.status === "used"
+                                            ? "used"
+                                            : "expired"
+                                }
                             />
 
                             <div className="glass-card p-6 border border-white/5 space-y-6">

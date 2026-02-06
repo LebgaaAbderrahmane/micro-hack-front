@@ -4,15 +4,27 @@ import React, { useEffect, useState } from "react";
 import { Navbar } from "./Navbar";
 import { usePathname } from "next/navigation";
 import { AIAssistant } from "../common/AIAssistant";
+import { useThemeStore } from "@/stores/useThemeStore";
 
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
     const pathname = usePathname();
     const [mounted, setMounted] = useState(false);
+    const { theme, isHydrated } = useThemeStore();
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (mounted && isHydrated) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+    }, [theme, mounted, isHydrated]);
 
     if (!mounted) return null;
 

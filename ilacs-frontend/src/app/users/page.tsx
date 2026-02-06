@@ -49,7 +49,7 @@ const UserRow = ({ user }: { user: User }) => {
         <tr className="group hover:bg-foreground/[0.02] transition-colors border-b border-foreground/5 last:border-0">
             <td className="py-5 px-8">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-foreground/5 flex items-center justify-center text-primary font-black overflow-hidden relative">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-foreground/5 flex items-center justify-center text-primary font-black overflow-hidden relative">
                         {user.firstName[0]}{user.lastName[0]}
                         <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     </div>
@@ -131,14 +131,14 @@ export default function UsersPage() {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => show("Exporting system activity logs...", "success")}
-                        className="flex items-center gap-2 px-8 py-4 bg-foreground/5 hover:bg-foreground/10 rounded-2xl text-[10px] uppercase font-black tracking-widest border border-foreground/5 transition-all"
+                        className="flex items-center gap-2 px-8 py-4 bg-foreground/5 hover:bg-foreground/10 rounded-xl text-[10px] uppercase font-black tracking-widest border border-foreground/5 transition-all"
                     >
                         <ArrowUpRight size={18} />
                         Audit Trail
                     </button>
                     <button
                         onClick={() => show("Opening user invitation portal", "info")}
-                        className="flex items-center gap-2 px-8 py-4 bg-primary text-white rounded-2xl text-[10px] uppercase font-black tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                        className="flex items-center gap-2 px-8 py-4 bg-primary text-white rounded-xl text-[10px] uppercase font-black tracking-widest shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-95 transition-all"
                     >
                         <UserPlus size={18} />
                         Identity Provision
