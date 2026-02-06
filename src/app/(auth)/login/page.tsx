@@ -18,8 +18,8 @@ export default function LoginPage() {
   }, [profile, isLoading, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-background via-background to-primary/10">
-      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 items-center">
+    <div className="p-6">
+      <div className="w-full max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-center">
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center font-bold text-2xl text-white shadow-lg shadow-primary/20">

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/utils/supabase/client";
 import { addOperator } from "./actions";
@@ -40,15 +41,15 @@ const UserRow = ({ user }: { user: any }) => {
     return (
         <tr className="group hover:bg-foreground/[0.02] transition-colors border-b border-white/5 last:border-0 text-white">
             <td className="py-5 px-8">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary">
-                        {(user.username || 'U').charAt(0).toUpperCase()}
+                <Link href={`/users/${user.id}`} className="flex items-center gap-3 group/link">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary group-hover/link:scale-110 transition-transform">
+                        {(user.username || "U").charAt(0).toUpperCase()}
                     </div>
                     <div>
-                        <div className="font-bold">{user.username || 'Anonymous'}</div>
-                        <div className="text-xs text-foreground/40">{user.email || 'No email'}</div>
+                        <div className="font-bold group-hover/link:text-primary transition-colors">{user.username || "Anonymous"}</div>
+                        <div className="text-xs text-foreground/40">{user.email || "No email"}</div>
                     </div>
-                </div>
+                </Link>
             </td>
             <td className="py-5 px-8">
                 <div className={cn(
@@ -63,9 +64,9 @@ const UserRow = ({ user }: { user: any }) => {
                 {user.organisation?.name || "Independent"}
             </td>
             <td className="py-5 px-8 text-right">
-                <button className="p-2 hover:bg-white/5 rounded-lg text-foreground/40 hover:text-foreground">
-                    <MoreVertical size={18} />
-                </button>
+                <Link href={`/users/${user.id}`} className="p-2 hover:bg-white/5 rounded-lg text-foreground/40 hover:text-foreground inline-block">
+                    <ArrowUpRight size={18} />
+                </Link>
             </td>
         </tr>
     );

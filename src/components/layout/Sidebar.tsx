@@ -12,34 +12,35 @@ import {
     Settings,
     LogOut,
     ChevronRight,
-    ShieldCheck
+    ShieldCheck,
+    UserCircle
 } from "lucide-react";
-import { useAuthStore, Role } from "@/stores/useAuthStore";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
     label: string;
     href: string;
     icon: React.ElementType;
-    roles: Role[];
+    roles: string[];
 }
 
 const navItems: NavItem[] = [
-    { label: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "terminal_op", "carrier"] },
-    { label: "Port Map", href: "/map", icon: MapIcon, roles: ["admin"] },
-    { label: "Manage Terminals", href: "/terminals", icon: ShieldCheck, roles: ["admin"] },
-    { label: "Bookings", href: "/bookings", icon: Calendar, roles: ["terminal_op", "carrier"] },
-    { label: "Fleet Status", href: "/fleet", icon: Truck, roles: ["carrier", "terminal_op"] },
-    { label: "User Management", href: "/users", icon: Users, roles: ["admin"] },
-    { label: "Settings", href: "/settings", icon: Settings, roles: ["admin", "terminal_op", "carrier"] },
+    { label: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["ADMIN", "OPERATOR", "DISPATCHER"] },
+    { label: "Bookings", href: "/bookings", icon: Calendar, roles: ["OPERATOR", "DISPATCHER"] },
+    { label: "Fleet Status", href: "/fleet", icon: Truck, roles: ["DISPATCHER", "OPERATOR"] },
+    { label: "Terminal Yards", href: "/terminals", icon: ShieldCheck, roles: ["ADMIN", "OPERATOR"] },
+    { label: "User Identity", href: "/users", icon: Users, roles: ["ADMIN"] },
+    { label: "My Profile", href: "/profile", icon: UserCircle, roles: ["ADMIN", "OPERATOR", "DISPATCHER"] },
+    { label: "System Settings", href: "/settings", icon: Settings, roles: ["ADMIN", "OPERATOR", "DISPATCHER"] },
 ];
 
 export const SidebarContent = () => {
     const pathname = usePathname();
-    const { user } = useAuthStore();
+    const { profile } = useAuth();
 
     const filteredItems = navItems.filter(item =>
-        user ? item.roles.includes(user.role) : false
+        profile ? item.roles.includes(profile.role) : false
     );
 
     return (
@@ -70,7 +71,7 @@ export const SidebarContent = () => {
 };
 
 export const Sidebar = () => {
-    const { logout } = useAuthStore();
+    const { signOut } = useAuth();
 
     return (
         <aside className="w-64 glass fixed left-0 top-16 bottom-0 z-40 border-r border-white/10 hidden lg:flex flex-col">
@@ -78,7 +79,7 @@ export const Sidebar = () => {
 
             <div className="p-4 border-t border-white/10">
                 <button
-                    onClick={logout}
+                    onClick={() => signOut()}
                     className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-foreground/60 hover:bg-error/10 hover:text-error transition-all duration-200"
                 >
                     <LogOut size={20} />

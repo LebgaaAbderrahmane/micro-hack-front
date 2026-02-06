@@ -8,14 +8,8 @@ import Link from "next/link";
 
 export default function RegisterPage() {
     return (
-        <div className="min-h-screen bg-[#0a0a0b] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
-            {/* Background elements */}
-            <div className="absolute top-0 left-0 w-full h-full">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/10 rounded-full blur-[120px]" />
-            </div>
-
-            <div className="w-full max-w-md space-y-8 relative z-10">
+        <div className="p-6 font-sans">
+            <div className="w-full max-w-md mx-auto space-y-8 relative z-10">
                 <div className="text-center space-y-2">
                     <div className="flex justify-center mb-6">
                         <div className="bg-primary/20 p-4 rounded-2xl border border-primary/20">
