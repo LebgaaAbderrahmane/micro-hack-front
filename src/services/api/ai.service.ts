@@ -1,6 +1,8 @@
 import { createClient } from "@/utils/supabase/client";
 
-const AI_API_URL = (process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000")
+const AI_API_URL = (
+  process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000"
+)
   .replace(/\/$/, "")
   .replace("https://localhost", "http://localhost");
 
@@ -64,28 +66,31 @@ export const aiService = {
     payload: ChatRequest,
     token?: string,
     userId?: string,
+    signal?: AbortSignal,
   ): Promise<ChatResponse> {
     const headers = await getAuthHeaders(token, userId);
-    
+
     // Ensure we are calling the endpoint with a trailing slash to avoid 307 redirects
     // and ensure headers like Authorization are preserved.
     const baseUrl = AI_API_URL.replace(/\/$/, "");
     const url = `${baseUrl}/api/v1/chat/`;
-    
-    console.log(`[AI Service] Sending message...`, { 
+
+    console.log(`[AI Service] Sending message...`, {
       url,
-      params: { 
+      params: {
         tokenPresent: !!headers.Authorization,
         tokenLength: headers.Authorization?.length || 0,
-        userId: headers["X-User-Id"] 
-      } 
+        userId: headers["X-User-Id"],
+      },
     });
 
     const res = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify(payload),
+      signal,
     }).catch((err) => {
+      if (err.name === "AbortError") throw err;
       console.error("[AI Service] Fetch error:", err);
       throw new Error(
         `Connection to AI Backend failed. Is it running at ${url}?`,

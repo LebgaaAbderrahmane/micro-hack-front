@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { aiService, ChatResponse } from "@/services/api/ai.service";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,7 +35,7 @@ const generateId = () => {
 export function useChat(options: UseChatOptions = {}) {
   const { language = "en", onAutoExpand } = options;
   const { session, user } = useAuth();
-  
+
   // Use session or user from context, with a fallback check
   const activeToken = session?.access_token;
   const activeUserId = session?.user?.id || user?.id;
@@ -54,26 +54,46 @@ export function useChat(options: UseChatOptions = {}) {
   ]);
 
   const sessionIdRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // ── Mutation ─────────────────────────────────────────
 
   const mutation = useMutation({
-    mutationFn: (message: string) => {
+    mutationFn: async (message: string) => {
+      abortControllerRef.current = new AbortController();
       console.log("useChat: mutationFn started", {
         message,
         hasToken: !!activeToken,
         userId: activeUserId,
       });
 
-      return aiService.sendMessage(
-        {
-          message,
-          session_id: sessionIdRef.current,
-          language,
-        },
-        activeToken,
-        activeUserId,
-      );
+      try {
+        const result = await aiService.sendMessage(
+          {
+            message,
+            session_id: sessionIdRef.current,
+            language,
+          },
+          activeToken,
+          activeUserId,
+          abortControllerRef.current.signal,
+        );
+        return result;
+      } finally {
+        // We don't clear the ref here immediately because we might want to know if it was active,
+        // but typically for one-flight-at-a-time it is fine.
+        // However, if we clear it, stopGeneration might check null.
+        // Actually, clearing it in finally is good practice if we don't reuse it.
+        // But if `stopGeneration` is called, it calls abort(), then this finally block runs.
+      }
     },
 
     onMutate: (variables) => {
@@ -133,6 +153,10 @@ export function useChat(options: UseChatOptions = {}) {
     },
 
     onError: (error: Error) => {
+      if (error.name === "AbortError") {
+        setMessages((prev) => prev.filter((m) => !m.isLoading));
+        return;
+      }
       console.error("useChat: mutation error", error);
       // Replace loading placeholder with error message
       setMessages((prev) => {
@@ -200,12 +224,20 @@ export function useChat(options: UseChatOptions = {}) {
 
   const getSessionId = useCallback(() => sessionIdRef.current, []);
 
+  const stopGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  }, []);
+
   return {
     messages,
     sendMessage,
     resetChat,
     loadSession,
     getSessionId,
+    stopGeneration,
     isLoading: mutation.isPending,
   };
 }

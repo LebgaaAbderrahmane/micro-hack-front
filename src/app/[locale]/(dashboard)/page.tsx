@@ -6,7 +6,11 @@ import { GateIndicator } from "@/components/Terminals/GateIndicator";
 import type { TileState } from "@/components/Terminals/TileGrid";
 import { Calendar, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { AdminDashboard, TerminalOpDashboard, CarrierDashboard } from "@/components/dashboard/RoleDashboards";
+import {
+  AdminDashboard,
+  TerminalOpDashboard,
+  CarrierDashboard,
+} from "@/components/dashboard/RoleDashboards";
 
 // ---------------------------------------------------------------------------
 // Helper: generate a tile grid from a pattern description

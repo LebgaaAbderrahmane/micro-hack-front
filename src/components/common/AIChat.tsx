@@ -18,6 +18,7 @@ import {
   Clock,
   Trash2,
   MessageSquare,
+  Square,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,7 @@ export const AIChat = () => {
     resetChat,
     loadSession,
     getSessionId,
+    stopGeneration,
   } = useChat({
     language: "en",
     onAutoExpand: () => setChatState("large"),
@@ -148,13 +150,10 @@ export const AIChat = () => {
 
     if (!messageText.trim() || isLoading) return;
 
-    // Check for session before attempting to send
-    if (!messages.length || messages[messages.length - 1].role !== "user") {
-      console.log("AIChat: triggering sendMessage", messageText);
-      sendMessage(messageText);
-      setInputValue("");
-      setShowSuggestions(false);
-    }
+    console.log("AIChat: triggering sendMessage", messageText);
+    sendMessage(messageText);
+    setInputValue("");
+    setShowSuggestions(false);
   };
 
   useEffect(() => {
@@ -479,10 +478,6 @@ export const AIChat = () => {
               {/* Messages Area */}
               <ScrollArea className="flex-1 px-6 py-4">
                 <div className="space-y-6 pb-4 pt-2">
-                  {console.log("AIChat: rendering messages list", {
-                    count: messages.length,
-                    messages,
-                  })}
                   {messages.map((msg, idx) => (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -632,12 +627,13 @@ export const AIChat = () => {
                       className="h-14 bg-white/5 dark:bg-black/10 border-white/10 focus-visible:ring-primary/20 focus-visible:border-primary/40 rounded-2xl pr-14 pl-5 transition-all placeholder:text-muted-foreground/30 text-sm backdrop-blur-lg disabled:opacity-50"
                     />
                     <Button
-                      type="submit"
-                      disabled={!inputValue.trim() || isLoading}
+                      type={isLoading ? "button" : "submit"}
+                      onClick={isLoading ? stopGeneration : undefined}
+                      disabled={!isLoading && !inputValue.trim()}
                       className="absolute right-2 top-2 h-10 w-10 rounded-xl transition-all shadow-xl active:scale-90 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-white/5 disabled:text-white/20"
                     >
                       {isLoading ? (
-                        <Loader2 size={18} className="animate-spin" />
+                        <Square size={18} fill="currentColor" />
                       ) : (
                         <Send size={18} />
                       )}

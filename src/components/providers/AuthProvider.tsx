@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useEffect, useState, useContext, useCallback } from "react";
+import {
+  createContext,
+  useEffect,
+  useState,
+  useContext,
+  useCallback,
+} from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { Database } from "@/types/database.types";
@@ -30,28 +36,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Use a stable reference for the Supabase client
   const [supabase] = useState(() => createClient());
 
-  const fetchProfile = useCallback( async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("*, organisation:organisations(*)")
-        .eq("id", userId)
-        .single();
+  const fetchProfile = useCallback(
+    async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("*, organisation:organisations(*)")
+          .eq("id", userId)
+          .single();
 
-      if (error) {
-        console.error("[AuthProvider] Profile fetch error:", error);
+        if (error) {
+          console.error("[AuthProvider] Profile fetch error:", error);
+          return null;
+        }
+        return data as Profile;
+      } catch (err) {
+        console.error("[AuthProvider] Profile fetch exception:", err);
         return null;
       }
-      return data as Profile;
-    } catch (err) {
-      console.error("[AuthProvider] Profile fetch exception:", err);
-      return null;
-    }
-  }, [supabase]);
+    },
+    [supabase],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -60,7 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         // Log all cookies to see if the session cookie is present
         if (typeof document !== "undefined") {
-          const hasSBCookie = document.cookie.includes("sb-") || document.cookie.includes("supabase.auth.token");
+          const hasSBCookie =
+            document.cookie.includes("sb-") ||
+            document.cookie.includes("supabase.auth.token");
           console.log("[AuthProvider] Browser cookie check:", { hasSBCookie });
         }
 
@@ -70,9 +81,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (!mounted) return;
 
-        console.log("[AuthProvider] Boot session:", { 
-          hasSession: !!currentSession, 
-          userId: currentSession?.user?.id 
+        console.log("[AuthProvider] Boot session:", {
+          hasSession: !!currentSession,
+          userId: currentSession?.user?.id,
         });
 
         setSession(currentSession);
@@ -94,10 +105,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log(`[AuthProvider] State change: ${event}`, { 
-        userId: newSession?.user?.id 
+      console.log(`[AuthProvider] State change: ${event}`, {
+        userId: newSession?.user?.id,
       });
-      
+
       if (!mounted) return;
 
       setSession(newSession);

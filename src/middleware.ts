@@ -53,7 +53,7 @@ export async function middleware(request: NextRequest) {
     
     // Crucial: Copy cookies and headers from the base modified response (e.g. session tokens, locale headers)
     response.cookies.getAll().forEach(cookie => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, cookie.options);
+      redirectResponse.cookies.set(cookie);
     });
     response.headers.forEach((value, key) => {
       redirectResponse.headers.set(key, value);
@@ -71,7 +71,7 @@ export async function middleware(request: NextRequest) {
       const redirectResponse = NextResponse.redirect(redirectUrl);
       
       response.cookies.getAll().forEach(cookie => {
-        redirectResponse.cookies.set(cookie.name, cookie.value, cookie.options);
+        redirectResponse.cookies.set(cookie);
       });
       response.headers.forEach((value, key) => {
         redirectResponse.headers.set(key, value);
@@ -97,7 +97,7 @@ export async function middleware(request: NextRequest) {
         const redirectResponse = NextResponse.redirect(redirectUrl);
         
         response.cookies.getAll().forEach(cookie => {
-          redirectResponse.cookies.set(cookie.name, cookie.value, cookie.options);
+          redirectResponse.cookies.set(cookie);
         });
         response.headers.forEach((value, key) => {
           redirectResponse.headers.set(key, value);
