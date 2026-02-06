@@ -29,6 +29,8 @@
   --color-content-title: #545454;
   --color-card-label: #343434;
   --color-inactive-nav: rgba(16, 16, 16, 0.7);
+  --color-border-div: var(--border-div);
+  --color-border-light: var(--border-light);
 
   --radius-card: 8px;
   --radius-modal: 12px;
@@ -50,6 +52,8 @@
   --primary-glow: rgba(59, 130, 246, 0.1);
   --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
   --shadow-card-hover: 0 20px 40px -12px rgba(0, 0, 0, 0.12);
+  --border-div: #e5e7eb;
+  --border-light: #bfbfbf;
 }
 
 .dark {
@@ -61,6 +65,8 @@
   --primary-glow: rgba(59, 130, 246, 0.25);
   --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   --shadow-card-hover: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
+  --border-div: rgba(255, 255, 255, 0.1);
+  --border-light: rgba(255, 255, 255, 0.2);
 }
 
 @layer base {
