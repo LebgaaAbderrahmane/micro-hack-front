@@ -1,0 +1,27 @@
+{
+  "Common": {
+    "welcome": "Welcome",
+    "login": "Login",
+    "logout": "Logout",
+    "settings": "Settings",
+    "profile": "Profile"
+  },
+  "Auth": {
+    "loginTitle": "Login to PortFlow",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign In"
+  },
+  "Dashboard": {
+    "overview": "Overview",
+    "fleet": "Fleet",
+    "bookings": "Bookings",
+    "terminals": "Terminals",
+    "users": "Users"
+  },
+  "Theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+  }
+}

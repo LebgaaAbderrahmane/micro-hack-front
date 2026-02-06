@@ -18,9 +18,10 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/common/Toast";
 import { cn } from "@/lib/utils";
-import { useThemeStore } from "@/stores/useThemeStore";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
+import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 
 const SettingSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div className="space-y-4">
@@ -100,17 +101,12 @@ export default function SettingsPage() {
     const { show } = useToast();
     const [mfa, setMfa] = useState(true);
     const [notifications, setNotifications] = useState(true);
-    const { theme, toggleTheme } = useThemeStore();
+    const { theme, setTheme, resolvedTheme } = useTheme();
     const { logout } = useAuthStore();
     const router = useRouter();
+    const t = useTranslations('Common');
 
-    useEffect(() => {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    }, [theme]);
+    const toggleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
 
     const handleLogout = () => {
         logout();
@@ -135,7 +131,7 @@ export default function SettingsPage() {
                         </button>
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black tracking-tight text-foreground uppercase">Admin Console</h1>
+                        <h1 className="text-3xl font-black tracking-tight text-foreground uppercase">{t('settings')}</h1>
                         <p className="text-foreground/40 mt-1 flex items-center gap-2 font-bold tracking-widest text-[10px] uppercase">
                             <Shield size={12} className="text-primary" />
                             Security Level: High Priority
@@ -201,12 +197,12 @@ export default function SettingsPage() {
                         onClick={() => { setNotifications(!notifications); show("Notify settings updated", "info"); }}
                     />
                     <SettingItem
-                        icon={theme === 'dark' ? Moon : Sun}
-                        title={theme === 'dark' ? "Neural Interface (Dark)" : "Standard Interface (Light)"}
+                        icon={resolvedTheme === 'dark' ? Moon : Sun}
+                        title={resolvedTheme === 'dark' ? "Neural Interface (Dark)" : "Standard Interface (Light)"}
                         description="Optimize UI for ambient lighting conditions"
                         isToggle
-                        value={theme === 'dark'}
-                        onClick={() => { toggleTheme(); show(`Switched to ${theme === 'dark' ? 'Light' : 'Dark'} mode`, "info"); }}
+                        value={resolvedTheme === 'dark'}
+                        onClick={() => { toggleTheme(); show(`Switched to ${resolvedTheme === 'dark' ? 'Light' : 'Dark'} mode`, "info"); }}
                     />
                     <SettingItem
                         icon={Globe}
