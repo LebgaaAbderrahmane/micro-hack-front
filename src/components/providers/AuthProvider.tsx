@@ -74,7 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Safety timeout to prevent infinite loading if Supabase hangs
       const timeoutId = setTimeout(() => {
         if (isLoading) {
-          console.warn("[AuthProvider] Auth initialization timed out - forcing loading to false");
+          console.warn(
+            "[AuthProvider] Auth initialization timed out - forcing loading to false",
+          );
           setIsLoading(false);
         }
       }, 5000);
