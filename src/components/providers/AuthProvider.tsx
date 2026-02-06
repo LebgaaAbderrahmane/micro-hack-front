@@ -42,6 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = useCallback(
     async (userId: string) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
       try {
         const { data, error } = await supabase
           .from("users")
@@ -57,6 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.error("[AuthProvider] Profile fetch exception:", err);
         return null;
+      } finally {
+        clearTimeout(timeoutId);
       }
     },
     [supabase],
@@ -66,6 +71,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
 
     const initializeAuth = async () => {
+      // Safety timeout to prevent infinite loading if Supabase hangs
+      const timeoutId = setTimeout(() => {
+        if (isLoading) {
+          console.warn("[AuthProvider] Auth initialization timed out - forcing loading to false");
+          setIsLoading(false);
+        }
+      }, 5000);
+
       try {
         // Log all cookies to see if the session cookie is present
         if (typeof document !== "undefined") {
@@ -96,7 +109,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error("[AuthProvider] Initialization error:", error);
       } finally {
-        if (mounted) setIsLoading(false);
+        clearTimeout(timeoutId);
+        setIsLoading(false);
       }
     };
 

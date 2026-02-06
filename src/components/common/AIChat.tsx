@@ -285,7 +285,7 @@ export const AIChat = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-background/60 backdrop-blur-md p-6"
+            className="fixed inset-0 z-[210] flex items-center justify-center bg-background/60 backdrop-blur-md p-6"
             onClick={() => setShowHistory(false)}
           >
             <motion.div
@@ -371,7 +371,7 @@ export const AIChat = () => {
         initial="closed"
         animate={chatState}
         className={cn(
-          "fixed z-[100] overflow-hidden flex flex-col",
+          "fixed z-[200] overflow-hidden flex flex-col",
           "bg-background/30 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-2xl",
           "before:absolute before:inset-0 before:bg-gradient-to-tr before:from-primary/5 before:to-transparent before:pointer-events-none",
           chatState === "closed"
@@ -588,11 +588,18 @@ export const AIChat = () => {
                       </button>
                     </div>
                     {RECOMMENDED_PROMPTS.map((prompt, i) => (
-                      <button
+                      <motion.button
                         key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          delay: 0.4 + (RECOMMENDED_PROMPTS.length - 1 - i) * 0.1,
+                          duration: 0.4,
+                          ease: "easeOut",
+                        }}
                         onClick={() => handleSend(prompt.text)}
                         disabled={isLoading}
-                        className="flex items-center justify-between w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-primary/5 group transition-all disabled:opacity-50"
+                        className="flex items-center justify-between w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-primary/5 group transition-all disabled:opacity-50 shadow-sm"
                       >
                         <div className="flex items-center gap-3">
                           <div className="text-primary opacity-70 group-hover:opacity-100">
@@ -606,7 +613,7 @@ export const AIChat = () => {
                           size={14}
                           className="text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all"
                         />
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 )}

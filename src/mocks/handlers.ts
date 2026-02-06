@@ -7,10 +7,32 @@ export const handlers = [
         return HttpResponse.json({
             id: "1",
             email: info.email,
-            role: info.email.includes("admin") ? "admin" : info.email.includes("op") ? "terminal_op" : "carrier",
+            role: info.email.includes("admin") ? "ADMIN" : info.email.includes("op") ? "OPERATOR" : "DISPATCHER",
             firstName: "Mock",
             lastName: "User",
             token: "mock-jwt-token",
+        });
+    }),
+
+    // Supabase Mock (REST)
+    http.get("*/rest/v1/users*", () => {
+        return HttpResponse.json({
+            id: "1",
+            role: "ADMIN",
+            username: "admin_user",
+            org_id: "org-1",
+            organisation: {
+                id: "org-1",
+                name: "System Admin Org",
+                nif: "123456789",
+                type: "ADMIN"
+            }
+        });
+    }),
+
+    http.get("*/auth/v1/session", () => {
+        return HttpResponse.json({
+            session: null
         });
     }),
 

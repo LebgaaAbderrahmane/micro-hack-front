@@ -47,6 +47,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${inter.variable} ${poppins.variable} ${montserrat.variable} font-sans antialiased text-foreground bg-background`}
       >
         <NextIntlClientProvider messages={messages}>
