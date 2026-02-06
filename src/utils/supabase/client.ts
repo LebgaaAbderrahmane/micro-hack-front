@@ -1,14 +1,10 @@
 import { createBrowserClient } from "@supabase/ssr";
 
-let client: ReturnType<typeof createBrowserClient> | null = null;
-
+// We removed the singleton 'let client' to ensure that cookie changes
+// are always picked up correctly on every call, avoiding stale state.
 export function createClient() {
-  if (client) return client;
-  
-  client = createBrowserClient(
+  return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
-  
-  return client;
 }

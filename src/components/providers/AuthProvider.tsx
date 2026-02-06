@@ -58,6 +58,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
+        // Log all cookies to see if the session cookie is present
+        if (typeof document !== "undefined") {
+          const hasSBCookie = document.cookie.includes("sb-") || document.cookie.includes("supabase.auth.token");
+          console.log("[AuthProvider] Browser cookie check:", { hasSBCookie });
+        }
+
         const {
           data: { session: currentSession },
         } = await supabase.auth.getSession();

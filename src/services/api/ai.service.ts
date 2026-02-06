@@ -1,6 +1,8 @@
 import { createClient } from "@/utils/supabase/client";
 
-const AI_API_URL = (process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000").replace(/\/$/, "").replace("https://localhost", "http://localhost");
+const AI_API_URL = (process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000")
+  .replace(/\/$/, "")
+  .replace("https://localhost", "http://localhost");
 
 // ── Request / Response types matching the FastAPI backend ──
 
@@ -64,19 +66,35 @@ export const aiService = {
     userId?: string,
   ): Promise<ChatResponse> {
     const headers = await getAuthHeaders(token, userId);
+    
+    // Ensure we are calling the endpoint with a trailing slash to avoid 307 redirects
+    // and ensure headers like Authorization are preserved.
+    const baseUrl = AI_API_URL.replace(/\/$/, "");
+    const url = `${baseUrl}/api/v1/chat/`;
+    
+    console.log(`[AI Service] Sending message...`, { 
+      url,
+      params: { 
+        tokenPresent: !!headers.Authorization,
+        tokenLength: headers.Authorization?.length || 0,
+        userId: headers["X-User-Id"] 
+      } 
+    });
 
-    const res = await fetch(`${AI_API_URL}/api/v1/chat/`, {
+    const res = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify(payload),
     }).catch((err) => {
+      console.error("[AI Service] Fetch error:", err);
       throw new Error(
-        `Connection to AI Backend failed. Is it running at ${AI_API_URL}?`,
+        `Connection to AI Backend failed. Is it running at ${url}?`,
       );
     });
 
     if (!res.ok) {
       const body = await res.text();
+      console.error(`[AI Service] 401/Error Detail:`, body);
       throw new Error(`AI chat failed (${res.status}): ${body}`);
     }
 

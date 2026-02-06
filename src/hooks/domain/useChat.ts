@@ -34,10 +34,15 @@ const generateId = () => {
 
 export function useChat(options: UseChatOptions = {}) {
   const { language = "en", onAutoExpand } = options;
-  const { session } = useAuth();
-  console.log("useChat: hook rendering with session:", {
-    hasSession: !!session,
-    userId: session?.user?.id,
+  const { session, user } = useAuth();
+  
+  // Use session or user from context, with a fallback check
+  const activeToken = session?.access_token;
+  const activeUserId = session?.user?.id || user?.id;
+
+  console.log("useChat: hook rendering with identity:", {
+    hasToken: !!activeToken,
+    userId: activeUserId,
   });
 
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -56,17 +61,9 @@ export function useChat(options: UseChatOptions = {}) {
     mutationFn: (message: string) => {
       console.log("useChat: mutationFn started", {
         message,
-        hasSession: !!session,
-        userId: session?.user?.id,
-        hasToken: !!session?.access_token,
+        hasToken: !!activeToken,
+        userId: activeUserId,
       });
-
-      if (!session?.access_token || !session?.user?.id) {
-        console.warn(
-          "useChat: session data is null, the request will likely fail at the security layer, but proceeding anyway for debugging.",
-          { session },
-        );
-      }
 
       return aiService.sendMessage(
         {
@@ -74,8 +71,8 @@ export function useChat(options: UseChatOptions = {}) {
           session_id: sessionIdRef.current,
           language,
         },
-        session?.access_token,
-        session?.user?.id,
+        activeToken,
+        activeUserId,
       );
     },
 

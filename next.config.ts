@@ -5,6 +5,7 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  trailingSlash: false,
 };
 
 export default withNextIntl(nextConfig);
