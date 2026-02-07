@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Shield,
   Ship,
@@ -19,7 +20,27 @@ import { toast } from "sonner";
 export default function RegisterPage() {
   const router = useRouter();
   const locale = useLocale();
+  const { profile, isLoading: isAuthLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthLoading && profile) {
+      router.push("/");
+    }
+  }, [profile, isAuthLoading, router]);
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse">
+            Checking Node Authorization...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

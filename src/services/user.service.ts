@@ -11,6 +11,7 @@ export class UsersService extends BaseService<'users'> {
                 .from('users')
                 .select(`
                     *,
+                    email,
                     organisation:organisations(*)
                 `, { count: 'exact' });
 
