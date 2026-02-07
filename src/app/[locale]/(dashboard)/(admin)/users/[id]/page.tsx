@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/utils/supabase/client";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import {
     Shield,
     User,
@@ -34,13 +35,13 @@ export default function UserDetailPage() {
     useEffect(() => {
         const fetchUserDetail = async () => {
             if (!id) return;
-            
+
             const { data, error } = await supabase
                 .from('users')
                 .select('*, organisation:organisations(*)')
                 .eq('id', id)
                 .single();
-            
+
             if (error) {
                 show("Could not fetch user details", "error");
             } else {
@@ -88,7 +89,7 @@ export default function UserDetailPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2 border-b border-foreground/5">
                 <div className="flex items-center gap-6">
-                    <button 
+                    <button
                         onClick={() => router.back()}
                         className="p-3 bg-foreground/5 hover:bg-foreground/10 rounded-2xl border border-foreground/5 transition-all"
                     >
@@ -97,19 +98,19 @@ export default function UserDetailPage() {
                     <div>
                         <h1 className="text-4xl font-black tracking-tight mb-2 uppercase">User Blueprint</h1>
                         <p className="text-foreground/50 font-medium font-mono text-xs uppercase tracking-widest flex items-center gap-2">
-                           <Database size={12} className="text-primary" /> NODE_SYS_ID: {user.id}
+                            <Database size={12} className="text-primary" /> NODE_SYS_ID: {user.id}
                         </p>
                     </div>
                 </div>
                 <div className="flex gap-3">
-                    <button 
+                    <button
                         onClick={() => show("Resetting security tokens...", "info")}
                         className="px-6 py-3 bg-foreground/5 hover:bg-foreground/10 text-foreground rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-foreground/5"
                     >
                         Reset Password
                     </button>
-                    <button 
-                         onClick={() => show("System access revoked", "error")}
+                    <button
+                        onClick={() => show("System access revoked", "error")}
                         className="px-6 py-3 bg-error/10 text-error hover:bg-error/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-error/10"
                     >
                         Suspend Entry
@@ -122,7 +123,7 @@ export default function UserDetailPage() {
                 <div className="space-y-8 lg:col-span-1">
                     <div className="glass-card border border-foreground/10 overflow-hidden bg-foreground/5 rounded-3xl p-8 text-center relative">
                         <div className="absolute top-0 right-0 p-4">
-                             <div className={cn(
+                            <div className={cn(
                                 "px-2.5 py-1 rounded-lg border text-[8px] font-black uppercase tracking-widest",
                                 user.role === 'ADMIN' ? "text-error border-error/20 bg-error/10" : "text-primary border-primary/20 bg-primary/10"
                             )}>
@@ -134,9 +135,9 @@ export default function UserDetailPage() {
                         </div>
                         <h2 className="text-2xl font-black text-foreground">{user.username}</h2>
                         <p className="text-foreground/40 text-sm font-medium mt-1">{user.email}</p>
-                        
+
                         <div className="mt-8 flex justify-center gap-2">
-                             <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground/40 hover:text-primary transition-colors">
+                            <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground/40 hover:text-primary transition-colors">
                                 <Activity size={18} />
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground/40 hover:text-primary transition-colors">
@@ -182,7 +183,7 @@ export default function UserDetailPage() {
                                 </div>
                             </div>
 
-                             <div className="p-6 rounded-2xl bg-foreground/[0.03] border border-foreground/5 space-y-4">
+                            <div className="p-6 rounded-2xl bg-foreground/[0.03] border border-foreground/5 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Active Sessions</span>
                                     <span className="text-[10px] px-2 py-0.5 bg-primary/20 text-primary border border-primary/20 rounded-full font-black uppercase">2 Active</span>
@@ -193,7 +194,7 @@ export default function UserDetailPage() {
                                 </div>
                             </div>
 
-                             <div className="p-6 rounded-2xl bg-foreground/[0.03] border border-foreground/5 space-y-4">
+                            <div className="p-6 rounded-2xl bg-foreground/[0.03] border border-foreground/5 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Access Expiry</span>
                                     <Unlock size={16} className="text-primary" />
@@ -204,7 +205,7 @@ export default function UserDetailPage() {
                                 </div>
                             </div>
 
-                             <div className="p-6 rounded-2xl bg-foreground/[0.03] border border-foreground/5 space-y-4">
+                            <div className="p-6 rounded-2xl bg-foreground/[0.03] border border-foreground/5 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Last Activity</span>
                                     <Activity size={16} className="text-primary" />
@@ -223,10 +224,10 @@ export default function UserDetailPage() {
                             Communication Logs
                         </h3>
                         <div className="space-y-4">
-                             {[
+                            {[
                                 { date: "Feb 04, 2026", subject: "Port Authority System Update", status: "Delivered" },
                                 { date: "Jan 12, 2026", subject: "Password Reset Confirmation", status: "Opened" },
-                             ].map((log, i) => (
+                            ].map((log, i) => (
                                 <div key={i} className="flex justify-between items-center p-4 bg-foreground/5 rounded-xl border border-foreground/5">
                                     <div>
                                         <p className="text-xs font-bold">{log.subject}</p>
@@ -234,7 +235,7 @@ export default function UserDetailPage() {
                                     </div>
                                     <span className="text-[10px] font-black text-foreground/30 uppercase border border-foreground/10 px-2 py-0.5 rounded-md">{log.status}</span>
                                 </div>
-                             ))}
+                            ))}
                         </div>
                     </div>
                 </div>

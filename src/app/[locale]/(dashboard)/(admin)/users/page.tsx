@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/utils/supabase/client";
-import { addOperator } from "./actions";
 import {
     Search,
     UserPlus,
@@ -88,7 +87,7 @@ export default function UsersPage() {
             const { data, error } = await supabase
                 .from('users')
                 .select('*, organisation:organisations(*)');
-            
+
             if (error) {
                 show(error.message, "error");
             } else {
@@ -127,7 +126,7 @@ export default function UsersPage() {
                     <h1 className="text-4xl font-black tracking-tight mb-2 uppercase">{t("title")}</h1>
                     <p className="text-foreground/50 font-medium">{t("subtitle")}</p>
                 </div>
-                <button 
+                <button
                     onClick={() => setShowAddModal(true)}
                     className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
                 >
@@ -192,11 +191,49 @@ export default function UsersPage() {
                                 <X size={20} />
                             </button>
                         </div>
-                        <form action={async (formData) => {
+                        <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            const formData = new FormData(e.currentTarget);
+                            const username = formData.get("username") as string;
+                            const email = formData.get("email") as string;
+                            const password = formData.get("password") as string;
+
                             try {
-                                await addOperator(formData);
+                                if (profile?.role !== 'ADMIN') throw new Error("Unauthorized");
+
+                                // 1. Sign up the operator
+                                const { data: authData, error: authError } = await supabase.auth.signUp({
+                                    email,
+                                    password,
+                                    options: {
+                                        data: {
+                                            username,
+                                            role: 'OPERATOR'
+                                        }
+                                    }
+                                });
+
+                                if (authError || !authData.user) throw new Error(authError?.message || "Auth failed");
+
+                                // 2. Create profile
+                                const { error: profileError } = await supabase
+                                    .from('users')
+                                    .upsert({
+                                        id: authData.user.id,
+                                        username,
+                                        org_id: profile.org_id,
+                                        role: 'OPERATOR'
+                                    }, { onConflict: 'id' });
+
+                                if (profileError) throw new Error(profileError.message);
+
                                 show(t("added"), "success");
                                 setShowAddModal(false);
+                                // Refresh list
+                                const { data: newData } = await supabase
+                                    .from('users')
+                                    .select('*, organisation:organisations(*)');
+                                if (newData) setUsers(newData);
                             } catch (e: any) {
                                 show(e.message, "error");
                             }
@@ -213,7 +250,7 @@ export default function UsersPage() {
                                 <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 px-1">{t("password")}</label>
                                 <input name="password" type="password" placeholder="••••••••" className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground" required />
                             </div>
-                            <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 mt-4">
+                            <button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 mt-4">
                                 {t("create")}
                             </button>
                         </form>

@@ -43,7 +43,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         {headerRight}
       </div>
 
-      <div className="relative z-10 flex-1">{children}</div>
+      <div className="relative z-10 flex-1 min-h-0 min-w-0">{children}</div>
     </motion.div>
   );
 };

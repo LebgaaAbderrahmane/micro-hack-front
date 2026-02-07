@@ -68,7 +68,7 @@ export const OperatorHeader = () => {
                                 <div className="flex items-center gap-1 mt-0.5">
                                     <Shield size={10} className="text-primary/60" />
                                     <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">
-                                        {profile?.role?.replace("_", " ")}
+                                        {profile?.role?.replace("_", " ") || "OPERATOR"}
                                     </p>
                                 </div>
                             </div>
@@ -97,7 +97,7 @@ export const OperatorHeader = () => {
                                             Email
                                         </p>
                                         <p className="text-xs font-semibold text-foreground/70 truncate">
-                                            {profile?.username}@portflow.com
+                                            {profile?.email || "No email"}
                                         </p>
                                     </div>
                                 </div>

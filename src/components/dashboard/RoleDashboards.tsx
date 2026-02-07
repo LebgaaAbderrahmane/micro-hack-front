@@ -231,7 +231,7 @@ export const AdminDashboard = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ChartCard title="Bookings Per Hour" subtitle="Today's distribution" accentColor="bg-secondary" delay={2}>
-          <div className="h-[180px]">
+          <div className="h-[180px] min-h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={bookingsPerHour}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -245,7 +245,7 @@ export const AdminDashboard = () => {
         </ChartCard>
 
         <ChartCard title="Booking Status" subtitle="All-time distribution" accentColor="bg-accent" delay={3}>
-          <div className="h-[180px] flex items-center">
+          <div className="h-[180px] min-h-[180px] flex items-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -275,7 +275,7 @@ export const AdminDashboard = () => {
       {/* Terminal Utilization Bar + Recommendations + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <ChartCard title="Terminal Utilization" subtitle="Current occupancy vs capacity" accentColor="bg-success" className="lg:col-span-1" delay={4}>
-          <div className="h-[180px]">
+          <div className="h-[180px] min-h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={terminalOccupancy} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -493,7 +493,7 @@ export const TerminalOpDashboard = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ChartCard title="Gate Throughput" subtitle="Entries & exits per hour" accentColor="bg-info" delay={2}>
-          <div className="h-[180px]">
+          <div className="h-[180px] min-h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={throughputData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -509,7 +509,7 @@ export const TerminalOpDashboard = () => {
         </ChartCard>
 
         <ChartCard title="Slot Availability" subtitle="Today's time slots" accentColor="bg-primary" delay={3}>
-          <div className="h-[180px]">
+          <div className="h-[180px] min-h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={slotAvailability}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -675,7 +675,7 @@ export const CarrierDashboard = () => {
       {/* Charts + Upcoming Bookings */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <ChartCard title="Weekly Booking Trend" subtitle="Last 7 days" accentColor="bg-primary" className="lg:col-span-2" delay={1}>
-          <div className="h-[200px]">
+          <div className="h-[200px] min-h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={weeklyTrend}>
                 <defs>
@@ -753,7 +753,7 @@ export const CarrierDashboard = () => {
       {/* Fleet Status + Booking Types + Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <ChartCard title="Fleet Utilization" subtitle="Current truck usage" accentColor="bg-accent" delay={2}>
-          <div className="h-[160px] flex items-center justify-center">
+          <div className="h-[160px] min-h-[160px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={fleetUtilization} startAngle={180} endAngle={0}>
                 <RadialBar dataKey="value" cornerRadius={10} background={{ fill: "rgba(255,255,255,0.03)" }} />

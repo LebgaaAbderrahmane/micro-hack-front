@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   Shield,
   Ship,
@@ -10,11 +9,89 @@ import {
   User,
   Building,
   Landmark,
+  Loader2,
 } from "lucide-react";
-import { signup } from "../login/actions";
-import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter, Link } from "@/i18n/routing";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const username = formData.get("username") as string;
+    const orgName = formData.get("orgName") as string;
+    const nif = formData.get("nif") as string;
+
+    const supabase = createClient();
+
+    try {
+      // 1. Sign up user in Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            username,
+            role: "DISPATCHER"
+          }
+        },
+      });
+
+      if (authError || !authData.user) {
+        toast.error(authError?.message || "Could not authenticate user");
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Create Carrier Organization
+      const { data: orgData, error: orgError } = await supabase
+        .from("organisations")
+        .insert({
+          name: orgName,
+          nif: nif,
+          type: "CARRIER",
+        })
+        .select()
+        .single();
+
+      if (orgError) {
+        toast.error(`Failed to create organization: ${orgError.message}`);
+        setIsLoading(false);
+        return;
+      }
+
+      // 3. Create User Profile
+      const { error: profileError } = await supabase.from("users").insert({
+        id: authData.user.id,
+        username: username,
+        org_id: orgData.id,
+        role: "DISPATCHER",
+      });
+
+      if (profileError) {
+        toast.error(`Failed to create user profile: ${profileError.message}`);
+        setIsLoading(false);
+        return;
+      }
+
+      toast.success("Account created successfully. Redirecting...");
+      router.push("/");
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 font-sans">
       <div className="w-full max-w-md mx-auto space-y-8 relative z-10">
@@ -33,7 +110,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-foreground/5 border border-foreground/10 p-8 rounded-3xl backdrop-blur-xl shadow-2xl">
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSignup}>
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-foreground/40 px-1">
                 Username
@@ -46,6 +123,7 @@ export default function RegisterPage() {
                   placeholder="johndoe"
                   className="w-full bg-foreground/5 border border-foreground/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -62,6 +140,7 @@ export default function RegisterPage() {
                   placeholder="name@company.com"
                   className="w-full bg-foreground/5 border border-foreground/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -76,6 +155,7 @@ export default function RegisterPage() {
                 placeholder="••••••••"
                 className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -92,6 +172,7 @@ export default function RegisterPage() {
                     placeholder="Logistics Co."
                     className="w-full bg-foreground/5 border border-foreground/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -107,16 +188,25 @@ export default function RegisterPage() {
                     placeholder="12345678"
                     className="w-full bg-foreground/5 border border-foreground/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
             </div>
 
             <button
-              formAction={signup}
-              className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 mt-4"
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 mt-4 flex items-center justify-center gap-2"
             >
-              Create Account
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Registering...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </button>
           </form>
 

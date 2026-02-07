@@ -42,10 +42,6 @@ export function useChat(options: UseChatOptions = {}) {
   const activeToken = session?.access_token;
   const activeUserId = session?.user?.id || user?.id;
 
-  console.log("useChat: hook rendering with identity:", {
-    hasToken: !!activeToken,
-    userId: activeUserId,
-  });
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -71,12 +67,6 @@ export function useChat(options: UseChatOptions = {}) {
   const mutation = useMutation({
     mutationFn: async (message: string) => {
       abortControllerRef.current = new AbortController();
-      console.log("useChat: mutationFn started", {
-        message,
-        hasToken: !!activeToken,
-        userId: activeUserId,
-      });
-
       try {
         const result = await aiService.sendMessage(
           {
@@ -98,26 +88,20 @@ export function useChat(options: UseChatOptions = {}) {
       }
     },
 
-    onMutate: (variables) => {
-      console.log("useChat: onMutate started", variables);
+    onMutate: () => {
       const loadingId = generateId();
-      setMessages((prev) => {
-        const next: ChatMessage[] = [
-          ...prev,
-          {
-            id: loadingId,
-            role: "assistant" as const,
-            text: "",
-            isLoading: true,
-          },
-        ];
-        console.log("useChat: messages state after onMutate", next);
-        return next;
-      });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: loadingId,
+          role: "assistant" as const,
+          text: "",
+          isLoading: true,
+        },
+      ]);
     },
 
     onSuccess: (data: ChatResponse) => {
-      console.log("useChat: mutation success", data);
       // Persist session for multi-turn conversation
       sessionIdRef.current = data.session_id;
 
@@ -133,9 +117,6 @@ export function useChat(options: UseChatOptions = {}) {
       // Replace the loading placeholder with the real response
       setMessages((prev) => {
         const withoutLoading = prev.filter((m) => !m.isLoading);
-        console.log("useChat: updating messages with response", {
-          withoutLoadingLength: withoutLoading.length,
-        });
         return [
           ...withoutLoading,
           {
@@ -183,17 +164,7 @@ export function useChat(options: UseChatOptions = {}) {
 
   const sendMessage = useCallback(
     (text: string) => {
-      console.log("useChat: sendMessage called", {
-        text,
-        isPending: mutation.isPending,
-      });
-      if (!text.trim() || mutation.isPending) {
-        console.warn("useChat: sendMessage skipped", {
-          text,
-          isPending: mutation.isPending,
-        });
-        return;
-      }
+      if (!text.trim() || mutation.isPending) return;
 
       // Add user message
       setMessages((prev) => [
@@ -201,7 +172,6 @@ export function useChat(options: UseChatOptions = {}) {
         { id: generateId(), role: "user", text },
       ]);
 
-      console.log("useChat: calling mutation.mutate");
       mutation.mutate(text);
     },
     [mutation],

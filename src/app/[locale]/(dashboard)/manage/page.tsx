@@ -53,7 +53,7 @@ import { toast } from "sonner";
 import { usersService } from "@/services/user.service";
 import { terminalsService } from "@/services/infrastructure.service";
 import { aiAgentsService } from "@/services/system.service";
-import { addOperator } from "../(admin)/users/actions";
+import { createClient } from "@/utils/supabase/client";
 
 // --- Types & Sample Data ---
 
@@ -300,15 +300,60 @@ export default function ManagePage() {
         }
 
         setIsLoading(true);
+        const supabase = createClient();
+
         try {
             if (activeTab === "users") {
-                const formData = new FormData();
-                formData.append("username", newItemName);
-                formData.append("email", newItemEmail);
-                formData.append("password", newItemPassword);
-                formData.append("role", newItemRole.toUpperCase());
+                // Client-side implementation of addOperator
+                const { data: { user: currentUser } } = await supabase.auth.getUser();
+                if (!currentUser) throw new Error("Unauthorized");
 
-                await addOperator(formData);
+                const { data: adminProfile } = await supabase
+                    .from('users')
+                    .select('role, org_id')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                if (adminProfile?.role !== 'ADMIN') {
+                    throw new Error("Only admins can add operation users");
+                }
+
+                // Create the operator user in Auth (Requires public signup or service role, using signUp as placeholder)
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: newItemEmail,
+                    password: newItemPassword,
+                    options: {
+                        data: {
+                            username: newItemName,
+                            role: newItemRole.toUpperCase()
+                        }
+                    }
+                });
+
+                if (authError || !authData.user) {
+                    throw new Error(authError?.message || "Failed to create auth user");
+                }
+
+                // Create or update the profile for the operator
+                const roleMap: Record<string, string> = {
+                    'ADMIN': 'ADMIN',
+                    'OPERATOR': 'OPERATOR',
+                    'CARRIER': 'DISPATCHER'
+                };
+                const role = roleMap[newItemRole.toUpperCase()] || 'OPERATOR';
+
+                const { error: profileError } = await supabase
+                    .from('users')
+                    .upsert({
+                        id: authData.user.id,
+                        username: newItemName,
+                        org_id: adminProfile.org_id,
+                        role: role as any
+                    }, { onConflict: 'id' });
+
+                if (profileError) {
+                    throw new Error(profileError.message);
+                }
             } else if (activeTab === "terminals") {
                 await terminalsService.create({
                     zone_name: newItemName,

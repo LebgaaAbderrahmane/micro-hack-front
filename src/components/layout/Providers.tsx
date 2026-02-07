@@ -34,11 +34,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <AuthProvider>
-          {mounted && <ToastContainer />}
-          {children}
-          {mounted && <FloatingSettings />}
-        </AuthProvider>
+        {(!mswReady && process.env.NODE_ENV === "development") ? (
+          <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <AuthProvider>
+            {mounted && <ToastContainer />}
+            {children}
+            {mounted && <FloatingSettings />}
+          </AuthProvider>
+        )}
       </ThemeProvider>
     </QueryClientProvider>
   );

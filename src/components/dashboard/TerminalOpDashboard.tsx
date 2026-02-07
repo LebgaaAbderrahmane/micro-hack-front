@@ -6,7 +6,7 @@ import TerminalYard from "./TerminalYard";
 import { useToast } from "@/components/common/Toast";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 
 export const TerminalOpDashboard = () => {
     const { show } = useToast();

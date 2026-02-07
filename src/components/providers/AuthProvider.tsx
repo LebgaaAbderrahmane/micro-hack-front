@@ -6,18 +6,20 @@ import {
   useState,
   useContext,
   useCallback,
+  useRef,
 } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
-import { Database } from "@/types/database.types";
-import { signOutAction } from "@/app/[locale]/(auth)/actions";
+import { User, Organisation, UserRole } from "@/types/models/auth";
+import { useRouter, usePathname } from "@/i18n/routing";
 
-type Profile = Database["public"]["Tables"]["users"]["Row"] & {
-  organisation?: Database["public"]["Tables"]["organisations"]["Row"];
+export type Profile = User & {
+  organisation?: Organisation;
+  email?: string | null;
 };
 
 interface AuthContextType {
-  user: User | null;
+  user: SupabaseUser | null;
   profile: Profile | null;
   session: Session | null;
   isLoading: boolean;
@@ -33,17 +35,28 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
+  const lastFetchedUserId = useRef<string | null>(null);
+  const fetchInProgress = useRef<string | null>(null);
+  const hasInitialized = useRef(false);
 
   // Use a stable reference for the Supabase client
   const [supabase] = useState(() => createClient());
 
   const fetchProfile = useCallback(
     async (userId: string, retryCount = 0): Promise<Profile | null> => {
+      // Avoid overlapping fetches for the same user
+      if (fetchInProgress.current === userId && retryCount === 0) return null;
+
       try {
+        fetchInProgress.current = userId;
+        console.log(`[AuthProvider] Fetching profile for ${userId} (attempt ${retryCount + 1})`);
+
         // Try to fetch with organisation details first
         const { data, error } = await supabase
           .from("users")
@@ -52,14 +65,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (!error && data) {
+          console.log("[AuthProvider] Profile fetch success:", data.role);
           return data as Profile;
         }
 
+        // Handle specific "PGRST116" error (no rows found)
+        if (error?.code === "PGRST116") {
+          console.warn(`[AuthProvider] No profile found (PGRST116) for ${userId}. Session might be stale or RLS blocking.`);
+          return null;
+        }
+
+        console.error("[AuthProvider] Profile fetch error details:", {
+          code: error?.code,
+          message: error?.message,
+          details: error?.details,
+          hint: error?.hint
+        });
+
         // If we get an empty error in dev, it might be MSW still booting
         if (process.env.NODE_ENV === "development" && retryCount < 2) {
-           console.log(`[AuthProvider] Potential race with MSW, retrying... (${retryCount + 1})`);
-           await new Promise(resolve => setTimeout(resolve, 500));
-           return fetchProfile(userId, retryCount + 1);
+          console.log(`[AuthProvider] Potential race with MSW, retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 500));
+          return fetchProfile(userId, retryCount + 1);
         }
 
         console.warn("[AuthProvider] Detailed profile fetch failed, trying basic fetch:", error);
@@ -72,12 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (basicError) {
-          console.error("[AuthProvider] Basic profile fetch error:", {
-            message: basicError.message,
-            details: basicError.details,
-            hint: basicError.hint,
-            code: basicError.code
-          });
+          console.error("[AuthProvider] Basic profile fetch error:", basicError);
           return null;
         }
 
@@ -85,6 +107,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.error("[AuthProvider] Profile fetch exception:", err);
         return null;
+      } finally {
+        if (retryCount === 0) {
+          fetchInProgress.current = null;
+        }
       }
     },
     [supabase],
@@ -94,59 +120,78 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
 
     const initializeAuth = async () => {
-      // Safety timeout to prevent infinite loading if Supabase hangs
+      if (hasInitialized.current) {
+        console.log("[AuthProvider] Already initialized, skipping...");
+        return;
+      }
+      hasInitialized.current = true;
+
+      // Safety timeout
       const timeoutId = setTimeout(() => {
-        if (isLoading) {
-          console.warn(
-            "[AuthProvider] Auth initialization timed out - forcing loading to false",
-          );
+        if (mounted && isLoading) {
+          console.warn("[AuthProvider] Auth initialization timeout reached. Unblocking UI.");
           setIsLoading(false);
         }
-      }, 5000);
+      }, 8000);
 
       try {
-        const {
-          data: { session: currentSession },
-        } = await supabase.auth.getSession();
+        console.log("[AuthProvider] Fetching initial session...");
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error("[AuthProvider] Initial session error:", sessionError);
+          // If the refresh token is invalid/not found, we should ensure clean state
+          if (sessionError.message?.includes("refresh_token_not_found") || sessionError.status === 400) {
+            console.warn("[AuthProvider] Refresh token invalid. Performing clean sign out.");
+            await supabase.auth.signOut();
+          }
+        }
 
         if (!mounted) return;
 
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+        console.log("[AuthProvider] Initializing session state:", !!initialSession);
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
 
-        if (currentSession?.user) {
-          // 1. Optimistic Profile from Metadata (Backup)
-          const metadata = currentSession.user.user_metadata;
-          if (metadata?.role) {
-            console.log("[AuthProvider] Using optimistic profile from metadata");
-            const optimisticProfile = {
-              id: currentSession.user.id,
-              role: metadata.role,
-              username: metadata.username || currentSession.user.email?.split("@")[0],
-              email: currentSession.user.email,
-              org_id: metadata.org_id,
-              created_at: new Date().toISOString()
-            } as Profile;
-            setProfile(optimisticProfile);
+        if (initialSession?.user) {
+          // 1. Prepare optimistic profile IMMEDIATELY from metadata
+          const metadata = initialSession.user.user_metadata || {};
+          const optimisticProfile = {
+            id: initialSession.user.id,
+            role: (metadata.role as UserRole) || "DISPATCHER",
+            username: metadata.username || initialSession.user.id.substring(0, 8),
+            org_id: metadata.org_id,
+            email: initialSession.user.email,
+            created_at: new Date().toISOString(),
+          } as Profile;
+
+          // 2. Set optimistic profile and UNBLOCK UI immediately
+          setProfile(optimisticProfile);
+          setIsLoading(false);
+
+          // 3. Background fetch "Real" Profile (enhancement) - silent success
+          if (lastFetchedUserId.current !== initialSession.user.id) {
+            lastFetchedUserId.current = initialSession.user.id;
+            fetchProfile(initialSession.user.id).then((profileData) => {
+              if (mounted && profileData) {
+                setProfile(profileData);
+              } else if (mounted && !optimisticProfile.role) {
+                console.error("[AuthProvider] Strictly Enforced: Background check failed, no fallback. Signing out.");
+                signOut();
+              }
+            });
           }
-
-          // 2. Fetch Real Profile from DB
-          const profileData = await fetchProfile(currentSession.user.id);
-
-          // 3. Confirm Profile (DB takes precedence, keep optimistic if DB fails)
-          if (mounted) {
-            if (profileData) {
-              setProfile(profileData);
-            } else if (!metadata?.role) {
-              // Only clear if we didn't have an optimistic profile
-              setProfile(null);
-            }
-          }
+        } else {
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("[AuthProvider] Initialization error:", error);
+        if (mounted) {
+          setProfile(null);
+          setSession(null);
+          setIsLoading(false);
+        }
       } finally {
-        if (mounted) setIsLoading(false);
         clearTimeout(timeoutId);
       }
     };
@@ -156,42 +201,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log(`[AuthProvider] State change: ${event}`, {
-        userId: newSession?.user?.id,
-      });
+      console.log(`[AuthProvider] State change: ${event}`);
 
       if (!mounted) return;
+
+      // When a SIGNED_IN or INITIAL_SESSION event happens with a NEW user, we should ensure isLoading is true
+      // until we have confirmed the profile. TOKEN_REFRESHED should NOT trigger loading.
+      const isNewUser = newSession?.user && newSession.user.id !== lastFetchedUserId.current;
+      if (newSession?.user && (event === "SIGNED_IN" || event === "INITIAL_SESSION") && isNewUser) {
+        setIsLoading(true);
+      }
 
       setSession(newSession);
       setUser(newSession?.user ?? null);
 
       if (newSession?.user) {
-        // 1. Optimistic Profile
-        const metadata = newSession.user.user_metadata;
-        if (metadata?.role) {
-          const optimisticProfile = {
-            id: newSession.user.id,
-            role: metadata.role,
-            username: metadata.username || newSession.user.email?.split("@")[0],
-            email: newSession.user.email,
-            org_id: metadata.org_id,
-            created_at: new Date().toISOString()
-          } as Profile;
-          setProfile(optimisticProfile);
-        }
+        // 1. Prepare optimistic profile IMMEDIATELY from metadata
+        const metadata = newSession.user.user_metadata || {};
+        const optimisticProfile = {
+          id: newSession.user.id,
+          role: (metadata.role as UserRole) || "DISPATCHER",
+          username: metadata.username || newSession.user.email?.split("@")[0],
+          org_id: metadata.org_id,
+          email: newSession.user.email,
+          created_at: new Date().toISOString(),
+        } as Profile;
 
-        // 2. Fetch Real Profile
-        const profileData = await fetchProfile(newSession.user.id);
+        // 2. Set optimistic profile and UNBLOCK UI immediately
+        setProfile(optimisticProfile);
+        setIsLoading(false);
 
-        if (mounted) {
-          if (profileData) {
-            setProfile(profileData);
-          } else if (!metadata?.role) {
-            setProfile(null);
-          }
+        // 3. Background fetch "Real" Profile - ONLY if user changed or profile missing
+        if (lastFetchedUserId.current !== newSession.user.id || !profile) {
+          lastFetchedUserId.current = newSession.user.id;
+          fetchProfile(newSession.user.id).then((profileData) => {
+            if (mounted && profileData) {
+              setProfile(profileData);
+            } else if (mounted && !optimisticProfile.role) {
+              console.error("[AuthProvider] Strictly Enforced: Background check failed on state change. Signing out.");
+              signOut();
+            }
+          });
         }
+      } else if (event === "SIGNED_OUT") {
+        console.log("[AuthProvider] Handled SIGNED_OUT event");
+        setProfile(null);
+        lastFetchedUserId.current = null;
+        setIsLoading(false);
       } else {
-        if (mounted) setProfile(null);
+        setIsLoading(false);
       }
     });
 
@@ -201,15 +259,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabase, fetchProfile]);
 
+  // Client-side Navigation Guard (SPA Protection)
+  useEffect(() => {
+    if (isLoading) {
+      console.log("[AuthProvider] Guard: Still loading, skipping...");
+      return;
+    }
+
+    const isAuthPage = /\/(login|register|auth\/callback)/.test(pathname);
+    const targetIsHome = pathname === "/" || pathname === "";
+
+    console.log(`[AuthProvider] Guard: Path="${pathname}", isAuthPage=${isAuthPage}, hasSession=${!!session}`);
+
+    if (!session && !isAuthPage) {
+      console.log("[AuthProvider] Guard: Redirecting to /login (Unauthenticated)");
+      router.push("/login");
+    } else if (session && isAuthPage && !pathname.includes("auth/callback")) {
+      console.log("[AuthProvider] Guard: Redirecting to / (Authenticated)");
+      router.push("/");
+    } else if (session && targetIsHome && profile) {
+      // Optional: Ensure we are on the right dashboard? No, let page handle it.
+      console.log("[AuthProvider] Guard: Already on dashboard/authorized area.");
+    }
+  }, [session, isLoading, pathname, router, profile]);
+
   const signOut = async () => {
-    // 1. Clear local state for immediate feedback
     setProfile(null);
     setUser(null);
     setSession(null);
-
-    // 2. Call server action to clear cookies and redirect
-    // This will trigger a redirect to /login
-    await signOutAction();
+    await supabase.auth.signOut();
+    router.push("/login");
   };
 
   return (

@@ -159,7 +159,7 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
                 <p className="font-bold text-sm truncate text-foreground">{profile?.username || "User"}</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   <Shield size={10} className="text-primary/60" />
-                  <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">{profile?.role?.replace("_", " ")}</p>
+                  <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">{profile?.role?.replace("_", " ") || "USER"}</p>
                 </div>
               </div>
             </div>
@@ -178,8 +178,8 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
                 <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-foreground/[0.02] border border-foreground/5">
                   <Mail size={14} className="text-foreground/30" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest leading-none mb-1">Email (Internal)</p>
-                    <p className="text-xs font-semibold text-foreground/70 truncate">{profile?.username}@portflow.com</p>
+                    <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest leading-none mb-1">Email</p>
+                    <p className="text-xs font-semibold text-foreground/70 truncate">{profile?.email || "No email"}</p>
                   </div>
                 </div>
               </div>

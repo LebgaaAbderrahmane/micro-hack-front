@@ -5,7 +5,7 @@ import { createServerClient } from '@supabase/ssr';
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  
+
   // 1. Handle i18n routing first
   const handleI18n = createMiddleware(routing);
   let response = handleI18n(request);
@@ -23,11 +23,11 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) => {
             request.cookies.set(name, value);
           });
-          
+
           // Re-generate response to include fresh cookies if needed
           // Some versions of next-intl middleware might benefit from this
           response = handleI18n(request);
-          
+
           cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options);
           });
@@ -36,90 +36,8 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // 3. Get user session (refreshes if needed)
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-  if (authError && authError.message !== "Auth session missing!") {
-    const isInvalidToken = authError.message.toLowerCase().includes("refresh token") || 
-                          authError.message.toLowerCase().includes("invalid token");
-    
-    if (isInvalidToken) {
-      console.warn(`[Proxy] Session invalidated: ${authError.message}`);
-      // Force sign out to clear invalid cookies and prevent infinite refresh attempts
-      await supabase.auth.signOut();
-    } else {
-      console.error(`[Proxy] Auth error: ${authError.message}`);
-    }
-  }
-
-  // Define public paths (login, register, and auth callback)
-  const isAuthPage = /\/(login|register|auth\/callback)/.test(pathname);
-
-  // 4. Protection Logic
-  if (!user && !isAuthPage) {
-    // Redirect unauthenticated users to login
-    const locale = pathname.split('/')[1];
-    const finalLocale = routing.locales.includes(locale as any) ? locale : routing.defaultLocale;
-    
-    const redirectUrl = new URL(`/${finalLocale}/login`, request.url);
-    const redirectResponse = NextResponse.redirect(redirectUrl);
-    
-    // Crucial: Copy cookies and headers from the base modified response (e.g. session tokens, locale headers)
-    response.cookies.getAll().forEach(cookie => {
-      redirectResponse.cookies.set(cookie);
-    });
-    response.headers.forEach((value, key) => {
-      redirectResponse.headers.set(key, value);
-    });
-    
-    return redirectResponse;
-  }
-
-  if (user) {
-    // Prevent authenticated users from accessing login/register
-    if (isAuthPage && !pathname.includes('auth/callback')) {
-      const locale = pathname.split('/')[1];
-      const finalLocale = routing.locales.includes(locale as any) ? locale : routing.defaultLocale;
-      const redirectUrl = new URL(`/${finalLocale}`, request.url);
-      const redirectResponse = NextResponse.redirect(redirectUrl);
-      
-      response.cookies.getAll().forEach(cookie => {
-        redirectResponse.cookies.set(cookie);
-      });
-      response.headers.forEach((value, key) => {
-        redirectResponse.headers.set(key, value);
-      });
-      
-      return redirectResponse;
-    }
-
-    // Role-based protection
-    const isAdminRoute = /\/(terminals|users)/.test(pathname);
-    if (isAdminRoute) {
-      const { data: profile } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role !== "ADMIN") {
-        console.warn(`[Proxy] Non-admin user ${user.id} attempted to access ${pathname}`);
-        const locale = pathname.split('/')[1];
-        const finalLocale = routing.locales.includes(locale as any) ? locale : routing.defaultLocale;
-        const redirectUrl = new URL(`/${finalLocale}`, request.url);
-        const redirectResponse = NextResponse.redirect(redirectUrl);
-        
-        response.cookies.getAll().forEach(cookie => {
-          redirectResponse.cookies.set(cookie);
-        });
-        response.headers.forEach((value, key) => {
-          redirectResponse.headers.set(key, value);
-        });
-        
-        return redirectResponse;
-      }
-    }
-  }
+  // 3. User session check removed to move to fully client-only auth
+  // This prevents the server from hammering the Supabase API on every request
 
   return response;
 }

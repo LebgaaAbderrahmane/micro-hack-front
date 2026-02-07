@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter, useSearchParams } from "next/navigation";
-import { LogIn, ArrowLeft, AlertCircle } from "lucide-react";
-import { login } from "./actions";
-import Link from "next/link";
+import { useRouter, Link } from "@/i18n/routing";
+import { useSearchParams } from "next/navigation";
+import { LogIn, ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface RoleLoginPageProps {
@@ -23,16 +23,79 @@ export const RoleLoginPage = ({
   icon: Icon,
   themeColor,
 }: RoleLoginPageProps) => {
-  const { profile, isLoading } = useAuth();
+  const { profile, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(searchParams.get("error"));
 
   useEffect(() => {
-    if (!isLoading && profile) {
+    if (!isAuthLoading && profile) {
       router.push("/");
     }
-  }, [profile, isLoading, router]);
+  }, [profile, isAuthLoading, router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    setLocalError(null);
+
+    const supabase = createClient();
+
+    try {
+      console.log(`[Client Login] Attempting login for: ${email}, requiredRole: ${role}`);
+
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        setLocalError(authError.message);
+        setIsLoggingIn(false);
+        return;
+      }
+
+      if (!authData.user) {
+        setLocalError("Authentication failed: No user returned.");
+        setIsLoggingIn(false);
+        return;
+      }
+
+      // Verify Role on Client
+      const { data: profileData, error: profileError } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", authData.user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        console.error("[Client Login] Profile fetch failed:", profileError);
+        await supabase.auth.signOut();
+        setLocalError("Profile not found. Please contact support.");
+        setIsLoggingIn(false);
+        return;
+      }
+
+      if (profileData.role !== role) {
+        console.warn(`[Client Login] Role mismatch. Required: ${role}, Found: ${profileData.role}`);
+        await supabase.auth.signOut();
+        setLocalError(`Unauthorized: This account is registered as ${profileData.role}`);
+        setIsLoggingIn(false);
+        return;
+      }
+
+      console.log("[Client Login] Success. Redirecting...");
+      router.push("/");
+    } catch (err) {
+      console.error("[Client Login] Unexpected error:", err);
+      setLocalError("An unexpected error occurred. Please try again.");
+      setIsLoggingIn(false);
+    }
+  };
 
   return (
     <div className="p-6 min-h-[60vh] flex items-center justify-center">
@@ -76,16 +139,14 @@ export const RoleLoginPage = ({
             )}
           ></div>
 
-          {error && (
+          {localError && (
             <div className="p-4 rounded-xl bg-error/10 border border-error/20 flex items-center gap-3 text-error animate-shake">
               <AlertCircle size={18} />
-              <p className="text-xs font-bold leading-none">{error}</p>
+              <p className="text-xs font-bold leading-none">{localError}</p>
             </div>
           )}
 
-          <form className="space-y-5">
-            <input type="hidden" name="requiredRole" value={role} />
-
+          <form className="space-y-5" onSubmit={handleLogin}>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 px-1">
                 Node Identity (Email)
@@ -93,9 +154,12 @@ export const RoleLoginPage = ({
               <input
                 name="email"
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="identity@portflow.dz"
                 className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-white/10 transition-all text-sm font-medium"
                 required
+                disabled={isLoggingIn}
               />
             </div>
 
@@ -104,30 +168,36 @@ export const RoleLoginPage = ({
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">
                   Access Token (Password)
                 </label>
-                <a
-                  href="#"
-                  className="text-[9px] font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors"
-                >
-                  Forgot?
-                </a>
               </div>
               <input
                 name="password"
                 type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
                 className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-white/10 transition-all text-sm font-medium"
                 required
+                disabled={isLoggingIn}
               />
             </div>
 
             <button
-              formAction={login}
+              type="submit"
+              disabled={isLoggingIn}
               className={cn(
-                "w-full py-4 rounded-xl text-white font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-95 shadow-lg",
+                "w-full py-4 rounded-xl text-white font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2",
                 themeColor,
+                isLoggingIn && "opacity-70 cursor-not-allowed"
               )}
             >
-              Establish Connection
+              {isLoggingIn ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Synchronizing...
+                </>
+              ) : (
+                "Establish Connection"
+              )}
             </button>
           </form>
 
