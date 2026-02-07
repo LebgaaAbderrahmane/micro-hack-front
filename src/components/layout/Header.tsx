@@ -35,9 +35,8 @@ const getNavItems = (role?: string) => {
   if (r === "OPERATOR") {
     return [
       ...baseItems,
-      // { label: "Analytics", href: "/analytics" },
-      { label: "Manage", href: "/bookings" },
-      { label: "Logs", href: "/loggings" },
+      { label: "Solts", href: "/bookings" },
+      { label: "Bookings", href: "/loggings" },
     ];
   }
 

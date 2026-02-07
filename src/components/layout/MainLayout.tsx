@@ -33,7 +33,6 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   // Role-based header rendering
-  const isOperator = profile?.role === "OPERATOR";
 
   // Show loading while waiting for auth to determine header type on client
   if (mounted && isLoading) {
@@ -76,12 +75,9 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Conditional Header based on role */}
         {mounted ? (
-          isOperator ? (
-            <OperatorHeader />
-          ) : (
             <Header onOpenSettings={() => setShowSettings(true)} />
           )
-        ) : (
+         : (
           <div className="h-[82px] w-full" /> // Placeholder for header during hydration
         )}
         <main className="flex-1">
