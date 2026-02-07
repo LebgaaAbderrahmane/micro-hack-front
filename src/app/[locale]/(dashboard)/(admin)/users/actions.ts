@@ -37,15 +37,23 @@ export async function addOperator(formData: FormData) {
     throw new Error(authError?.message || "Failed to create auth user");
   }
 
-  // 3. Create the profile for the operator
+  // 3. Create or update the profile for the operator
+  const rawRole = (formData.get("role") as string) || 'OPERATOR';
+  const roleMap: Record<string, string> = {
+    'ADMIN': 'ADMIN',
+    'OPERATOR': 'OPERATOR',
+    'CARRIER': 'DISPATCHER'
+  };
+  const role = roleMap[rawRole] || 'OPERATOR';
+
   const { error: profileError } = await supabase
     .from('users')
-    .insert({
+    .upsert({
       id: authData.user.id,
       username: username,
-      org_id: profile.org_id, // Same org as admin (presumably Terminal Org for operators)
-      role: 'OPERATOR'
-    });
+      org_id: profile.org_id,
+      role: role as any
+    }, { onConflict: 'id' });
 
   if (profileError) {
     throw new Error(profileError.message);

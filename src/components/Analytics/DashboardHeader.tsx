@@ -8,7 +8,7 @@ export const DashboardHeader = () => {
     return (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 w-full max-w-[1080px] mx-auto px-1">
             <div className="space-y-1">
-                <div className="flex items-center gap-2 text-primary font-medium uppercase tracking-[0.1em] text-[10px]">
+                <div className="flex items-center gap-2 text-primary font-medium uppercase tracking-widest text-[10px]">
                     <LayoutDashboard size={14} />
                     Operations Suite
                 </div>
