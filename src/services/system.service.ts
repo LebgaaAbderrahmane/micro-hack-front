@@ -22,6 +22,7 @@ export class BookingAuditLogsService extends BaseService<'booking_audit_logs'> {
         toDate?: string;
         users?: string[];
         activities?: string[];
+        actorId?: string;
     }): Promise<ServiceResponse<BookingAuditLogWithActor[]>> {
         let query = this.supabase
             .from('booking_audit_logs')
@@ -34,6 +35,9 @@ export class BookingAuditLogsService extends BaseService<'booking_audit_logs'> {
             `)
             .order('timestamp', { ascending: false });
 
+        if (filters?.actorId) {
+            query = query.eq('actor_user_id', filters.actorId);
+        }
         if (filters?.fromDate) {
             query = query.gte('timestamp', filters.fromDate);
         }

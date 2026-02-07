@@ -94,7 +94,7 @@ export const AIAssistant = () => {
                             width: isMinimized ? "200px" : "380px"
                         }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="glass-card shadow-2xl border border-foreground/10 flex flex-col overflow-hidden bg-background/95 backdrop-blur-xl"
+                        className="glass-card-geo shadow-2xl border border-foreground/10 flex flex-col overflow-hidden backdrop-blur-xl"
                     >
                         {/* Header */}
                         <div className="p-4 border-b border-foreground/5 bg-primary/10 flex items-center justify-between">

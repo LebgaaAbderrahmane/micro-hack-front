@@ -71,7 +71,7 @@ export const NotificationDropdown = () => {
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute right-0 mt-3 w-80 sm:w-96 glass-card border border-foreground/10 shadow-2xl overflow-hidden z-[60]"
+                            className="absolute right-0 mt-3 w-80 sm:w-96 glass-card-geo border border-foreground/10 shadow-2xl overflow-hidden z-[60]"
                         >
                             <div className="p-4 border-b border-foreground/5 flex items-center justify-between">
                                 <h3 className="font-bold text-sm uppercase tracking-widest text-foreground/40">Notifications</h3>

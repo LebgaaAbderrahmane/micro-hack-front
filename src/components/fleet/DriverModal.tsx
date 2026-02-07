@@ -56,7 +56,7 @@ export const DriverModal = ({ isOpen, onClose, driver }: DriverModalProps) => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}></div>
 
-            <div className="glass-card w-full max-w-lg border border-foreground/10 relative z-10 animate-in fade-in zoom-in duration-300">
+            <div className="glass-card-geo w-full max-w-lg border border-foreground/10 relative z-10 animate-in fade-in zoom-in duration-300">
                 <div className="flex items-center justify-between p-6 border-b border-foreground/5">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">

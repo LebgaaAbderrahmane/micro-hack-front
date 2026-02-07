@@ -101,10 +101,13 @@
   },
   "Sidebar": {
     "dashboard": "Tableau de bord",
-    "bookings": "Réservations",
+    "bookings": "Gérer les réservations",
+    "new_booking": "Réservation",
     "fleet": "État de la flotte",
     "terminals": "Terminaux",
-    "users": "Identité Utilisateurs",
+    "users": "Gestion",
+    "analytics": "Analyses",
+    "loggings": "Journaux",
     "profile": "Mon Profil",
     "settings": "Paramètres Système",
     "logout": "Déconnexion"

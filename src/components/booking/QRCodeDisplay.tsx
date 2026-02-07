@@ -12,7 +12,7 @@ interface QRCodeDisplayProps {
 
 export const QRCodeDisplay = ({ value, bookingNumber, terminalName }: QRCodeDisplayProps) => {
     return (
-        <div className="glass-card p-8 border border-foreground/10 flex flex-col items-center space-y-8 max-w-sm mx-auto shadow-2xl relative overflow-hidden group">
+        <div className="glass-card-geo p-8 border border-foreground/10 flex flex-col items-center space-y-8 max-w-sm mx-auto shadow-2xl relative overflow-hidden group">
             {/* Decorative Background */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors"></div>
 
