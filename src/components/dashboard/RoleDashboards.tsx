@@ -39,6 +39,7 @@ import {
   // InteractivePortPlan, // Replaced
 } from "./widgets";
 
+import { TerminalSelector } from "./Filters/TerminalSelector";
 import TerminalYard from "./TerminalYard";
 import PortMap from "./PortMap";
 
@@ -118,23 +119,43 @@ export const AdminDashboard = () => {
   const { data: gateLogs } = useGateLogs();
 
   const [dismissedWarnings, setDismissedWarnings] = useState<string[]>([]);
+  const [selectedTerminalId, setSelectedTerminalId] = useState<string>("ALL");
+
+  // Factory filtering logic
+  const filteredTerminals = useMemo(() => {
+    if (selectedTerminalId === "ALL") return terminals ?? [];
+    return terminals?.filter((t) => t.id === selectedTerminalId) ?? [];
+  }, [terminals, selectedTerminalId]);
+
+  const relevantSlotIds = useMemo(() => {
+    if (selectedTerminalId === "ALL") return undefined;
+    if (!slots) return new Set();
+    return new Set(slots.filter((s) => s.terminal_id === selectedTerminalId).map((s) => s.id));
+  }, [slots, selectedTerminalId]);
+
+  const filteredBookings = useMemo(() => {
+    const all = bookings ?? [];
+    if (selectedTerminalId === "ALL") return all;
+    if (!relevantSlotIds) return [];
+    return all.filter((b) => b.slot_id && relevantSlotIds.has(b.slot_id));
+  }, [bookings, selectedTerminalId, relevantSlotIds]);
 
   // KPI calculations
   const kpis = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
-    const todayBookings = bookings?.filter((b) => b.scheduled_date === today) ?? [];
-    const activeTerminals = terminals?.filter((t) => (t.current_occupancy ?? 0) > 0)?.length ?? 0;
+    const todayBookings = filteredBookings.filter((b) => b.scheduled_date === today);
+    const activeTerminals = filteredTerminals.filter((t) => (t.current_occupancy ?? 0) > 0).length;
     const totalTrucks = fleet?.trucks?.length ?? 0;
     const inUseTrucks = fleet?.trucks?.filter((t) => t.status === "IN_USE")?.length ?? 0;
     const completedToday = todayBookings.filter((b) => b.status === "COMPLETED").length;
-    const totalCapacity = terminals?.reduce((s, t) => s + t.total_capacity, 0) ?? 1;
-    const totalOccupancy = terminals?.reduce((s, t) => s + (t.current_occupancy ?? 0), 0) ?? 0;
+    const totalCapacity = filteredTerminals.reduce((s, t) => s + t.total_capacity, 0) || 1;
+    const totalOccupancy = filteredTerminals.reduce((s, t) => s + (t.current_occupancy ?? 0), 0);
     const utilizationPct = totalCapacity > 0 ? Math.round((totalOccupancy / totalCapacity) * 100) : 0;
 
     return {
       todayBookings: todayBookings.length,
       activeTerminals,
-      totalTerminals: terminals?.length ?? 0,
+      totalTerminals: filteredTerminals.length,
       totalTrucks,
       inUseTrucks,
       completedToday,
@@ -142,15 +163,15 @@ export const AdminDashboard = () => {
       totalOccupancy,
       totalCapacity,
     };
-  }, [bookings, terminals, fleet]);
+  }, [filteredBookings, filteredTerminals, fleet]);
 
   // Booking status distribution for pie chart
   const statusDistribution = useMemo(() => {
-    if (!bookings?.length) return [];
+    if (!filteredBookings?.length) return [];
     const counts: Record<string, number> = {};
-    bookings.forEach((b) => { counts[b.status] = (counts[b.status] || 0) + 1; });
+    filteredBookings.forEach((b) => { counts[b.status] = (counts[b.status] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [bookings]);
+  }, [filteredBookings]);
 
   // Bookings per hour for bar chart
   const bookingsPerHour = useMemo(() => {
@@ -159,32 +180,32 @@ export const AdminDashboard = () => {
       count: 0,
     }));
     const today = new Date().toISOString().split("T")[0];
-    bookings
-      ?.filter((b) => b.scheduled_date === today)
+    filteredBookings
+      .filter((b) => b.scheduled_date === today)
       .forEach((b) => {
         const h = parseInt(b.scheduled_start?.split(":")[0] ?? "0", 10);
         const idx = h - 6;
         if (idx >= 0 && idx < hours.length) hours[idx].count++;
       });
     return hours;
-  }, [bookings]);
+  }, [filteredBookings]);
 
   // Terminal occupancy for bar chart
   const terminalOccupancy = useMemo(
     () =>
-      (terminals ?? []).map((t) => ({
+      filteredTerminals.map((t) => ({
         name: t.zone_code,
         occupancy: t.current_occupancy ?? 0,
         capacity: t.total_capacity,
         pct: t.total_capacity > 0 ? Math.round(((t.current_occupancy ?? 0) / t.total_capacity) * 100) : 0,
       })),
-    [terminals]
+    [filteredTerminals]
   );
 
   // Warnings
   const warnings = useMemo(() => {
     const w: Array<{ id: string; title: string; message: string; severity: "critical" | "warning" | "info" }> = [];
-    terminals?.forEach((t) => {
+    filteredTerminals.forEach((t) => {
       const pct = t.total_capacity > 0 ? ((t.current_occupancy ?? 0) / t.total_capacity) * 100 : 0;
       if (pct >= 90) w.push({ id: `term-${t.id}`, title: `${t.zone_code} Near Capacity`, message: `Terminal ${t.zone_name} is at ${Math.round(pct)}% — consider redirecting inbound trucks.`, severity: "critical" });
       else if (pct >= 70) w.push({ id: `term-${t.id}`, title: `${t.zone_code} High Load`, message: `Terminal ${t.zone_name} is at ${Math.round(pct)}% capacity.`, severity: "warning" });
@@ -193,14 +214,21 @@ export const AdminDashboard = () => {
       if (g.gate_status === "MAINTENANCE") w.push({ id: `gate-${g.id}`, title: `Gate ${g.gate_number} Under Maintenance`, message: "This gate is currently offline for maintenance.", severity: "warning" });
       if (g.gate_status === "CLOSED") w.push({ id: `gate-closed-${g.id}`, title: `Gate ${g.gate_number} Closed`, message: "Gate is closed — traffic may be impacted.", severity: "info" });
     });
-    const overdue = bookings?.filter((b) => b.status === "NO_SHOW")?.length ?? 0;
+    const overdue = filteredBookings.filter((b) => b.status === "NO_SHOW").length;
     if (overdue > 0) w.push({ id: "no-show", title: `${overdue} No-Show Booking(s)`, message: "Carriers failed to arrive for their scheduled slots.", severity: "warning" });
     return w.filter((warning) => !dismissedWarnings.includes(warning.id));
-  }, [terminals, gates, bookings, dismissedWarnings]);
+  }, [filteredTerminals, gates, filteredBookings, dismissedWarnings]);
 
   return (
     <div className="space-y-4 pb-8">
-      <SectionHeader icon={ShieldCheck} title="Port Administration" subtitle="System-wide monitoring & terminal management" color="primary" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <SectionHeader icon={ShieldCheck} title="Port Administration" subtitle="System-wide monitoring & terminal management" color="primary" />
+        <TerminalSelector 
+           terminals={terminals ?? []} 
+           selectedId={selectedTerminalId} 
+           onSelect={setSelectedTerminalId} 
+        />
+      </div>
 
       {/* KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">

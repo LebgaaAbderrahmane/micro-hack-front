@@ -274,22 +274,25 @@ export default function ManagePage() {
 
     try {
       if (activeTab === "users") {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: newItemEmail,
-          password: newItemPassword,
-          options: {
-            data: {
-              username: newItemName,
-              role: "OPERATOR",
+        const { data: authData, error: authError } = await supabase.auth.signUp(
+          {
+            email: newItemEmail,
+            password: newItemPassword,
+            options: {
+              data: {
+                username: newItemName,
+                role: "OPERATOR",
+              },
             },
           },
-        });
+        );
 
         if (authError) throw authError;
 
         if (authData.user) {
-          if (!profile?.org_id) throw new Error("No organization found for current user");
-          
+          if (!profile?.org_id)
+            throw new Error("No organization found for current user");
+
           await usersService.create({
             id: authData.user.id,
             username: newItemName,
@@ -472,7 +475,9 @@ export default function ManagePage() {
       <Tabs
         defaultValue="users"
         value={activeTab}
-        onValueChange={(v) => setActiveTab(v as "users" | "terminals" | "gates")}
+        onValueChange={(v) =>
+          setActiveTab(v as "users" | "terminals" | "gates")
+        }
         className="w-full space-y-6"
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-100/50 dark:bg-slate-800/20 p-1.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/40 backdrop-blur-sm">
@@ -610,7 +615,8 @@ export default function ManagePage() {
                 </TableRow>
               )}
 
-              {!isLoading && activeTab === "users" &&
+              {!isLoading &&
+                activeTab === "users" &&
                 filteredUsers.map((user) => (
                   <TableRow
                     key={user.id}
@@ -663,7 +669,8 @@ export default function ManagePage() {
                   </TableRow>
                 ))}
 
-              {!isLoading && activeTab === "terminals" &&
+              {!isLoading &&
+                activeTab === "terminals" &&
                 filteredTerminals.map((terminal) => (
                   <TableRow
                     key={terminal.id}
@@ -719,7 +726,8 @@ export default function ManagePage() {
                   </TableRow>
                 ))}
 
-              {!isLoading && activeTab === "gates" &&
+              {!isLoading &&
+                activeTab === "gates" &&
                 filteredGates.map((gate) => (
                   <TableRow
                     key={gate.id}

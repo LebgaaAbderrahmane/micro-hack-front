@@ -12,15 +12,29 @@ import {
     Legend,
     Cell,
 } from "recharts";
-
-const data = [
-    { name: "Terminal 1", used: 65, available: 35 },
-    { name: "Terminal 2", used: 82, available: 18 },
-    { name: "Terminal 3", used: 45, available: 55 },
-    { name: "Terminal 4", used: 91, available: 9 },
-];
+import { useTerminals } from "@/hooks/domain/useTerminals";
 
 export const TerminalUtilizationChart = () => {
+    const { data: terminals } = useTerminals();
+
+    const data = React.useMemo(() => {
+        if (!terminals) return [];
+        return terminals.map(t => {
+            const used = t.total_capacity > 0 
+                ? Math.round(((t.current_occupancy ?? 0) / t.total_capacity) * 100) 
+                : 0;
+            return {
+                name: t.zone_code, // Or t.zone_name, but zone_code is shorter for YAxis
+                used,
+                available: 100 - used
+            };
+        });
+    }, [terminals]);
+
+    if (!terminals || terminals.length === 0) {
+        return <div className="flex h-full items-center justify-center text-muted-foreground">No terminal data available</div>;
+    }
+
     return (
         <ResponsiveContainer width="100%" height="100%">
             <BarChart

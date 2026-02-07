@@ -435,84 +435,6 @@ export type Database = {
           },
         ]
       }
-      checkpoint_blobs: {
-        Row: {
-          blob: string
-          blob_id: string
-          checkpoint_id: string
-          thread_id: string
-          type: string
-        }
-        Insert: {
-          blob: string
-          blob_id: string
-          checkpoint_id: string
-          thread_id: string
-          type: string
-        }
-        Update: {
-          blob?: string
-          blob_id?: string
-          checkpoint_id?: string
-          thread_id?: string
-          type?: string
-        }
-        Relationships: []
-      }
-      checkpoint_writes: {
-        Row: {
-          channel: string
-          checkpoint_id: string
-          idx: number
-          task_id: string
-          thread_id: string
-          type: string | null
-          value: string | null
-        }
-        Insert: {
-          channel: string
-          checkpoint_id: string
-          idx: number
-          task_id: string
-          thread_id: string
-          type?: string | null
-          value?: string | null
-        }
-        Update: {
-          channel?: string
-          checkpoint_id?: string
-          idx?: number
-          task_id?: string
-          thread_id?: string
-          type?: string | null
-          value?: string | null
-        }
-        Relationships: []
-      }
-      checkpoints: {
-        Row: {
-          checkpoint: string
-          checkpoint_id: string
-          metadata: string
-          parent_id: string | null
-          thread_id: string
-        }
-        Insert: {
-          checkpoint: string
-          checkpoint_id: string
-          metadata: string
-          parent_id?: string | null
-          thread_id: string
-        }
-        Update: {
-          checkpoint?: string
-          checkpoint_id?: string
-          metadata?: string
-          parent_id?: string | null
-          thread_id?: string
-        }
-        Relationships: []
-      }
       containers: {
         Row: {
           cargo_weight: number | null
@@ -654,47 +576,50 @@ export type Database = {
       }
       gate_logs: {
         Row: {
-          action_type: Database["public"]["Enums"]["gate_action_type_enum"]
-          booking_id: string
+          action_type: Database["public"]["Enums"]["gate_action_enum"]
+          booking_id: string | null
+          date: string | null
           detected_plate: string | null
           gate_id: string
-          gate_lane_id: string | null
           id: string
+          lane_id: string | null
           measured_weight: number | null
           operator_user_id: string | null
           overweight: boolean | null
           plate_match: boolean | null
-          status: Database["public"]["Enums"]["operation_status_enum"]
+          status: Database["public"]["Enums"]["gate_log_status_enum"]
           status_message: string | null
           timestamp: string | null
         }
         Insert: {
-          action_type: Database["public"]["Enums"]["gate_action_type_enum"]
-          booking_id: string
+          action_type: Database["public"]["Enums"]["gate_action_enum"]
+          booking_id?: string | null
+          date?: string | null
           detected_plate?: string | null
           gate_id: string
-          gate_lane_id?: string | null
           id?: string
+          lane_id?: string | null
           measured_weight?: number | null
           operator_user_id?: string | null
           overweight?: boolean | null
           plate_match?: boolean | null
-          status?: Database["public"]["Enums"]["operation_status_enum"]
+          status?: Database["public"]["Enums"]["gate_log_status_enum"]
           status_message?: string | null
           timestamp?: string | null
         }
         Update: {
-          action_type?: Database["public"]["Enums"]["gate_action_type_enum"]
-          booking_id?: string
+          action_type?: Database["public"]["Enums"]["gate_action_enum"]
+          booking_id?: string | null
+          date?: string | null
           detected_plate?: string | null
           gate_id?: string
-          gate_lane_id?: string | null
           id?: string
+          lane_id?: string | null
           measured_weight?: number | null
           operator_user_id?: string | null
           overweight?: boolean | null
           plate_match?: boolean | null
-          status?: Database["public"]["Enums"]["operation_status_enum"]
+          status?: Database["public"]["Enums"]["gate_log_status_enum"]
           status_message?: string | null
           timestamp?: string | null
         }
@@ -715,7 +640,7 @@ export type Database = {
           },
           {
             foreignKeyName: "gate_logs_gate_lane_id_fkey"
-            columns: ["gate_lane_id"]
+            columns: ["lane_id"]
             isOneToOne: false
             referencedRelation: "gate_lanes"
             referencedColumns: ["id"]
@@ -1007,6 +932,7 @@ export type Database = {
           gate_id: string | null
           id: string
           modified_at: string | null
+          operator_id: string | null
           port_id: string
           total_capacity: number
           zone_code: string
@@ -1018,6 +944,7 @@ export type Database = {
           gate_id?: string | null
           id?: string
           modified_at?: string | null
+          operator_id?: string | null
           port_id: string
           total_capacity: number
           zone_code: string
@@ -1029,6 +956,7 @@ export type Database = {
           gate_id?: string | null
           id?: string
           modified_at?: string | null
+          operator_id?: string | null
           port_id?: string
           total_capacity?: number
           zone_code?: string
@@ -1040,6 +968,13 @@ export type Database = {
             columns: ["gate_id"]
             isOneToOne: false
             referencedRelation: "gates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "terminals_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -1198,13 +1133,14 @@ export type Database = {
       delivery_channel_enum: "EMAIL" | "SMS" | "WHATSAPP" | "PUSH" | "IN_APP"
       delivery_status_enum: "PENDING" | "SENT" | "DELIVERED" | "FAILED"
       driver_status_enum: "ACTIVE" | "INACTIVE" | "SUSPENDED"
-      gate_action_type_enum:
-        | "CHECK_IN"
+      gate_action_enum:
         | "ENTRY"
+        | "EXIT"
+        | "CHECK_IN"
         | "WEIGHMENT"
         | "INSPECTION"
-        | "EXIT"
         | "REJECTED"
+      gate_log_status_enum: "SUCCESS" | "FAILED" | "WARNING"
       gate_status_enum: "OPERATIONAL" | "CLOSED" | "MAINTENANCE"
       lane_type_enum: "ENTRY" | "EXIT" | "BIDIRECTIONAL"
       notification_type_enum:
@@ -1213,7 +1149,6 @@ export type Database = {
         | "GATE_READY"
         | "PAYMENT_DUE"
         | "SYSTEM_ALERT"
-      operation_status_enum: "SUCCESS" | "FAILED" | "WARNING"
       organisation_type_enum: "ADMIN" | "TERMINAL_OPERATOR" | "CARRIER"
       payment_status_enum: "UNPAID" | "PAID" | "WAIVED"
       slot_override_type_enum: "CLOSE" | "CAPACITY_CHANGE" | "HOURS_CHANGE"
@@ -1388,14 +1323,15 @@ export const Constants = {
       delivery_channel_enum: ["EMAIL", "SMS", "WHATSAPP", "PUSH", "IN_APP"],
       delivery_status_enum: ["PENDING", "SENT", "DELIVERED", "FAILED"],
       driver_status_enum: ["ACTIVE", "INACTIVE", "SUSPENDED"],
-      gate_action_type_enum: [
-        "CHECK_IN",
+      gate_action_enum: [
         "ENTRY",
+        "EXIT",
+        "CHECK_IN",
         "WEIGHMENT",
         "INSPECTION",
-        "EXIT",
         "REJECTED",
       ],
+      gate_log_status_enum: ["SUCCESS", "FAILED", "WARNING"],
       gate_status_enum: ["OPERATIONAL", "CLOSED", "MAINTENANCE"],
       lane_type_enum: ["ENTRY", "EXIT", "BIDIRECTIONAL"],
       notification_type_enum: [
@@ -1405,7 +1341,6 @@ export const Constants = {
         "PAYMENT_DUE",
         "SYSTEM_ALERT",
       ],
-      operation_status_enum: ["SUCCESS", "FAILED", "WARNING"],
       organisation_type_enum: ["ADMIN", "TERMINAL_OPERATOR", "CARRIER"],
       payment_status_enum: ["UNPAID", "PAID", "WAIVED"],
       slot_override_type_enum: ["CLOSE", "CAPACITY_CHANGE", "HOURS_CHANGE"],
