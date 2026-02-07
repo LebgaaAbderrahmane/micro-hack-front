@@ -146,7 +146,7 @@ export const Navbar = () => {
                 <div className="w-px h-6 bg-foreground/10 mx-2"></div>
 
                 <Link href="/profile" className="relative group">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 border border-foreground/10 flex items-center justify-center text-primary-foreground font-black text-sm shadow-xl shadow-primary/10 group-hover:scale-105 transition-all group-active:scale-95">
+                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-primary/80 border border-foreground/10 flex items-center justify-center text-primary-foreground font-black text-sm shadow-xl shadow-primary/10 group-hover:scale-105 transition-all group-active:scale-95">
                         {user?.username?.[0]?.toUpperCase()}
                     </div>
                 </Link>
