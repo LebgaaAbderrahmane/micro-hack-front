@@ -16,6 +16,7 @@
     "overview": "Vue d'ensemble",
     "fleet": "Flotte",
     "bookings": "Réservations",
+    "management": "Gestion des Réservations",
     "terminals": "Terminaux",
     "users": "Utilisateurs",
     "accessRestricted": "Accès restreint",
@@ -70,11 +71,11 @@
     "error": "Erreur"
   },
   "Theme": {
-      "light": "Clair",
-      "dark": "Sombre",
-      "system": "Système",
-      "toggle": "Changer le Thème",
-      "switchLocale": "Passer à l'{language}"
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système",
+    "toggle": "Changer le Thème",
+    "switchLocale": "Passer à l'{language}"
   },
   "AI": {
     "welcome": "Bonjour ! Je suis votre assistant IA ILACS. Comment puis-je vous aider à gérer vos accès au terminal ou votre flotte aujourd'hui ?",

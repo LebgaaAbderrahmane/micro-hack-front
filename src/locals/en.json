@@ -16,6 +16,7 @@
     "overview": "Overview",
     "fleet": "Fleet",
     "bookings": "Bookings",
+    "management": "Booking Management",
     "terminals": "Terminals",
     "users": "Users",
     "accessRestricted": "Access Restricted",
@@ -70,11 +71,11 @@
     "error": "Error"
   },
   "Theme": {
-      "light": "Light",
-      "dark": "Dark",
-      "system": "System",
-      "toggle": "Toggle Theme",
-      "switchLocale": "Switch to {language}"
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "toggle": "Toggle Theme",
+    "switchLocale": "Switch to {language}"
   },
   "AI": {
     "welcome": "Hello! I'm your ILACS AI assistant. How can I help you manage your terminal access or fleet today?",

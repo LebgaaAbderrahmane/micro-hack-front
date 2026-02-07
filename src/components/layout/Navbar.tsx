@@ -24,7 +24,7 @@ export const Navbar = () => {
 
     const navItems = [
         { label: t('overview'), href: "/", icon: LayoutDashboard, roles: ["ADMIN", "OPERATOR"] },
-        { label: t('bookings'), href: "/bookings", icon: Calendar, roles: ["OPERATOR"] },
+        { label: t('management'), href: "/bookings", icon: Calendar, roles: ["OPERATOR", "ADMIN"] },
         { label: t('bookings'), href: "/carrier", icon: Calendar, roles: ["DISPATCHER"] },
         { label: t('fleet'), href: "/fleet", icon: Truck, roles: ["DISPATCHER", "OPERATOR"] },
         { label: t('users'), href: "/users", icon: Users, roles: ["ADMIN"] },

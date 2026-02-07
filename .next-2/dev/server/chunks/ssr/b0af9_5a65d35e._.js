@@ -1,0 +1,19019 @@
+module.exports = [
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/timeoutManager.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "TimeoutManager",
+    ()=>TimeoutManager,
+    "defaultTimeoutProvider",
+    ()=>defaultTimeoutProvider,
+    "systemSetTimeoutZero",
+    ()=>systemSetTimeoutZero,
+    "timeoutManager",
+    ()=>timeoutManager
+]);
+// src/timeoutManager.ts
+var defaultTimeoutProvider = {
+    // We need the wrapper function syntax below instead of direct references to
+    // global setTimeout etc.
+    //
+    // BAD: `setTimeout: setTimeout`
+    // GOOD: `setTimeout: (cb, delay) => setTimeout(cb, delay)`
+    //
+    // If we use direct references here, then anything that wants to spy on or
+    // replace the global setTimeout (like tests) won't work since we'll already
+    // have a hard reference to the original implementation at the time when this
+    // file was imported.
+    setTimeout: (callback, delay)=>setTimeout(callback, delay),
+    clearTimeout: (timeoutId)=>clearTimeout(timeoutId),
+    setInterval: (callback, delay)=>setInterval(callback, delay),
+    clearInterval: (intervalId)=>clearInterval(intervalId)
+};
+var TimeoutManager = class {
+    // We cannot have TimeoutManager<T> as we must instantiate it with a concrete
+    // type at app boot; and if we leave that type, then any new timer provider
+    // would need to support ReturnType<typeof setTimeout>, which is infeasible.
+    //
+    // We settle for type safety for the TimeoutProvider type, and accept that
+    // this class is unsafe internally to allow for extension.
+    #provider = defaultTimeoutProvider;
+    #providerCalled = false;
+    setTimeoutProvider(provider) {
+        if ("TURBOPACK compile-time truthy", 1) {
+            if (this.#providerCalled && provider !== this.#provider) {
+                console.error(`[timeoutManager]: Switching provider after calls to previous provider might result in unexpected behavior.`, {
+                    previous: this.#provider,
+                    provider
+                });
+            }
+        }
+        this.#provider = provider;
+        if (("TURBOPACK compile-time value", "development") !== "production") {
+            this.#providerCalled = false;
+        }
+    }
+    setTimeout(callback, delay) {
+        if (("TURBOPACK compile-time value", "development") !== "production") {
+            this.#providerCalled = true;
+        }
+        return this.#provider.setTimeout(callback, delay);
+    }
+    clearTimeout(timeoutId) {
+        this.#provider.clearTimeout(timeoutId);
+    }
+    setInterval(callback, delay) {
+        if (("TURBOPACK compile-time value", "development") !== "production") {
+            this.#providerCalled = true;
+        }
+        return this.#provider.setInterval(callback, delay);
+    }
+    clearInterval(intervalId) {
+        this.#provider.clearInterval(intervalId);
+    }
+};
+var timeoutManager = new TimeoutManager();
+function systemSetTimeoutZero(callback) {
+    setTimeout(callback, 0);
+}
+;
+ //# sourceMappingURL=timeoutManager.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/utils.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "addConsumeAwareSignal",
+    ()=>addConsumeAwareSignal,
+    "addToEnd",
+    ()=>addToEnd,
+    "addToStart",
+    ()=>addToStart,
+    "ensureQueryFn",
+    ()=>ensureQueryFn,
+    "functionalUpdate",
+    ()=>functionalUpdate,
+    "hashKey",
+    ()=>hashKey,
+    "hashQueryKeyByOptions",
+    ()=>hashQueryKeyByOptions,
+    "isPlainArray",
+    ()=>isPlainArray,
+    "isPlainObject",
+    ()=>isPlainObject,
+    "isServer",
+    ()=>isServer,
+    "isValidTimeout",
+    ()=>isValidTimeout,
+    "keepPreviousData",
+    ()=>keepPreviousData,
+    "matchMutation",
+    ()=>matchMutation,
+    "matchQuery",
+    ()=>matchQuery,
+    "noop",
+    ()=>noop,
+    "partialMatchKey",
+    ()=>partialMatchKey,
+    "replaceData",
+    ()=>replaceData,
+    "replaceEqualDeep",
+    ()=>replaceEqualDeep,
+    "resolveEnabled",
+    ()=>resolveEnabled,
+    "resolveStaleTime",
+    ()=>resolveStaleTime,
+    "shallowEqualObjects",
+    ()=>shallowEqualObjects,
+    "shouldThrowError",
+    ()=>shouldThrowError,
+    "skipToken",
+    ()=>skipToken,
+    "sleep",
+    ()=>sleep,
+    "timeUntilStale",
+    ()=>timeUntilStale
+]);
+// src/utils.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$timeoutManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/timeoutManager.js [app-ssr] (ecmascript)");
+;
+var isServer = ("TURBOPACK compile-time value", "undefined") === "undefined" || "Deno" in globalThis;
+function noop() {}
+function functionalUpdate(updater, input) {
+    return typeof updater === "function" ? updater(input) : updater;
+}
+function isValidTimeout(value) {
+    return typeof value === "number" && value >= 0 && value !== Infinity;
+}
+function timeUntilStale(updatedAt, staleTime) {
+    return Math.max(updatedAt + (staleTime || 0) - Date.now(), 0);
+}
+function resolveStaleTime(staleTime, query) {
+    return typeof staleTime === "function" ? staleTime(query) : staleTime;
+}
+function resolveEnabled(enabled, query) {
+    return typeof enabled === "function" ? enabled(query) : enabled;
+}
+function matchQuery(filters, query) {
+    const { type = "all", exact, fetchStatus, predicate, queryKey, stale } = filters;
+    if (queryKey) {
+        if (exact) {
+            if (query.queryHash !== hashQueryKeyByOptions(queryKey, query.options)) {
+                return false;
+            }
+        } else if (!partialMatchKey(query.queryKey, queryKey)) {
+            return false;
+        }
+    }
+    if (type !== "all") {
+        const isActive = query.isActive();
+        if (type === "active" && !isActive) {
+            return false;
+        }
+        if (type === "inactive" && isActive) {
+            return false;
+        }
+    }
+    if (typeof stale === "boolean" && query.isStale() !== stale) {
+        return false;
+    }
+    if (fetchStatus && fetchStatus !== query.state.fetchStatus) {
+        return false;
+    }
+    if (predicate && !predicate(query)) {
+        return false;
+    }
+    return true;
+}
+function matchMutation(filters, mutation) {
+    const { exact, status, predicate, mutationKey } = filters;
+    if (mutationKey) {
+        if (!mutation.options.mutationKey) {
+            return false;
+        }
+        if (exact) {
+            if (hashKey(mutation.options.mutationKey) !== hashKey(mutationKey)) {
+                return false;
+            }
+        } else if (!partialMatchKey(mutation.options.mutationKey, mutationKey)) {
+            return false;
+        }
+    }
+    if (status && mutation.state.status !== status) {
+        return false;
+    }
+    if (predicate && !predicate(mutation)) {
+        return false;
+    }
+    return true;
+}
+function hashQueryKeyByOptions(queryKey, options) {
+    const hashFn = options?.queryKeyHashFn || hashKey;
+    return hashFn(queryKey);
+}
+function hashKey(queryKey) {
+    return JSON.stringify(queryKey, (_, val)=>isPlainObject(val) ? Object.keys(val).sort().reduce((result, key)=>{
+            result[key] = val[key];
+            return result;
+        }, {}) : val);
+}
+function partialMatchKey(a, b) {
+    if (a === b) {
+        return true;
+    }
+    if (typeof a !== typeof b) {
+        return false;
+    }
+    if (a && b && typeof a === "object" && typeof b === "object") {
+        return Object.keys(b).every((key)=>partialMatchKey(a[key], b[key]));
+    }
+    return false;
+}
+var hasOwn = Object.prototype.hasOwnProperty;
+function replaceEqualDeep(a, b, depth = 0) {
+    if (a === b) {
+        return a;
+    }
+    if (depth > 500) return b;
+    const array = isPlainArray(a) && isPlainArray(b);
+    if (!array && !(isPlainObject(a) && isPlainObject(b))) return b;
+    const aItems = array ? a : Object.keys(a);
+    const aSize = aItems.length;
+    const bItems = array ? b : Object.keys(b);
+    const bSize = bItems.length;
+    const copy = array ? new Array(bSize) : {};
+    let equalItems = 0;
+    for(let i = 0; i < bSize; i++){
+        const key = array ? i : bItems[i];
+        const aItem = a[key];
+        const bItem = b[key];
+        if (aItem === bItem) {
+            copy[key] = aItem;
+            if (array ? i < aSize : hasOwn.call(a, key)) equalItems++;
+            continue;
+        }
+        if (aItem === null || bItem === null || typeof aItem !== "object" || typeof bItem !== "object") {
+            copy[key] = bItem;
+            continue;
+        }
+        const v = replaceEqualDeep(aItem, bItem, depth + 1);
+        copy[key] = v;
+        if (v === aItem) equalItems++;
+    }
+    return aSize === bSize && equalItems === aSize ? a : copy;
+}
+function shallowEqualObjects(a, b) {
+    if (!b || Object.keys(a).length !== Object.keys(b).length) {
+        return false;
+    }
+    for(const key in a){
+        if (a[key] !== b[key]) {
+            return false;
+        }
+    }
+    return true;
+}
+function isPlainArray(value) {
+    return Array.isArray(value) && value.length === Object.keys(value).length;
+}
+function isPlainObject(o) {
+    if (!hasObjectPrototype(o)) {
+        return false;
+    }
+    const ctor = o.constructor;
+    if (ctor === void 0) {
+        return true;
+    }
+    const prot = ctor.prototype;
+    if (!hasObjectPrototype(prot)) {
+        return false;
+    }
+    if (!prot.hasOwnProperty("isPrototypeOf")) {
+        return false;
+    }
+    if (Object.getPrototypeOf(o) !== Object.prototype) {
+        return false;
+    }
+    return true;
+}
+function hasObjectPrototype(o) {
+    return Object.prototype.toString.call(o) === "[object Object]";
+}
+function sleep(timeout) {
+    return new Promise((resolve)=>{
+        __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$timeoutManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["timeoutManager"].setTimeout(resolve, timeout);
+    });
+}
+function replaceData(prevData, data, options) {
+    if (typeof options.structuralSharing === "function") {
+        return options.structuralSharing(prevData, data);
+    } else if (options.structuralSharing !== false) {
+        if ("TURBOPACK compile-time truthy", 1) {
+            try {
+                return replaceEqualDeep(prevData, data);
+            } catch (error) {
+                console.error(`Structural sharing requires data to be JSON serializable. To fix this, turn off structuralSharing or return JSON-serializable data from your queryFn. [${options.queryHash}]: ${error}`);
+                throw error;
+            }
+        }
+        return replaceEqualDeep(prevData, data);
+    }
+    return data;
+}
+function keepPreviousData(previousData) {
+    return previousData;
+}
+function addToEnd(items, item, max = 0) {
+    const newItems = [
+        ...items,
+        item
+    ];
+    return max && newItems.length > max ? newItems.slice(1) : newItems;
+}
+function addToStart(items, item, max = 0) {
+    const newItems = [
+        item,
+        ...items
+    ];
+    return max && newItems.length > max ? newItems.slice(0, -1) : newItems;
+}
+var skipToken = /* @__PURE__ */ Symbol();
+function ensureQueryFn(options, fetchOptions) {
+    if ("TURBOPACK compile-time truthy", 1) {
+        if (options.queryFn === skipToken) {
+            console.error(`Attempted to invoke queryFn when set to skipToken. This is likely a configuration error. Query hash: '${options.queryHash}'`);
+        }
+    }
+    if (!options.queryFn && fetchOptions?.initialPromise) {
+        return ()=>fetchOptions.initialPromise;
+    }
+    if (!options.queryFn || options.queryFn === skipToken) {
+        return ()=>Promise.reject(new Error(`Missing queryFn: '${options.queryHash}'`));
+    }
+    return options.queryFn;
+}
+function shouldThrowError(throwOnError, params) {
+    if (typeof throwOnError === "function") {
+        return throwOnError(...params);
+    }
+    return !!throwOnError;
+}
+function addConsumeAwareSignal(object, getSignal, onCancelled) {
+    let consumed = false;
+    let signal;
+    Object.defineProperty(object, "signal", {
+        enumerable: true,
+        get: ()=>{
+            signal ??= getSignal();
+            if (consumed) {
+                return signal;
+            }
+            consumed = true;
+            if (signal.aborted) {
+                onCancelled();
+            } else {
+                signal.addEventListener("abort", onCancelled, {
+                    once: true
+                });
+            }
+            return signal;
+        }
+    });
+    return object;
+}
+;
+ //# sourceMappingURL=utils.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/notifyManager.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "createNotifyManager",
+    ()=>createNotifyManager,
+    "defaultScheduler",
+    ()=>defaultScheduler,
+    "notifyManager",
+    ()=>notifyManager
+]);
+// src/notifyManager.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$timeoutManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/timeoutManager.js [app-ssr] (ecmascript)");
+;
+var defaultScheduler = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$timeoutManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["systemSetTimeoutZero"];
+function createNotifyManager() {
+    let queue = [];
+    let transactions = 0;
+    let notifyFn = (callback)=>{
+        callback();
+    };
+    let batchNotifyFn = (callback)=>{
+        callback();
+    };
+    let scheduleFn = defaultScheduler;
+    const schedule = (callback)=>{
+        if (transactions) {
+            queue.push(callback);
+        } else {
+            scheduleFn(()=>{
+                notifyFn(callback);
+            });
+        }
+    };
+    const flush = ()=>{
+        const originalQueue = queue;
+        queue = [];
+        if (originalQueue.length) {
+            scheduleFn(()=>{
+                batchNotifyFn(()=>{
+                    originalQueue.forEach((callback)=>{
+                        notifyFn(callback);
+                    });
+                });
+            });
+        }
+    };
+    return {
+        batch: (callback)=>{
+            let result;
+            transactions++;
+            try {
+                result = callback();
+            } finally{
+                transactions--;
+                if (!transactions) {
+                    flush();
+                }
+            }
+            return result;
+        },
+        /**
+     * All calls to the wrapped function will be batched.
+     */ batchCalls: (callback)=>{
+            return (...args)=>{
+                schedule(()=>{
+                    callback(...args);
+                });
+            };
+        },
+        schedule,
+        /**
+     * Use this method to set a custom notify function.
+     * This can be used to for example wrap notifications with `React.act` while running tests.
+     */ setNotifyFunction: (fn)=>{
+            notifyFn = fn;
+        },
+        /**
+     * Use this method to set a custom function to batch notifications together into a single tick.
+     * By default React Query will use the batch function provided by ReactDOM or React Native.
+     */ setBatchNotifyFunction: (fn)=>{
+            batchNotifyFn = fn;
+        },
+        setScheduler: (fn)=>{
+            scheduleFn = fn;
+        }
+    };
+}
+var notifyManager = createNotifyManager();
+;
+ //# sourceMappingURL=notifyManager.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/subscribable.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Subscribable",
+    ()=>Subscribable
+]);
+// src/subscribable.ts
+var Subscribable = class {
+    constructor(){
+        this.listeners = /* @__PURE__ */ new Set();
+        this.subscribe = this.subscribe.bind(this);
+    }
+    subscribe(listener) {
+        this.listeners.add(listener);
+        this.onSubscribe();
+        return ()=>{
+            this.listeners.delete(listener);
+            this.onUnsubscribe();
+        };
+    }
+    hasListeners() {
+        return this.listeners.size > 0;
+    }
+    onSubscribe() {}
+    onUnsubscribe() {}
+};
+;
+ //# sourceMappingURL=subscribable.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/focusManager.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "FocusManager",
+    ()=>FocusManager,
+    "focusManager",
+    ()=>focusManager
+]);
+// src/focusManager.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$subscribable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/subscribable.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/utils.js [app-ssr] (ecmascript)");
+;
+;
+var FocusManager = class extends __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$subscribable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Subscribable"] {
+    #focused;
+    #cleanup;
+    #setup;
+    constructor(){
+        super();
+        this.#setup = (onFocus)=>{
+            if (!__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isServer"] && window.addEventListener) {
+                const listener = ()=>onFocus();
+                window.addEventListener("visibilitychange", listener, false);
+                return ()=>{
+                    window.removeEventListener("visibilitychange", listener);
+                };
+            }
+            return;
+        };
+    }
+    onSubscribe() {
+        if (!this.#cleanup) {
+            this.setEventListener(this.#setup);
+        }
+    }
+    onUnsubscribe() {
+        if (!this.hasListeners()) {
+            this.#cleanup?.();
+            this.#cleanup = void 0;
+        }
+    }
+    setEventListener(setup) {
+        this.#setup = setup;
+        this.#cleanup?.();
+        this.#cleanup = setup((focused)=>{
+            if (typeof focused === "boolean") {
+                this.setFocused(focused);
+            } else {
+                this.onFocus();
+            }
+        });
+    }
+    setFocused(focused) {
+        const changed = this.#focused !== focused;
+        if (changed) {
+            this.#focused = focused;
+            this.onFocus();
+        }
+    }
+    onFocus() {
+        const isFocused = this.isFocused();
+        this.listeners.forEach((listener)=>{
+            listener(isFocused);
+        });
+    }
+    isFocused() {
+        if (typeof this.#focused === "boolean") {
+            return this.#focused;
+        }
+        return globalThis.document?.visibilityState !== "hidden";
+    }
+};
+var focusManager = new FocusManager();
+;
+ //# sourceMappingURL=focusManager.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/onlineManager.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "OnlineManager",
+    ()=>OnlineManager,
+    "onlineManager",
+    ()=>onlineManager
+]);
+// src/onlineManager.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$subscribable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/subscribable.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/utils.js [app-ssr] (ecmascript)");
+;
+;
+var OnlineManager = class extends __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$subscribable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Subscribable"] {
+    #online = true;
+    #cleanup;
+    #setup;
+    constructor(){
+        super();
+        this.#setup = (onOnline)=>{
+            if (!__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isServer"] && window.addEventListener) {
+                const onlineListener = ()=>onOnline(true);
+                const offlineListener = ()=>onOnline(false);
+                window.addEventListener("online", onlineListener, false);
+                window.addEventListener("offline", offlineListener, false);
+                return ()=>{
+                    window.removeEventListener("online", onlineListener);
+                    window.removeEventListener("offline", offlineListener);
+                };
+            }
+            return;
+        };
+    }
+    onSubscribe() {
+        if (!this.#cleanup) {
+            this.setEventListener(this.#setup);
+        }
+    }
+    onUnsubscribe() {
+        if (!this.hasListeners()) {
+            this.#cleanup?.();
+            this.#cleanup = void 0;
+        }
+    }
+    setEventListener(setup) {
+        this.#setup = setup;
+        this.#cleanup?.();
+        this.#cleanup = setup(this.setOnline.bind(this));
+    }
+    setOnline(online) {
+        const changed = this.#online !== online;
+        if (changed) {
+            this.#online = online;
+            this.listeners.forEach((listener)=>{
+                listener(online);
+            });
+        }
+    }
+    isOnline() {
+        return this.#online;
+    }
+};
+var onlineManager = new OnlineManager();
+;
+ //# sourceMappingURL=onlineManager.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/thenable.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "pendingThenable",
+    ()=>pendingThenable,
+    "tryResolveSync",
+    ()=>tryResolveSync
+]);
+// src/thenable.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/utils.js [app-ssr] (ecmascript)");
+;
+function pendingThenable() {
+    let resolve;
+    let reject;
+    const thenable = new Promise((_resolve, _reject)=>{
+        resolve = _resolve;
+        reject = _reject;
+    });
+    thenable.status = "pending";
+    thenable.catch(()=>{});
+    function finalize(data) {
+        Object.assign(thenable, data);
+        delete thenable.resolve;
+        delete thenable.reject;
+    }
+    thenable.resolve = (value)=>{
+        finalize({
+            status: "fulfilled",
+            value
+        });
+        resolve(value);
+    };
+    thenable.reject = (reason)=>{
+        finalize({
+            status: "rejected",
+            reason
+        });
+        reject(reason);
+    };
+    return thenable;
+}
+function tryResolveSync(promise) {
+    let data;
+    promise.then((result)=>{
+        data = result;
+        return result;
+    }, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"])?.catch(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]);
+    if (data !== void 0) {
+        return {
+            data
+        };
+    }
+    return void 0;
+}
+;
+ //# sourceMappingURL=thenable.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/retryer.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "CancelledError",
+    ()=>CancelledError,
+    "canFetch",
+    ()=>canFetch,
+    "createRetryer",
+    ()=>createRetryer,
+    "isCancelledError",
+    ()=>isCancelledError
+]);
+// src/retryer.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$focusManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/focusManager.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$onlineManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/onlineManager.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$thenable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/thenable.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/utils.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+function defaultRetryDelay(failureCount) {
+    return Math.min(1e3 * 2 ** failureCount, 3e4);
+}
+function canFetch(networkMode) {
+    return (networkMode ?? "online") === "online" ? __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$onlineManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["onlineManager"].isOnline() : true;
+}
+var CancelledError = class extends Error {
+    constructor(options){
+        super("CancelledError");
+        this.revert = options?.revert;
+        this.silent = options?.silent;
+    }
+};
+function isCancelledError(value) {
+    return value instanceof CancelledError;
+}
+function createRetryer(config) {
+    let isRetryCancelled = false;
+    let failureCount = 0;
+    let continueFn;
+    const thenable = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$thenable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["pendingThenable"])();
+    const isResolved = ()=>thenable.status !== "pending";
+    const cancel = (cancelOptions)=>{
+        if (!isResolved()) {
+            const error = new CancelledError(cancelOptions);
+            reject(error);
+            config.onCancel?.(error);
+        }
+    };
+    const cancelRetry = ()=>{
+        isRetryCancelled = true;
+    };
+    const continueRetry = ()=>{
+        isRetryCancelled = false;
+    };
+    const canContinue = ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$focusManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["focusManager"].isFocused() && (config.networkMode === "always" || __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$onlineManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["onlineManager"].isOnline()) && config.canRun();
+    const canStart = ()=>canFetch(config.networkMode) && config.canRun();
+    const resolve = (value)=>{
+        if (!isResolved()) {
+            continueFn?.();
+            thenable.resolve(value);
+        }
+    };
+    const reject = (value)=>{
+        if (!isResolved()) {
+            continueFn?.();
+            thenable.reject(value);
+        }
+    };
+    const pause = ()=>{
+        return new Promise((continueResolve)=>{
+            continueFn = (value)=>{
+                if (isResolved() || canContinue()) {
+                    continueResolve(value);
+                }
+            };
+            config.onPause?.();
+        }).then(()=>{
+            continueFn = void 0;
+            if (!isResolved()) {
+                config.onContinue?.();
+            }
+        });
+    };
+    const run = ()=>{
+        if (isResolved()) {
+            return;
+        }
+        let promiseOrValue;
+        const initialPromise = failureCount === 0 ? config.initialPromise : void 0;
+        try {
+            promiseOrValue = initialPromise ?? config.fn();
+        } catch (error) {
+            promiseOrValue = Promise.reject(error);
+        }
+        Promise.resolve(promiseOrValue).then(resolve).catch((error)=>{
+            if (isResolved()) {
+                return;
+            }
+            const retry = config.retry ?? (__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isServer"] ? 0 : 3);
+            const retryDelay = config.retryDelay ?? defaultRetryDelay;
+            const delay = typeof retryDelay === "function" ? retryDelay(failureCount, error) : retryDelay;
+            const shouldRetry = retry === true || typeof retry === "number" && failureCount < retry || typeof retry === "function" && retry(failureCount, error);
+            if (isRetryCancelled || !shouldRetry) {
+                reject(error);
+                return;
+            }
+            failureCount++;
+            config.onFail?.(failureCount, error);
+            (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["sleep"])(delay).then(()=>{
+                return canContinue() ? void 0 : pause();
+            }).then(()=>{
+                if (isRetryCancelled) {
+                    reject(error);
+                } else {
+                    run();
+                }
+            });
+        });
+    };
+    return {
+        promise: thenable,
+        status: ()=>thenable.status,
+        cancel,
+        continue: ()=>{
+            continueFn?.();
+            return thenable;
+        },
+        cancelRetry,
+        continueRetry,
+        canStart,
+        start: ()=>{
+            if (canStart()) {
+                run();
+            } else {
+                pause().then(run);
+            }
+            return thenable;
+        }
+    };
+}
+;
+ //# sourceMappingURL=retryer.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/removable.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Removable",
+    ()=>Removable
+]);
+// src/removable.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$timeoutManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/timeoutManager.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/utils.js [app-ssr] (ecmascript)");
+;
+;
+var Removable = class {
+    #gcTimeout;
+    destroy() {
+        this.clearGcTimeout();
+    }
+    scheduleGc() {
+        this.clearGcTimeout();
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isValidTimeout"])(this.gcTime)) {
+            this.#gcTimeout = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$timeoutManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["timeoutManager"].setTimeout(()=>{
+                this.optionalRemove();
+            }, this.gcTime);
+        }
+    }
+    updateGcTime(newGcTime) {
+        this.gcTime = Math.max(this.gcTime || 0, newGcTime ?? (__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isServer"] ? Infinity : 5 * 60 * 1e3));
+    }
+    clearGcTimeout() {
+        if (this.#gcTimeout) {
+            __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$timeoutManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["timeoutManager"].clearTimeout(this.#gcTimeout);
+            this.#gcTimeout = void 0;
+        }
+    }
+};
+;
+ //# sourceMappingURL=removable.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/query.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Query",
+    ()=>Query,
+    "fetchState",
+    ()=>fetchState
+]);
+// src/query.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/utils.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/notifyManager.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$retryer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/retryer.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$removable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/removable.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+var Query = class extends __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$removable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Removable"] {
+    #initialState;
+    #revertState;
+    #cache;
+    #client;
+    #retryer;
+    #defaultOptions;
+    #abortSignalConsumed;
+    constructor(config){
+        super();
+        this.#abortSignalConsumed = false;
+        this.#defaultOptions = config.defaultOptions;
+        this.setOptions(config.options);
+        this.observers = [];
+        this.#client = config.client;
+        this.#cache = this.#client.getQueryCache();
+        this.queryKey = config.queryKey;
+        this.queryHash = config.queryHash;
+        this.#initialState = getDefaultState(this.options);
+        this.state = config.state ?? this.#initialState;
+        this.scheduleGc();
+    }
+    get meta() {
+        return this.options.meta;
+    }
+    get promise() {
+        return this.#retryer?.promise;
+    }
+    setOptions(options) {
+        this.options = {
+            ...this.#defaultOptions,
+            ...options
+        };
+        this.updateGcTime(this.options.gcTime);
+        if (this.state && this.state.data === void 0) {
+            const defaultState = getDefaultState(this.options);
+            if (defaultState.data !== void 0) {
+                this.setState(successState(defaultState.data, defaultState.dataUpdatedAt));
+                this.#initialState = defaultState;
+            }
+        }
+    }
+    optionalRemove() {
+        if (!this.observers.length && this.state.fetchStatus === "idle") {
+            this.#cache.remove(this);
+        }
+    }
+    setData(newData, options) {
+        const data = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["replaceData"])(this.state.data, newData, this.options);
+        this.#dispatch({
+            data,
+            type: "success",
+            dataUpdatedAt: options?.updatedAt,
+            manual: options?.manual
+        });
+        return data;
+    }
+    setState(state, setStateOptions) {
+        this.#dispatch({
+            type: "setState",
+            state,
+            setStateOptions
+        });
+    }
+    cancel(options) {
+        const promise = this.#retryer?.promise;
+        this.#retryer?.cancel(options);
+        return promise ? promise.then(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]).catch(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]) : Promise.resolve();
+    }
+    destroy() {
+        super.destroy();
+        this.cancel({
+            silent: true
+        });
+    }
+    reset() {
+        this.destroy();
+        this.setState(this.#initialState);
+    }
+    isActive() {
+        return this.observers.some((observer)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["resolveEnabled"])(observer.options.enabled, this) !== false);
+    }
+    isDisabled() {
+        if (this.getObserversCount() > 0) {
+            return !this.isActive();
+        }
+        return this.options.queryFn === __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["skipToken"] || this.state.dataUpdateCount + this.state.errorUpdateCount === 0;
+    }
+    isStatic() {
+        if (this.getObserversCount() > 0) {
+            return this.observers.some((observer)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["resolveStaleTime"])(observer.options.staleTime, this) === "static");
+        }
+        return false;
+    }
+    isStale() {
+        if (this.getObserversCount() > 0) {
+            return this.observers.some((observer)=>observer.getCurrentResult().isStale);
+        }
+        return this.state.data === void 0 || this.state.isInvalidated;
+    }
+    isStaleByTime(staleTime = 0) {
+        if (this.state.data === void 0) {
+            return true;
+        }
+        if (staleTime === "static") {
+            return false;
+        }
+        if (this.state.isInvalidated) {
+            return true;
+        }
+        return !(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["timeUntilStale"])(this.state.dataUpdatedAt, staleTime);
+    }
+    onFocus() {
+        const observer = this.observers.find((x)=>x.shouldFetchOnWindowFocus());
+        observer?.refetch({
+            cancelRefetch: false
+        });
+        this.#retryer?.continue();
+    }
+    onOnline() {
+        const observer = this.observers.find((x)=>x.shouldFetchOnReconnect());
+        observer?.refetch({
+            cancelRefetch: false
+        });
+        this.#retryer?.continue();
+    }
+    addObserver(observer) {
+        if (!this.observers.includes(observer)) {
+            this.observers.push(observer);
+            this.clearGcTimeout();
+            this.#cache.notify({
+                type: "observerAdded",
+                query: this,
+                observer
+            });
+        }
+    }
+    removeObserver(observer) {
+        if (this.observers.includes(observer)) {
+            this.observers = this.observers.filter((x)=>x !== observer);
+            if (!this.observers.length) {
+                if (this.#retryer) {
+                    if (this.#abortSignalConsumed) {
+                        this.#retryer.cancel({
+                            revert: true
+                        });
+                    } else {
+                        this.#retryer.cancelRetry();
+                    }
+                }
+                this.scheduleGc();
+            }
+            this.#cache.notify({
+                type: "observerRemoved",
+                query: this,
+                observer
+            });
+        }
+    }
+    getObserversCount() {
+        return this.observers.length;
+    }
+    invalidate() {
+        if (!this.state.isInvalidated) {
+            this.#dispatch({
+                type: "invalidate"
+            });
+        }
+    }
+    async fetch(options, fetchOptions) {
+        if (this.state.fetchStatus !== "idle" && // If the promise in the retryer is already rejected, we have to definitely
+        // re-start the fetch; there is a chance that the query is still in a
+        // pending state when that happens
+        this.#retryer?.status() !== "rejected") {
+            if (this.state.data !== void 0 && fetchOptions?.cancelRefetch) {
+                this.cancel({
+                    silent: true
+                });
+            } else if (this.#retryer) {
+                this.#retryer.continueRetry();
+                return this.#retryer.promise;
+            }
+        }
+        if (options) {
+            this.setOptions(options);
+        }
+        if (!this.options.queryFn) {
+            const observer = this.observers.find((x)=>x.options.queryFn);
+            if (observer) {
+                this.setOptions(observer.options);
+            }
+        }
+        if ("TURBOPACK compile-time truthy", 1) {
+            if (!Array.isArray(this.options.queryKey)) {
+                console.error(`As of v4, queryKey needs to be an Array. If you are using a string like 'repoData', please change it to an Array, e.g. ['repoData']`);
+            }
+        }
+        const abortController = new AbortController();
+        const addSignalProperty = (object)=>{
+            Object.defineProperty(object, "signal", {
+                enumerable: true,
+                get: ()=>{
+                    this.#abortSignalConsumed = true;
+                    return abortController.signal;
+                }
+            });
+        };
+        const fetchFn = ()=>{
+            const queryFn = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ensureQueryFn"])(this.options, fetchOptions);
+            const createQueryFnContext = ()=>{
+                const queryFnContext2 = {
+                    client: this.#client,
+                    queryKey: this.queryKey,
+                    meta: this.meta
+                };
+                addSignalProperty(queryFnContext2);
+                return queryFnContext2;
+            };
+            const queryFnContext = createQueryFnContext();
+            this.#abortSignalConsumed = false;
+            if (this.options.persister) {
+                return this.options.persister(queryFn, queryFnContext, this);
+            }
+            return queryFn(queryFnContext);
+        };
+        const createFetchContext = ()=>{
+            const context2 = {
+                fetchOptions,
+                options: this.options,
+                queryKey: this.queryKey,
+                client: this.#client,
+                state: this.state,
+                fetchFn
+            };
+            addSignalProperty(context2);
+            return context2;
+        };
+        const context = createFetchContext();
+        this.options.behavior?.onFetch(context, this);
+        this.#revertState = this.state;
+        if (this.state.fetchStatus === "idle" || this.state.fetchMeta !== context.fetchOptions?.meta) {
+            this.#dispatch({
+                type: "fetch",
+                meta: context.fetchOptions?.meta
+            });
+        }
+        this.#retryer = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$retryer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createRetryer"])({
+            initialPromise: fetchOptions?.initialPromise,
+            fn: context.fetchFn,
+            onCancel: (error)=>{
+                if (error instanceof __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$retryer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CancelledError"] && error.revert) {
+                    this.setState({
+                        ...this.#revertState,
+                        fetchStatus: "idle"
+                    });
+                }
+                abortController.abort();
+            },
+            onFail: (failureCount, error)=>{
+                this.#dispatch({
+                    type: "failed",
+                    failureCount,
+                    error
+                });
+            },
+            onPause: ()=>{
+                this.#dispatch({
+                    type: "pause"
+                });
+            },
+            onContinue: ()=>{
+                this.#dispatch({
+                    type: "continue"
+                });
+            },
+            retry: context.options.retry,
+            retryDelay: context.options.retryDelay,
+            networkMode: context.options.networkMode,
+            canRun: ()=>true
+        });
+        try {
+            const data = await this.#retryer.start();
+            if (data === void 0) {
+                if ("TURBOPACK compile-time truthy", 1) {
+                    console.error(`Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ${this.queryHash}`);
+                }
+                throw new Error(`${this.queryHash} data is undefined`);
+            }
+            this.setData(data);
+            this.#cache.config.onSuccess?.(data, this);
+            this.#cache.config.onSettled?.(data, this.state.error, this);
+            return data;
+        } catch (error) {
+            if (error instanceof __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$retryer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CancelledError"]) {
+                if (error.silent) {
+                    return this.#retryer.promise;
+                } else if (error.revert) {
+                    if (this.state.data === void 0) {
+                        throw error;
+                    }
+                    return this.state.data;
+                }
+            }
+            this.#dispatch({
+                type: "error",
+                error
+            });
+            this.#cache.config.onError?.(error, this);
+            this.#cache.config.onSettled?.(this.state.data, error, this);
+            throw error;
+        } finally{
+            this.scheduleGc();
+        }
+    }
+    #dispatch(action) {
+        const reducer = (state)=>{
+            switch(action.type){
+                case "failed":
+                    return {
+                        ...state,
+                        fetchFailureCount: action.failureCount,
+                        fetchFailureReason: action.error
+                    };
+                case "pause":
+                    return {
+                        ...state,
+                        fetchStatus: "paused"
+                    };
+                case "continue":
+                    return {
+                        ...state,
+                        fetchStatus: "fetching"
+                    };
+                case "fetch":
+                    return {
+                        ...state,
+                        ...fetchState(state.data, this.options),
+                        fetchMeta: action.meta ?? null
+                    };
+                case "success":
+                    const newState = {
+                        ...state,
+                        ...successState(action.data, action.dataUpdatedAt),
+                        dataUpdateCount: state.dataUpdateCount + 1,
+                        ...!action.manual && {
+                            fetchStatus: "idle",
+                            fetchFailureCount: 0,
+                            fetchFailureReason: null
+                        }
+                    };
+                    this.#revertState = action.manual ? newState : void 0;
+                    return newState;
+                case "error":
+                    const error = action.error;
+                    return {
+                        ...state,
+                        error,
+                        errorUpdateCount: state.errorUpdateCount + 1,
+                        errorUpdatedAt: Date.now(),
+                        fetchFailureCount: state.fetchFailureCount + 1,
+                        fetchFailureReason: error,
+                        fetchStatus: "idle",
+                        status: "error",
+                        // flag existing data as invalidated if we get a background error
+                        // note that "no data" always means stale so we can set unconditionally here
+                        isInvalidated: true
+                    };
+                case "invalidate":
+                    return {
+                        ...state,
+                        isInvalidated: true
+                    };
+                case "setState":
+                    return {
+                        ...state,
+                        ...action.state
+                    };
+            }
+        };
+        this.state = reducer(this.state);
+        __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>{
+            this.observers.forEach((observer)=>{
+                observer.onQueryUpdate();
+            });
+            this.#cache.notify({
+                query: this,
+                type: "updated",
+                action
+            });
+        });
+    }
+};
+function fetchState(data, options) {
+    return {
+        fetchFailureCount: 0,
+        fetchFailureReason: null,
+        fetchStatus: (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$retryer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["canFetch"])(options.networkMode) ? "fetching" : "paused",
+        ...data === void 0 && {
+            error: null,
+            status: "pending"
+        }
+    };
+}
+function successState(data, dataUpdatedAt) {
+    return {
+        data,
+        dataUpdatedAt: dataUpdatedAt ?? Date.now(),
+        error: null,
+        isInvalidated: false,
+        status: "success"
+    };
+}
+function getDefaultState(options) {
+    const data = typeof options.initialData === "function" ? options.initialData() : options.initialData;
+    const hasData = data !== void 0;
+    const initialDataUpdatedAt = hasData ? typeof options.initialDataUpdatedAt === "function" ? options.initialDataUpdatedAt() : options.initialDataUpdatedAt : 0;
+    return {
+        data,
+        dataUpdateCount: 0,
+        dataUpdatedAt: hasData ? initialDataUpdatedAt ?? Date.now() : 0,
+        error: null,
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        fetchFailureCount: 0,
+        fetchFailureReason: null,
+        fetchMeta: null,
+        isInvalidated: false,
+        status: hasData ? "success" : "pending",
+        fetchStatus: "idle"
+    };
+}
+;
+ //# sourceMappingURL=query.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/queryCache.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "QueryCache",
+    ()=>QueryCache
+]);
+// src/queryCache.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/utils.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$query$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/query.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/notifyManager.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$subscribable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/subscribable.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+var QueryCache = class extends __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$subscribable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Subscribable"] {
+    constructor(config = {}){
+        super();
+        this.config = config;
+        this.#queries = /* @__PURE__ */ new Map();
+    }
+    #queries;
+    build(client, options, state) {
+        const queryKey = options.queryKey;
+        const queryHash = options.queryHash ?? (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["hashQueryKeyByOptions"])(queryKey, options);
+        let query = this.get(queryHash);
+        if (!query) {
+            query = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$query$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Query"]({
+                client,
+                queryKey,
+                queryHash,
+                options: client.defaultQueryOptions(options),
+                state,
+                defaultOptions: client.getQueryDefaults(queryKey)
+            });
+            this.add(query);
+        }
+        return query;
+    }
+    add(query) {
+        if (!this.#queries.has(query.queryHash)) {
+            this.#queries.set(query.queryHash, query);
+            this.notify({
+                type: "added",
+                query
+            });
+        }
+    }
+    remove(query) {
+        const queryInMap = this.#queries.get(query.queryHash);
+        if (queryInMap) {
+            query.destroy();
+            if (queryInMap === query) {
+                this.#queries.delete(query.queryHash);
+            }
+            this.notify({
+                type: "removed",
+                query
+            });
+        }
+    }
+    clear() {
+        __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>{
+            this.getAll().forEach((query)=>{
+                this.remove(query);
+            });
+        });
+    }
+    get(queryHash) {
+        return this.#queries.get(queryHash);
+    }
+    getAll() {
+        return [
+            ...this.#queries.values()
+        ];
+    }
+    find(filters) {
+        const defaultedFilters = {
+            exact: true,
+            ...filters
+        };
+        return this.getAll().find((query)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["matchQuery"])(defaultedFilters, query));
+    }
+    findAll(filters = {}) {
+        const queries = this.getAll();
+        return Object.keys(filters).length > 0 ? queries.filter((query)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["matchQuery"])(filters, query)) : queries;
+    }
+    notify(event) {
+        __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>{
+            this.listeners.forEach((listener)=>{
+                listener(event);
+            });
+        });
+    }
+    onFocus() {
+        __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>{
+            this.getAll().forEach((query)=>{
+                query.onFocus();
+            });
+        });
+    }
+    onOnline() {
+        __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>{
+            this.getAll().forEach((query)=>{
+                query.onOnline();
+            });
+        });
+    }
+};
+;
+ //# sourceMappingURL=queryCache.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/mutation.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Mutation",
+    ()=>Mutation,
+    "getDefaultState",
+    ()=>getDefaultState
+]);
+// src/mutation.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/notifyManager.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$removable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/removable.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$retryer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/retryer.js [app-ssr] (ecmascript)");
+;
+;
+;
+var Mutation = class extends __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$removable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Removable"] {
+    #client;
+    #observers;
+    #mutationCache;
+    #retryer;
+    constructor(config){
+        super();
+        this.#client = config.client;
+        this.mutationId = config.mutationId;
+        this.#mutationCache = config.mutationCache;
+        this.#observers = [];
+        this.state = config.state || getDefaultState();
+        this.setOptions(config.options);
+        this.scheduleGc();
+    }
+    setOptions(options) {
+        this.options = options;
+        this.updateGcTime(this.options.gcTime);
+    }
+    get meta() {
+        return this.options.meta;
+    }
+    addObserver(observer) {
+        if (!this.#observers.includes(observer)) {
+            this.#observers.push(observer);
+            this.clearGcTimeout();
+            this.#mutationCache.notify({
+                type: "observerAdded",
+                mutation: this,
+                observer
+            });
+        }
+    }
+    removeObserver(observer) {
+        this.#observers = this.#observers.filter((x)=>x !== observer);
+        this.scheduleGc();
+        this.#mutationCache.notify({
+            type: "observerRemoved",
+            mutation: this,
+            observer
+        });
+    }
+    optionalRemove() {
+        if (!this.#observers.length) {
+            if (this.state.status === "pending") {
+                this.scheduleGc();
+            } else {
+                this.#mutationCache.remove(this);
+            }
+        }
+    }
+    continue() {
+        return this.#retryer?.continue() ?? // continuing a mutation assumes that variables are set, mutation must have been dehydrated before
+        this.execute(this.state.variables);
+    }
+    async execute(variables) {
+        const onContinue = ()=>{
+            this.#dispatch({
+                type: "continue"
+            });
+        };
+        const mutationFnContext = {
+            client: this.#client,
+            meta: this.options.meta,
+            mutationKey: this.options.mutationKey
+        };
+        this.#retryer = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$retryer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createRetryer"])({
+            fn: ()=>{
+                if (!this.options.mutationFn) {
+                    return Promise.reject(new Error("No mutationFn found"));
+                }
+                return this.options.mutationFn(variables, mutationFnContext);
+            },
+            onFail: (failureCount, error)=>{
+                this.#dispatch({
+                    type: "failed",
+                    failureCount,
+                    error
+                });
+            },
+            onPause: ()=>{
+                this.#dispatch({
+                    type: "pause"
+                });
+            },
+            onContinue,
+            retry: this.options.retry ?? 0,
+            retryDelay: this.options.retryDelay,
+            networkMode: this.options.networkMode,
+            canRun: ()=>this.#mutationCache.canRun(this)
+        });
+        const restored = this.state.status === "pending";
+        const isPaused = !this.#retryer.canStart();
+        try {
+            if (restored) {
+                onContinue();
+            } else {
+                this.#dispatch({
+                    type: "pending",
+                    variables,
+                    isPaused
+                });
+                if (this.#mutationCache.config.onMutate) {
+                    await this.#mutationCache.config.onMutate(variables, this, mutationFnContext);
+                }
+                const context = await this.options.onMutate?.(variables, mutationFnContext);
+                if (context !== this.state.context) {
+                    this.#dispatch({
+                        type: "pending",
+                        context,
+                        variables,
+                        isPaused
+                    });
+                }
+            }
+            const data = await this.#retryer.start();
+            await this.#mutationCache.config.onSuccess?.(data, variables, this.state.context, this, mutationFnContext);
+            await this.options.onSuccess?.(data, variables, this.state.context, mutationFnContext);
+            await this.#mutationCache.config.onSettled?.(data, null, this.state.variables, this.state.context, this, mutationFnContext);
+            await this.options.onSettled?.(data, null, variables, this.state.context, mutationFnContext);
+            this.#dispatch({
+                type: "success",
+                data
+            });
+            return data;
+        } catch (error) {
+            try {
+                await this.#mutationCache.config.onError?.(error, variables, this.state.context, this, mutationFnContext);
+            } catch (e) {
+                void Promise.reject(e);
+            }
+            try {
+                await this.options.onError?.(error, variables, this.state.context, mutationFnContext);
+            } catch (e) {
+                void Promise.reject(e);
+            }
+            try {
+                await this.#mutationCache.config.onSettled?.(void 0, error, this.state.variables, this.state.context, this, mutationFnContext);
+            } catch (e) {
+                void Promise.reject(e);
+            }
+            try {
+                await this.options.onSettled?.(void 0, error, variables, this.state.context, mutationFnContext);
+            } catch (e) {
+                void Promise.reject(e);
+            }
+            this.#dispatch({
+                type: "error",
+                error
+            });
+            throw error;
+        } finally{
+            this.#mutationCache.runNext(this);
+        }
+    }
+    #dispatch(action) {
+        const reducer = (state)=>{
+            switch(action.type){
+                case "failed":
+                    return {
+                        ...state,
+                        failureCount: action.failureCount,
+                        failureReason: action.error
+                    };
+                case "pause":
+                    return {
+                        ...state,
+                        isPaused: true
+                    };
+                case "continue":
+                    return {
+                        ...state,
+                        isPaused: false
+                    };
+                case "pending":
+                    return {
+                        ...state,
+                        context: action.context,
+                        data: void 0,
+                        failureCount: 0,
+                        failureReason: null,
+                        error: null,
+                        isPaused: action.isPaused,
+                        status: "pending",
+                        variables: action.variables,
+                        submittedAt: Date.now()
+                    };
+                case "success":
+                    return {
+                        ...state,
+                        data: action.data,
+                        failureCount: 0,
+                        failureReason: null,
+                        error: null,
+                        status: "success",
+                        isPaused: false
+                    };
+                case "error":
+                    return {
+                        ...state,
+                        data: void 0,
+                        error: action.error,
+                        failureCount: state.failureCount + 1,
+                        failureReason: action.error,
+                        isPaused: false,
+                        status: "error"
+                    };
+            }
+        };
+        this.state = reducer(this.state);
+        __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>{
+            this.#observers.forEach((observer)=>{
+                observer.onMutationUpdate(action);
+            });
+            this.#mutationCache.notify({
+                mutation: this,
+                type: "updated",
+                action
+            });
+        });
+    }
+};
+function getDefaultState() {
+    return {
+        context: void 0,
+        data: void 0,
+        error: null,
+        failureCount: 0,
+        failureReason: null,
+        isPaused: false,
+        status: "idle",
+        variables: void 0,
+        submittedAt: 0
+    };
+}
+;
+ //# sourceMappingURL=mutation.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/mutationCache.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "MutationCache",
+    ()=>MutationCache
+]);
+// src/mutationCache.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/notifyManager.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$mutation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/mutation.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/utils.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$subscribable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/subscribable.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+var MutationCache = class extends __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$subscribable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Subscribable"] {
+    constructor(config = {}){
+        super();
+        this.config = config;
+        this.#mutations = /* @__PURE__ */ new Set();
+        this.#scopes = /* @__PURE__ */ new Map();
+        this.#mutationId = 0;
+    }
+    #mutations;
+    #scopes;
+    #mutationId;
+    build(client, options, state) {
+        const mutation = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$mutation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Mutation"]({
+            client,
+            mutationCache: this,
+            mutationId: ++this.#mutationId,
+            options: client.defaultMutationOptions(options),
+            state
+        });
+        this.add(mutation);
+        return mutation;
+    }
+    add(mutation) {
+        this.#mutations.add(mutation);
+        const scope = scopeFor(mutation);
+        if (typeof scope === "string") {
+            const scopedMutations = this.#scopes.get(scope);
+            if (scopedMutations) {
+                scopedMutations.push(mutation);
+            } else {
+                this.#scopes.set(scope, [
+                    mutation
+                ]);
+            }
+        }
+        this.notify({
+            type: "added",
+            mutation
+        });
+    }
+    remove(mutation) {
+        if (this.#mutations.delete(mutation)) {
+            const scope = scopeFor(mutation);
+            if (typeof scope === "string") {
+                const scopedMutations = this.#scopes.get(scope);
+                if (scopedMutations) {
+                    if (scopedMutations.length > 1) {
+                        const index = scopedMutations.indexOf(mutation);
+                        if (index !== -1) {
+                            scopedMutations.splice(index, 1);
+                        }
+                    } else if (scopedMutations[0] === mutation) {
+                        this.#scopes.delete(scope);
+                    }
+                }
+            }
+        }
+        this.notify({
+            type: "removed",
+            mutation
+        });
+    }
+    canRun(mutation) {
+        const scope = scopeFor(mutation);
+        if (typeof scope === "string") {
+            const mutationsWithSameScope = this.#scopes.get(scope);
+            const firstPendingMutation = mutationsWithSameScope?.find((m)=>m.state.status === "pending");
+            return !firstPendingMutation || firstPendingMutation === mutation;
+        } else {
+            return true;
+        }
+    }
+    runNext(mutation) {
+        const scope = scopeFor(mutation);
+        if (typeof scope === "string") {
+            const foundMutation = this.#scopes.get(scope)?.find((m)=>m !== mutation && m.state.isPaused);
+            return foundMutation?.continue() ?? Promise.resolve();
+        } else {
+            return Promise.resolve();
+        }
+    }
+    clear() {
+        __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>{
+            this.#mutations.forEach((mutation)=>{
+                this.notify({
+                    type: "removed",
+                    mutation
+                });
+            });
+            this.#mutations.clear();
+            this.#scopes.clear();
+        });
+    }
+    getAll() {
+        return Array.from(this.#mutations);
+    }
+    find(filters) {
+        const defaultedFilters = {
+            exact: true,
+            ...filters
+        };
+        return this.getAll().find((mutation)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["matchMutation"])(defaultedFilters, mutation));
+    }
+    findAll(filters = {}) {
+        return this.getAll().filter((mutation)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["matchMutation"])(filters, mutation));
+    }
+    notify(event) {
+        __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>{
+            this.listeners.forEach((listener)=>{
+                listener(event);
+            });
+        });
+    }
+    resumePausedMutations() {
+        const pausedMutations = this.getAll().filter((x)=>x.state.isPaused);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>Promise.all(pausedMutations.map((mutation)=>mutation.continue().catch(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]))));
+    }
+};
+function scopeFor(mutation) {
+    return mutation.options.scope?.id;
+}
+;
+ //# sourceMappingURL=mutationCache.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/infiniteQueryBehavior.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "hasNextPage",
+    ()=>hasNextPage,
+    "hasPreviousPage",
+    ()=>hasPreviousPage,
+    "infiniteQueryBehavior",
+    ()=>infiniteQueryBehavior
+]);
+// src/infiniteQueryBehavior.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/utils.js [app-ssr] (ecmascript)");
+;
+function infiniteQueryBehavior(pages) {
+    return {
+        onFetch: (context, query)=>{
+            const options = context.options;
+            const direction = context.fetchOptions?.meta?.fetchMore?.direction;
+            const oldPages = context.state.data?.pages || [];
+            const oldPageParams = context.state.data?.pageParams || [];
+            let result = {
+                pages: [],
+                pageParams: []
+            };
+            let currentPage = 0;
+            const fetchFn = async ()=>{
+                let cancelled = false;
+                const addSignalProperty = (object)=>{
+                    (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["addConsumeAwareSignal"])(object, ()=>context.signal, ()=>cancelled = true);
+                };
+                const queryFn = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ensureQueryFn"])(context.options, context.fetchOptions);
+                const fetchPage = async (data, param, previous)=>{
+                    if (cancelled) {
+                        return Promise.reject();
+                    }
+                    if (param == null && data.pages.length) {
+                        return Promise.resolve(data);
+                    }
+                    const createQueryFnContext = ()=>{
+                        const queryFnContext2 = {
+                            client: context.client,
+                            queryKey: context.queryKey,
+                            pageParam: param,
+                            direction: previous ? "backward" : "forward",
+                            meta: context.options.meta
+                        };
+                        addSignalProperty(queryFnContext2);
+                        return queryFnContext2;
+                    };
+                    const queryFnContext = createQueryFnContext();
+                    const page = await queryFn(queryFnContext);
+                    const { maxPages } = context.options;
+                    const addTo = previous ? __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["addToStart"] : __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["addToEnd"];
+                    return {
+                        pages: addTo(data.pages, page, maxPages),
+                        pageParams: addTo(data.pageParams, param, maxPages)
+                    };
+                };
+                if (direction && oldPages.length) {
+                    const previous = direction === "backward";
+                    const pageParamFn = previous ? getPreviousPageParam : getNextPageParam;
+                    const oldData = {
+                        pages: oldPages,
+                        pageParams: oldPageParams
+                    };
+                    const param = pageParamFn(options, oldData);
+                    result = await fetchPage(oldData, param, previous);
+                } else {
+                    const remainingPages = pages ?? oldPages.length;
+                    do {
+                        const param = currentPage === 0 ? oldPageParams[0] ?? options.initialPageParam : getNextPageParam(options, result);
+                        if (currentPage > 0 && param == null) {
+                            break;
+                        }
+                        result = await fetchPage(result, param);
+                        currentPage++;
+                    }while (currentPage < remainingPages)
+                }
+                return result;
+            };
+            if (context.options.persister) {
+                context.fetchFn = ()=>{
+                    return context.options.persister?.(fetchFn, {
+                        client: context.client,
+                        queryKey: context.queryKey,
+                        meta: context.options.meta,
+                        signal: context.signal
+                    }, query);
+                };
+            } else {
+                context.fetchFn = fetchFn;
+            }
+        }
+    };
+}
+function getNextPageParam(options, { pages, pageParams }) {
+    const lastIndex = pages.length - 1;
+    return pages.length > 0 ? options.getNextPageParam(pages[lastIndex], pages, pageParams[lastIndex], pageParams) : void 0;
+}
+function getPreviousPageParam(options, { pages, pageParams }) {
+    return pages.length > 0 ? options.getPreviousPageParam?.(pages[0], pages, pageParams[0], pageParams) : void 0;
+}
+function hasNextPage(options, data) {
+    if (!data) return false;
+    return getNextPageParam(options, data) != null;
+}
+function hasPreviousPage(options, data) {
+    if (!data || !options.getPreviousPageParam) return false;
+    return getPreviousPageParam(options, data) != null;
+}
+;
+ //# sourceMappingURL=infiniteQueryBehavior.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/queryClient.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "QueryClient",
+    ()=>QueryClient
+]);
+// src/queryClient.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/utils.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$queryCache$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/queryCache.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$mutationCache$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/mutationCache.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$focusManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/focusManager.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$onlineManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/onlineManager.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/notifyManager.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$infiniteQueryBehavior$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/query-core/build/modern/infiniteQueryBehavior.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+;
+;
+;
+var QueryClient = class {
+    #queryCache;
+    #mutationCache;
+    #defaultOptions;
+    #queryDefaults;
+    #mutationDefaults;
+    #mountCount;
+    #unsubscribeFocus;
+    #unsubscribeOnline;
+    constructor(config = {}){
+        this.#queryCache = config.queryCache || new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$queryCache$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["QueryCache"]();
+        this.#mutationCache = config.mutationCache || new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$mutationCache$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["MutationCache"]();
+        this.#defaultOptions = config.defaultOptions || {};
+        this.#queryDefaults = /* @__PURE__ */ new Map();
+        this.#mutationDefaults = /* @__PURE__ */ new Map();
+        this.#mountCount = 0;
+    }
+    mount() {
+        this.#mountCount++;
+        if (this.#mountCount !== 1) return;
+        this.#unsubscribeFocus = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$focusManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["focusManager"].subscribe(async (focused)=>{
+            if (focused) {
+                await this.resumePausedMutations();
+                this.#queryCache.onFocus();
+            }
+        });
+        this.#unsubscribeOnline = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$onlineManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["onlineManager"].subscribe(async (online)=>{
+            if (online) {
+                await this.resumePausedMutations();
+                this.#queryCache.onOnline();
+            }
+        });
+    }
+    unmount() {
+        this.#mountCount--;
+        if (this.#mountCount !== 0) return;
+        this.#unsubscribeFocus?.();
+        this.#unsubscribeFocus = void 0;
+        this.#unsubscribeOnline?.();
+        this.#unsubscribeOnline = void 0;
+    }
+    isFetching(filters) {
+        return this.#queryCache.findAll({
+            ...filters,
+            fetchStatus: "fetching"
+        }).length;
+    }
+    isMutating(filters) {
+        return this.#mutationCache.findAll({
+            ...filters,
+            status: "pending"
+        }).length;
+    }
+    /**
+   * Imperative (non-reactive) way to retrieve data for a QueryKey.
+   * Should only be used in callbacks or functions where reading the latest data is necessary, e.g. for optimistic updates.
+   *
+   * Hint: Do not use this function inside a component, because it won't receive updates.
+   * Use `useQuery` to create a `QueryObserver` that subscribes to changes.
+   */ getQueryData(queryKey) {
+        const options = this.defaultQueryOptions({
+            queryKey
+        });
+        return this.#queryCache.get(options.queryHash)?.state.data;
+    }
+    ensureQueryData(options) {
+        const defaultedOptions = this.defaultQueryOptions(options);
+        const query = this.#queryCache.build(this, defaultedOptions);
+        const cachedData = query.state.data;
+        if (cachedData === void 0) {
+            return this.fetchQuery(options);
+        }
+        if (options.revalidateIfStale && query.isStaleByTime((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["resolveStaleTime"])(defaultedOptions.staleTime, query))) {
+            void this.prefetchQuery(defaultedOptions);
+        }
+        return Promise.resolve(cachedData);
+    }
+    getQueriesData(filters) {
+        return this.#queryCache.findAll(filters).map(({ queryKey, state })=>{
+            const data = state.data;
+            return [
+                queryKey,
+                data
+            ];
+        });
+    }
+    setQueryData(queryKey, updater, options) {
+        const defaultedOptions = this.defaultQueryOptions({
+            queryKey
+        });
+        const query = this.#queryCache.get(defaultedOptions.queryHash);
+        const prevData = query?.state.data;
+        const data = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["functionalUpdate"])(updater, prevData);
+        if (data === void 0) {
+            return void 0;
+        }
+        return this.#queryCache.build(this, defaultedOptions).setData(data, {
+            ...options,
+            manual: true
+        });
+    }
+    setQueriesData(filters, updater, options) {
+        return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>this.#queryCache.findAll(filters).map(({ queryKey })=>[
+                    queryKey,
+                    this.setQueryData(queryKey, updater, options)
+                ]));
+    }
+    getQueryState(queryKey) {
+        const options = this.defaultQueryOptions({
+            queryKey
+        });
+        return this.#queryCache.get(options.queryHash)?.state;
+    }
+    removeQueries(filters) {
+        const queryCache = this.#queryCache;
+        __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>{
+            queryCache.findAll(filters).forEach((query)=>{
+                queryCache.remove(query);
+            });
+        });
+    }
+    resetQueries(filters, options) {
+        const queryCache = this.#queryCache;
+        return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>{
+            queryCache.findAll(filters).forEach((query)=>{
+                query.reset();
+            });
+            return this.refetchQueries({
+                type: "active",
+                ...filters
+            }, options);
+        });
+    }
+    cancelQueries(filters, cancelOptions = {}) {
+        const defaultedCancelOptions = {
+            revert: true,
+            ...cancelOptions
+        };
+        const promises = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>this.#queryCache.findAll(filters).map((query)=>query.cancel(defaultedCancelOptions)));
+        return Promise.all(promises).then(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]).catch(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]);
+    }
+    invalidateQueries(filters, options = {}) {
+        return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>{
+            this.#queryCache.findAll(filters).forEach((query)=>{
+                query.invalidate();
+            });
+            if (filters?.refetchType === "none") {
+                return Promise.resolve();
+            }
+            return this.refetchQueries({
+                ...filters,
+                type: filters?.refetchType ?? filters?.type ?? "active"
+            }, options);
+        });
+    }
+    refetchQueries(filters, options = {}) {
+        const fetchOptions = {
+            ...options,
+            cancelRefetch: options.cancelRefetch ?? true
+        };
+        const promises = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$notifyManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["notifyManager"].batch(()=>this.#queryCache.findAll(filters).filter((query)=>!query.isDisabled() && !query.isStatic()).map((query)=>{
+                let promise = query.fetch(void 0, fetchOptions);
+                if (!fetchOptions.throwOnError) {
+                    promise = promise.catch(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]);
+                }
+                return query.state.fetchStatus === "paused" ? Promise.resolve() : promise;
+            }));
+        return Promise.all(promises).then(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]);
+    }
+    fetchQuery(options) {
+        const defaultedOptions = this.defaultQueryOptions(options);
+        if (defaultedOptions.retry === void 0) {
+            defaultedOptions.retry = false;
+        }
+        const query = this.#queryCache.build(this, defaultedOptions);
+        return query.isStaleByTime((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["resolveStaleTime"])(defaultedOptions.staleTime, query)) ? query.fetch(defaultedOptions) : Promise.resolve(query.state.data);
+    }
+    prefetchQuery(options) {
+        return this.fetchQuery(options).then(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]).catch(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]);
+    }
+    fetchInfiniteQuery(options) {
+        options.behavior = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$infiniteQueryBehavior$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["infiniteQueryBehavior"])(options.pages);
+        return this.fetchQuery(options);
+    }
+    prefetchInfiniteQuery(options) {
+        return this.fetchInfiniteQuery(options).then(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]).catch(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"]);
+    }
+    ensureInfiniteQueryData(options) {
+        options.behavior = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$infiniteQueryBehavior$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["infiniteQueryBehavior"])(options.pages);
+        return this.ensureQueryData(options);
+    }
+    resumePausedMutations() {
+        if (__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$onlineManager$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["onlineManager"].isOnline()) {
+            return this.#mutationCache.resumePausedMutations();
+        }
+        return Promise.resolve();
+    }
+    getQueryCache() {
+        return this.#queryCache;
+    }
+    getMutationCache() {
+        return this.#mutationCache;
+    }
+    getDefaultOptions() {
+        return this.#defaultOptions;
+    }
+    setDefaultOptions(options) {
+        this.#defaultOptions = options;
+    }
+    setQueryDefaults(queryKey, options) {
+        this.#queryDefaults.set((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["hashKey"])(queryKey), {
+            queryKey,
+            defaultOptions: options
+        });
+    }
+    getQueryDefaults(queryKey) {
+        const defaults = [
+            ...this.#queryDefaults.values()
+        ];
+        const result = {};
+        defaults.forEach((queryDefault)=>{
+            if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["partialMatchKey"])(queryKey, queryDefault.queryKey)) {
+                Object.assign(result, queryDefault.defaultOptions);
+            }
+        });
+        return result;
+    }
+    setMutationDefaults(mutationKey, options) {
+        this.#mutationDefaults.set((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["hashKey"])(mutationKey), {
+            mutationKey,
+            defaultOptions: options
+        });
+    }
+    getMutationDefaults(mutationKey) {
+        const defaults = [
+            ...this.#mutationDefaults.values()
+        ];
+        const result = {};
+        defaults.forEach((queryDefault)=>{
+            if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["partialMatchKey"])(mutationKey, queryDefault.mutationKey)) {
+                Object.assign(result, queryDefault.defaultOptions);
+            }
+        });
+        return result;
+    }
+    defaultQueryOptions(options) {
+        if (options._defaulted) {
+            return options;
+        }
+        const defaultedOptions = {
+            ...this.#defaultOptions.queries,
+            ...this.getQueryDefaults(options.queryKey),
+            ...options,
+            _defaulted: true
+        };
+        if (!defaultedOptions.queryHash) {
+            defaultedOptions.queryHash = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["hashQueryKeyByOptions"])(defaultedOptions.queryKey, defaultedOptions);
+        }
+        if (defaultedOptions.refetchOnReconnect === void 0) {
+            defaultedOptions.refetchOnReconnect = defaultedOptions.networkMode !== "always";
+        }
+        if (defaultedOptions.throwOnError === void 0) {
+            defaultedOptions.throwOnError = !!defaultedOptions.suspense;
+        }
+        if (!defaultedOptions.networkMode && defaultedOptions.persister) {
+            defaultedOptions.networkMode = "offlineFirst";
+        }
+        if (defaultedOptions.queryFn === __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$tanstack$2f$query$2d$core$2f$build$2f$modern$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["skipToken"]) {
+            defaultedOptions.enabled = false;
+        }
+        return defaultedOptions;
+    }
+    defaultMutationOptions(options) {
+        if (options?._defaulted) {
+            return options;
+        }
+        return {
+            ...this.#defaultOptions.mutations,
+            ...options?.mutationKey && this.getMutationDefaults(options.mutationKey),
+            ...options,
+            _defaulted: true
+        };
+    }
+    clear() {
+        this.#queryCache.clear();
+        this.#mutationCache.clear();
+    }
+};
+;
+ //# sourceMappingURL=queryClient.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "QueryClientContext",
+    ()=>QueryClientContext,
+    "QueryClientProvider",
+    ()=>QueryClientProvider,
+    "useQueryClient",
+    ()=>useQueryClient
+]);
+// src/QueryClientProvider.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-runtime.js [app-ssr] (ecmascript)");
+"use client";
+;
+;
+var QueryClientContext = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createContext"](void 0);
+var useQueryClient = (queryClient)=>{
+    const client = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useContext"](QueryClientContext);
+    if (queryClient) {
+        return queryClient;
+    }
+    if (!client) {
+        throw new Error("No QueryClient set, use QueryClientProvider to set one");
+    }
+    return client;
+};
+var QueryClientProvider = ({ client, children })=>{
+    __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"](()=>{
+        client.mount();
+        return ()=>{
+            client.unmount();
+        };
+    }, [
+        client
+    ]);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsx"])(QueryClientContext.Provider, {
+        value: client,
+        children
+    });
+};
+;
+ //# sourceMappingURL=QueryClientProvider.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/shared/src/utils/mergeClasses.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "mergeClasses",
+    ()=>mergeClasses
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ const mergeClasses = (...classes)=>classes.filter((className, index, array)=>{
+        return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index;
+    }).join(" ").trim();
+;
+ //# sourceMappingURL=mergeClasses.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "toKebabCase",
+    ()=>toKebabCase
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ const toKebabCase = (string)=>string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+;
+ //# sourceMappingURL=toKebabCase.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/shared/src/utils/toCamelCase.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "toCamelCase",
+    ()=>toCamelCase
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ const toCamelCase = (string)=>string.replace(/^([A-Z])|[\s-_]+(\w)/g, (match, p1, p2)=>p2 ? p2.toUpperCase() : p1.toLowerCase());
+;
+ //# sourceMappingURL=toCamelCase.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/shared/src/utils/toPascalCase.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "toPascalCase",
+    ()=>toPascalCase
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$toCamelCase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/shared/src/utils/toCamelCase.js [app-ssr] (ecmascript)");
+;
+const toPascalCase = (string)=>{
+    const camelCase = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$toCamelCase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toCamelCase"])(string);
+    return camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
+};
+;
+ //# sourceMappingURL=toPascalCase.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/defaultAttributes.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>defaultAttributes
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var defaultAttributes = {
+    xmlns: "http://www.w3.org/2000/svg",
+    width: 24,
+    height: 24,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+};
+;
+ //# sourceMappingURL=defaultAttributes.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/shared/src/utils/hasA11yProp.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "hasA11yProp",
+    ()=>hasA11yProp
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ const hasA11yProp = (props)=>{
+    for(const prop in props){
+        if (prop.startsWith("aria-") || prop === "role" || prop === "title") {
+            return true;
+        }
+    }
+    return false;
+};
+;
+ //# sourceMappingURL=hasA11yProp.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/Icon.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>Icon
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$defaultAttributes$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/defaultAttributes.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$hasA11yProp$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/shared/src/utils/hasA11yProp.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$mergeClasses$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/shared/src/utils/mergeClasses.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+const Icon = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["forwardRef"])(({ color = "currentColor", size = 24, strokeWidth = 2, absoluteStrokeWidth, className = "", children, iconNode, ...rest }, ref)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createElement"])("svg", {
+        ref,
+        ...__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$defaultAttributes$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"],
+        width: size,
+        height: size,
+        stroke: color,
+        strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
+        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$mergeClasses$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["mergeClasses"])("lucide", className),
+        ...!children && !(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$hasA11yProp$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["hasA11yProp"])(rest) && {
+            "aria-hidden": "true"
+        },
+        ...rest
+    }, [
+        ...iconNode.map(([tag, attrs])=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createElement"])(tag, attrs)),
+        ...Array.isArray(children) ? children : [
+            children
+        ]
+    ]));
+;
+ //# sourceMappingURL=Icon.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>createLucideIcon
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$mergeClasses$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/shared/src/utils/mergeClasses.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$toKebabCase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$toPascalCase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/shared/src/utils/toPascalCase.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$Icon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/Icon.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+;
+const createLucideIcon = (iconName, iconNode)=>{
+    const Component = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["forwardRef"])(({ className, ...props }, ref)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createElement"])(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$Icon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
+            ref,
+            iconNode,
+            className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$mergeClasses$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["mergeClasses"])(`lucide-${(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$toKebabCase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toKebabCase"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$toPascalCase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toPascalCase"])(iconName))}`, `lucide-${iconName}`, className),
+            ...props
+        }));
+    Component.displayName = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$shared$2f$src$2f$utils$2f$toPascalCase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toPascalCase"])(iconName);
+    return Component;
+};
+;
+ //# sourceMappingURL=createLucideIcon.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/x.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>X
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-ssr] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M18 6 6 18",
+            key: "1bl5f8"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m6 6 12 12",
+            key: "d8bk6v"
+        }
+    ]
+];
+const X = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])("x", __iconNode);
+;
+ //# sourceMappingURL=x.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/x.js [app-ssr] (ecmascript) <export default as X>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "X",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$x$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$x$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/x.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/circle-check.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>CircleCheck
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-ssr] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "circle",
+        {
+            cx: "12",
+            cy: "12",
+            r: "10",
+            key: "1mglay"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m9 12 2 2 4-4",
+            key: "dzmm74"
+        }
+    ]
+];
+const CircleCheck = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])("circle-check", __iconNode);
+;
+ //# sourceMappingURL=circle-check.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/circle-check.js [app-ssr] (ecmascript) <export default as CheckCircle2>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "CheckCircle2",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$check$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$check$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/circle-check.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/triangle-alert.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>TriangleAlert
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-ssr] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",
+            key: "wmoenq"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M12 9v4",
+            key: "juzpu7"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M12 17h.01",
+            key: "p32p05"
+        }
+    ]
+];
+const TriangleAlert = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])("triangle-alert", __iconNode);
+;
+ //# sourceMappingURL=triangle-alert.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/triangle-alert.js [app-ssr] (ecmascript) <export default as AlertTriangle>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "AlertTriangle",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/triangle-alert.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/info.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>Info
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-ssr] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "circle",
+        {
+            cx: "12",
+            cy: "12",
+            r: "10",
+            key: "1mglay"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M12 16v-4",
+            key: "1dtifu"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M12 8h.01",
+            key: "e9boi3"
+        }
+    ]
+];
+const Info = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])("info", __iconNode);
+;
+ //# sourceMappingURL=info.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/info.js [app-ssr] (ecmascript) <export default as Info>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Info",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$info$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$info$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/info.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/circle-alert.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>CircleAlert
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-ssr] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "circle",
+        {
+            cx: "12",
+            cy: "12",
+            r: "10",
+            key: "1mglay"
+        }
+    ],
+    [
+        "line",
+        {
+            x1: "12",
+            x2: "12",
+            y1: "8",
+            y2: "12",
+            key: "1pkeuh"
+        }
+    ],
+    [
+        "line",
+        {
+            x1: "12",
+            x2: "12.01",
+            y1: "16",
+            y2: "16",
+            key: "4dfq90"
+        }
+    ]
+];
+const CircleAlert = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])("circle-alert", __iconNode);
+;
+ //# sourceMappingURL=circle-alert.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/circle-alert.js [app-ssr] (ecmascript) <export default as AlertCircle>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "AlertCircle",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$alert$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$alert$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/circle-alert.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/sun.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>Sun
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-ssr] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "circle",
+        {
+            cx: "12",
+            cy: "12",
+            r: "4",
+            key: "4exip2"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M12 2v2",
+            key: "tus03m"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M12 20v2",
+            key: "1lh1kg"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m4.93 4.93 1.41 1.41",
+            key: "149t6j"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m17.66 17.66 1.41 1.41",
+            key: "ptbguv"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M2 12h2",
+            key: "1t8f8n"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M20 12h2",
+            key: "1q8mjw"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m6.34 17.66-1.41 1.41",
+            key: "1m8zz5"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m19.07 4.93-1.41 1.41",
+            key: "1shlcs"
+        }
+    ]
+];
+const Sun = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])("sun", __iconNode);
+;
+ //# sourceMappingURL=sun.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/sun.js [app-ssr] (ecmascript) <export default as Sun>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Sun",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sun$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sun$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/sun.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/moon.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>Moon
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-ssr] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401",
+            key: "kfwtm"
+        }
+    ]
+];
+const Moon = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])("moon", __iconNode);
+;
+ //# sourceMappingURL=moon.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/moon.js [app-ssr] (ecmascript) <export default as Moon>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Moon",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$moon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$moon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/moon.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/languages.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>Languages
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-ssr] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "m5 8 6 6",
+            key: "1wu5hv"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m4 14 6-6 2-3",
+            key: "1k1g8d"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M2 5h12",
+            key: "or177f"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M7 2h1",
+            key: "1t2jsx"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m22 22-5-10-5 10",
+            key: "don7ne"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M14 18h6",
+            key: "1m8k6r"
+        }
+    ]
+];
+const Languages = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])("languages", __iconNode);
+;
+ //# sourceMappingURL=languages.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/languages.js [app-ssr] (ecmascript) <export default as Languages>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Languages",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$languages$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$languages$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/languages.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/loader-circle.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>LoaderCircle
+]);
+/**
+ * @license lucide-react v0.563.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-ssr] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M21 12a9 9 0 1 1-6.219-8.56",
+            key: "13zald"
+        }
+    ]
+];
+const LoaderCircle = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])("loader-circle", __iconNode);
+;
+ //# sourceMappingURL=loader-circle.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/loader-circle.js [app-ssr] (ecmascript) <export default as Loader2>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Loader2",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/lucide-react/dist/esm/icons/loader-circle.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/clsx/dist/clsx.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "clsx",
+    ()=>clsx,
+    "default",
+    ()=>__TURBOPACK__default__export__
+]);
+function r(e) {
+    var t, f, n = "";
+    if ("string" == typeof e || "number" == typeof e) n += e;
+    else if ("object" == typeof e) if (Array.isArray(e)) {
+        var o = e.length;
+        for(t = 0; t < o; t++)e[t] && (f = r(e[t])) && (n && (n += " "), n += f);
+    } else for(f in e)e[f] && (n && (n += " "), n += f);
+    return n;
+}
+function clsx() {
+    for(var e, t, f = 0, n = "", o = arguments.length; f < o; f++)(e = arguments[f]) && (t = r(e)) && (n && (n += " "), n += t);
+    return n;
+}
+const __TURBOPACK__default__export__ = clsx;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/zustand/esm/vanilla.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "createStore",
+    ()=>createStore
+]);
+const createStoreImpl = (createState)=>{
+    let state;
+    const listeners = /* @__PURE__ */ new Set();
+    const setState = (partial, replace)=>{
+        const nextState = typeof partial === "function" ? partial(state) : partial;
+        if (!Object.is(nextState, state)) {
+            const previousState = state;
+            state = (replace != null ? replace : typeof nextState !== "object" || nextState === null) ? nextState : Object.assign({}, state, nextState);
+            listeners.forEach((listener)=>listener(state, previousState));
+        }
+    };
+    const getState = ()=>state;
+    const getInitialState = ()=>initialState;
+    const subscribe = (listener)=>{
+        listeners.add(listener);
+        return ()=>listeners.delete(listener);
+    };
+    const api = {
+        setState,
+        getState,
+        getInitialState,
+        subscribe
+    };
+    const initialState = state = createState(setState, getState, api);
+    return api;
+};
+const createStore = (createState)=>createState ? createStoreImpl(createState) : createStoreImpl;
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/zustand/esm/react.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "create",
+    ()=>create,
+    "useStore",
+    ()=>useStore
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$zustand$2f$esm$2f$vanilla$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/zustand/esm/vanilla.mjs [app-ssr] (ecmascript)");
+;
+;
+const identity = (arg)=>arg;
+function useStore(api, selector = identity) {
+    const slice = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useSyncExternalStore(api.subscribe, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useCallback(()=>selector(api.getState()), [
+        api,
+        selector
+    ]), __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useCallback(()=>selector(api.getInitialState()), [
+        api,
+        selector
+    ]));
+    __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useDebugValue(slice);
+    return slice;
+}
+const createImpl = (createState)=>{
+    const api = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$zustand$2f$esm$2f$vanilla$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createStore"])(createState);
+    const useBoundStore = (selector)=>useStore(api, selector);
+    Object.assign(useBoundStore, api);
+    return useBoundStore;
+};
+const create = (createState)=>createState ? createImpl(createState) : createImpl;
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/functions-js/dist/module/types.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+/**
+ * Base error for Supabase Edge Function invocations.
+ *
+ * @example
+ * ```ts
+ * import { FunctionsError } from '@supabase/functions-js'
+ *
+ * throw new FunctionsError('Unexpected error invoking function', 'FunctionsError', {
+ *   requestId: 'abc123',
+ * })
+ * ```
+ */ __turbopack_context__.s([
+    "FunctionRegion",
+    ()=>FunctionRegion,
+    "FunctionsError",
+    ()=>FunctionsError,
+    "FunctionsFetchError",
+    ()=>FunctionsFetchError,
+    "FunctionsHttpError",
+    ()=>FunctionsHttpError,
+    "FunctionsRelayError",
+    ()=>FunctionsRelayError
+]);
+class FunctionsError extends Error {
+    constructor(message, name = 'FunctionsError', context){
+        super(message);
+        this.name = name;
+        this.context = context;
+    }
+}
+class FunctionsFetchError extends FunctionsError {
+    constructor(context){
+        super('Failed to send a request to the Edge Function', 'FunctionsFetchError', context);
+    }
+}
+class FunctionsRelayError extends FunctionsError {
+    constructor(context){
+        super('Relay Error invoking the Edge Function', 'FunctionsRelayError', context);
+    }
+}
+class FunctionsHttpError extends FunctionsError {
+    constructor(context){
+        super('Edge Function returned a non-2xx status code', 'FunctionsHttpError', context);
+    }
+}
+var FunctionRegion;
+(function(FunctionRegion) {
+    FunctionRegion["Any"] = "any";
+    FunctionRegion["ApNortheast1"] = "ap-northeast-1";
+    FunctionRegion["ApNortheast2"] = "ap-northeast-2";
+    FunctionRegion["ApSouth1"] = "ap-south-1";
+    FunctionRegion["ApSoutheast1"] = "ap-southeast-1";
+    FunctionRegion["ApSoutheast2"] = "ap-southeast-2";
+    FunctionRegion["CaCentral1"] = "ca-central-1";
+    FunctionRegion["EuCentral1"] = "eu-central-1";
+    FunctionRegion["EuWest1"] = "eu-west-1";
+    FunctionRegion["EuWest2"] = "eu-west-2";
+    FunctionRegion["EuWest3"] = "eu-west-3";
+    FunctionRegion["SaEast1"] = "sa-east-1";
+    FunctionRegion["UsEast1"] = "us-east-1";
+    FunctionRegion["UsWest1"] = "us-west-1";
+    FunctionRegion["UsWest2"] = "us-west-2";
+})(FunctionRegion || (FunctionRegion = {})); //# sourceMappingURL=types.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/functions-js/dist/module/helper.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "resolveFetch",
+    ()=>resolveFetch
+]);
+const resolveFetch = (customFetch)=>{
+    if (customFetch) {
+        return (...args)=>customFetch(...args);
+    }
+    return (...args)=>fetch(...args);
+}; //# sourceMappingURL=helper.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/functions-js/dist/module/FunctionsClient.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "FunctionsClient",
+    ()=>FunctionsClient
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$tslib$2f$tslib$2e$es6$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/tslib/tslib.es6.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$helper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/functions-js/dist/module/helper.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/functions-js/dist/module/types.js [app-ssr] (ecmascript)");
+;
+;
+;
+class FunctionsClient {
+    /**
+     * Creates a new Functions client bound to an Edge Functions URL.
+     *
+     * @example
+     * ```ts
+     * import { FunctionsClient, FunctionRegion } from '@supabase/functions-js'
+     *
+     * const functions = new FunctionsClient('https://xyzcompany.supabase.co/functions/v1', {
+     *   headers: { apikey: 'public-anon-key' },
+     *   region: FunctionRegion.UsEast1,
+     * })
+     * ```
+     */ constructor(url, { headers = {}, customFetch, region = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FunctionRegion"].Any } = {}){
+        this.url = url;
+        this.headers = headers;
+        this.region = region;
+        this.fetch = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$helper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["resolveFetch"])(customFetch);
+    }
+    /**
+     * Updates the authorization header
+     * @param token - the new jwt token sent in the authorisation header
+     * @example
+     * ```ts
+     * functions.setAuth(session.access_token)
+     * ```
+     */ setAuth(token) {
+        this.headers.Authorization = `Bearer ${token}`;
+    }
+    /**
+     * Invokes a function
+     * @param functionName - The name of the Function to invoke.
+     * @param options - Options for invoking the Function.
+     * @example
+     * ```ts
+     * const { data, error } = await functions.invoke('hello-world', {
+     *   body: { name: 'Ada' },
+     * })
+     * ```
+     */ invoke(functionName_1) {
+        return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$tslib$2f$tslib$2e$es6$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["__awaiter"])(this, arguments, void 0, function*(functionName, options = {}) {
+            var _a;
+            let timeoutId;
+            let timeoutController;
+            try {
+                const { headers, method, body: functionArgs, signal, timeout } = options;
+                let _headers = {};
+                let { region } = options;
+                if (!region) {
+                    region = this.region;
+                }
+                // Add region as query parameter using URL API
+                const url = new URL(`${this.url}/${functionName}`);
+                if (region && region !== 'any') {
+                    _headers['x-region'] = region;
+                    url.searchParams.set('forceFunctionRegion', region);
+                }
+                let body;
+                if (functionArgs && (headers && !Object.prototype.hasOwnProperty.call(headers, 'Content-Type') || !headers)) {
+                    if (typeof Blob !== 'undefined' && functionArgs instanceof Blob || functionArgs instanceof ArrayBuffer) {
+                        // will work for File as File inherits Blob
+                        // also works for ArrayBuffer as it is the same underlying structure as a Blob
+                        _headers['Content-Type'] = 'application/octet-stream';
+                        body = functionArgs;
+                    } else if (typeof functionArgs === 'string') {
+                        // plain string
+                        _headers['Content-Type'] = 'text/plain';
+                        body = functionArgs;
+                    } else if (typeof FormData !== 'undefined' && functionArgs instanceof FormData) {
+                        // don't set content-type headers
+                        // Request will automatically add the right boundary value
+                        body = functionArgs;
+                    } else {
+                        // default, assume this is JSON
+                        _headers['Content-Type'] = 'application/json';
+                        body = JSON.stringify(functionArgs);
+                    }
+                } else {
+                    if (functionArgs && typeof functionArgs !== 'string' && !(typeof Blob !== 'undefined' && functionArgs instanceof Blob) && !(functionArgs instanceof ArrayBuffer) && !(typeof FormData !== 'undefined' && functionArgs instanceof FormData)) {
+                        body = JSON.stringify(functionArgs);
+                    } else {
+                        body = functionArgs;
+                    }
+                }
+                // Handle timeout by creating an AbortController
+                let effectiveSignal = signal;
+                if (timeout) {
+                    timeoutController = new AbortController();
+                    timeoutId = setTimeout(()=>timeoutController.abort(), timeout);
+                    // If user provided their own signal, we need to respect both
+                    if (signal) {
+                        effectiveSignal = timeoutController.signal;
+                        // If the user's signal is aborted, abort our timeout controller too
+                        signal.addEventListener('abort', ()=>timeoutController.abort());
+                    } else {
+                        effectiveSignal = timeoutController.signal;
+                    }
+                }
+                const response = yield this.fetch(url.toString(), {
+                    method: method || 'POST',
+                    // headers priority is (high to low):
+                    // 1. invoke-level headers
+                    // 2. client-level headers
+                    // 3. default Content-Type header
+                    headers: Object.assign(Object.assign(Object.assign({}, _headers), this.headers), headers),
+                    body,
+                    signal: effectiveSignal
+                }).catch((fetchError)=>{
+                    throw new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FunctionsFetchError"](fetchError);
+                });
+                const isRelayError = response.headers.get('x-relay-error');
+                if (isRelayError && isRelayError === 'true') {
+                    throw new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FunctionsRelayError"](response);
+                }
+                if (!response.ok) {
+                    throw new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FunctionsHttpError"](response);
+                }
+                let responseType = ((_a = response.headers.get('Content-Type')) !== null && _a !== void 0 ? _a : 'text/plain').split(';')[0].trim();
+                let data;
+                if (responseType === 'application/json') {
+                    data = yield response.json();
+                } else if (responseType === 'application/octet-stream' || responseType === 'application/pdf') {
+                    data = yield response.blob();
+                } else if (responseType === 'text/event-stream') {
+                    data = response;
+                } else if (responseType === 'multipart/form-data') {
+                    data = yield response.formData();
+                } else {
+                    // default to text
+                    data = yield response.text();
+                }
+                return {
+                    data,
+                    error: null,
+                    response
+                };
+            } catch (error) {
+                return {
+                    data: null,
+                    error,
+                    response: error instanceof __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FunctionsHttpError"] || error instanceof __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FunctionsRelayError"] ? error.context : undefined
+                };
+            } finally{
+                // Clear the timeout if it was set
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
+            }
+        });
+    }
+} //# sourceMappingURL=FunctionsClient.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/tslib/tslib.es6.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__addDisposableResource",
+    ()=>__addDisposableResource,
+    "__assign",
+    ()=>__assign,
+    "__asyncDelegator",
+    ()=>__asyncDelegator,
+    "__asyncGenerator",
+    ()=>__asyncGenerator,
+    "__asyncValues",
+    ()=>__asyncValues,
+    "__await",
+    ()=>__await,
+    "__awaiter",
+    ()=>__awaiter,
+    "__classPrivateFieldGet",
+    ()=>__classPrivateFieldGet,
+    "__classPrivateFieldIn",
+    ()=>__classPrivateFieldIn,
+    "__classPrivateFieldSet",
+    ()=>__classPrivateFieldSet,
+    "__createBinding",
+    ()=>__createBinding,
+    "__decorate",
+    ()=>__decorate,
+    "__disposeResources",
+    ()=>__disposeResources,
+    "__esDecorate",
+    ()=>__esDecorate,
+    "__exportStar",
+    ()=>__exportStar,
+    "__extends",
+    ()=>__extends,
+    "__generator",
+    ()=>__generator,
+    "__importDefault",
+    ()=>__importDefault,
+    "__importStar",
+    ()=>__importStar,
+    "__makeTemplateObject",
+    ()=>__makeTemplateObject,
+    "__metadata",
+    ()=>__metadata,
+    "__param",
+    ()=>__param,
+    "__propKey",
+    ()=>__propKey,
+    "__read",
+    ()=>__read,
+    "__rest",
+    ()=>__rest,
+    "__rewriteRelativeImportExtension",
+    ()=>__rewriteRelativeImportExtension,
+    "__runInitializers",
+    ()=>__runInitializers,
+    "__setFunctionName",
+    ()=>__setFunctionName,
+    "__spread",
+    ()=>__spread,
+    "__spreadArray",
+    ()=>__spreadArray,
+    "__spreadArrays",
+    ()=>__spreadArrays,
+    "__values",
+    ()=>__values,
+    "default",
+    ()=>__TURBOPACK__default__export__
+]);
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */ /* global Reflect, Promise, SuppressedError, Symbol, Iterator */ var extendStatics = function(d, b) {
+    extendStatics = Object.setPrototypeOf || ({
+        __proto__: []
+    }) instanceof Array && function(d, b) {
+        d.__proto__ = b;
+    } || function(d, b) {
+        for(var p in b)if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+    };
+    return extendStatics(d, b);
+};
+function __extends(d, b) {
+    if (typeof b !== "function" && b !== null) throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+    extendStatics(d, b);
+    function __() {
+        this.constructor = d;
+    }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+}
+var __assign = function() {
+    __assign = Object.assign || function __assign(t) {
+        for(var s, i = 1, n = arguments.length; i < n; i++){
+            s = arguments[i];
+            for(var p in s)if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+function __rest(s, e) {
+    var t = {};
+    for(var p in s)if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0) t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function") for(var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++){
+        if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i])) t[p[i]] = s[p[i]];
+    }
+    return t;
+}
+function __decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for(var i = decorators.length - 1; i >= 0; i--)if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+function __param(paramIndex, decorator) {
+    return function(target, key) {
+        decorator(target, key, paramIndex);
+    };
+}
+function __esDecorate(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) {
+        if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected");
+        return f;
+    }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for(var i = decorators.length - 1; i >= 0; i--){
+        var context = {};
+        for(var p in contextIn)context[p] = p === "access" ? {} : contextIn[p];
+        for(var p in contextIn.access)context.access[p] = contextIn.access[p];
+        context.addInitializer = function(f) {
+            if (done) throw new TypeError("Cannot add initializers after decoration has completed");
+            extraInitializers.push(accept(f || null));
+        };
+        var result = (0, decorators[i])(kind === "accessor" ? {
+            get: descriptor.get,
+            set: descriptor.set
+        } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        } else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
+}
+;
+function __runInitializers(thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for(var i = 0; i < initializers.length; i++){
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+}
+;
+function __propKey(x) {
+    return typeof x === "symbol" ? x : "".concat(x);
+}
+;
+function __setFunctionName(f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", {
+        configurable: true,
+        value: prefix ? "".concat(prefix, " ", name) : name
+    });
+}
+;
+function __metadata(metadataKey, metadataValue) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+}
+function __awaiter(thisArg, _arguments, P, generator) {
+    function adopt(value) {
+        return value instanceof P ? value : new P(function(resolve) {
+            resolve(value);
+        });
+    }
+    return new (P || (P = Promise))(function(resolve, reject) {
+        function fulfilled(value) {
+            try {
+                step(generator.next(value));
+            } catch (e) {
+                reject(e);
+            }
+        }
+        function rejected(value) {
+            try {
+                step(generator["throw"](value));
+            } catch (e) {
+                reject(e);
+            }
+        }
+        function step(result) {
+            result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+        }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+}
+function __generator(thisArg, body) {
+    var _ = {
+        label: 0,
+        sent: function() {
+            if (t[0] & 1) throw t[1];
+            return t[1];
+        },
+        trys: [],
+        ops: []
+    }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() {
+        return this;
+    }), g;
+    //TURBOPACK unreachable
+    ;
+    function verb(n) {
+        return function(v) {
+            return step([
+                n,
+                v
+            ]);
+        };
+    }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while(g && (g = 0, op[0] && (_ = 0)), _)try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [
+                op[0] & 2,
+                t.value
+            ];
+            switch(op[0]){
+                case 0:
+                case 1:
+                    t = op;
+                    break;
+                case 4:
+                    _.label++;
+                    return {
+                        value: op[1],
+                        done: false
+                    };
+                case 5:
+                    _.label++;
+                    y = op[1];
+                    op = [
+                        0
+                    ];
+                    continue;
+                case 7:
+                    op = _.ops.pop();
+                    _.trys.pop();
+                    continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                        _ = 0;
+                        continue;
+                    }
+                    if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                        _.label = op[1];
+                        break;
+                    }
+                    if (op[0] === 6 && _.label < t[1]) {
+                        _.label = t[1];
+                        t = op;
+                        break;
+                    }
+                    if (t && _.label < t[2]) {
+                        _.label = t[2];
+                        _.ops.push(op);
+                        break;
+                    }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop();
+                    continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) {
+            op = [
+                6,
+                e
+            ];
+            y = 0;
+        } finally{
+            f = t = 0;
+        }
+        if (op[0] & 5) throw op[1];
+        return {
+            value: op[0] ? op[1] : void 0,
+            done: true
+        };
+    }
+}
+var __createBinding = Object.create ? function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+        desc = {
+            enumerable: true,
+            get: function() {
+                return m[k];
+            }
+        };
+    }
+    Object.defineProperty(o, k2, desc);
+} : function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+};
+function __exportStar(m, o) {
+    for(var p in m)if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
+}
+function __values(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function() {
+            if (o && i >= o.length) o = void 0;
+            return {
+                value: o && o[i++],
+                done: !o
+            };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+}
+function __read(o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while((n === void 0 || n-- > 0) && !(r = i.next()).done)ar.push(r.value);
+    } catch (error) {
+        e = {
+            error: error
+        };
+    } finally{
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        } finally{
+            if (e) throw e.error;
+        }
+    }
+    return ar;
+}
+function __spread() {
+    for(var ar = [], i = 0; i < arguments.length; i++)ar = ar.concat(__read(arguments[i]));
+    return ar;
+}
+function __spreadArrays() {
+    for(var s = 0, i = 0, il = arguments.length; i < il; i++)s += arguments[i].length;
+    for(var r = Array(s), k = 0, i = 0; i < il; i++)for(var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)r[k] = a[j];
+    return r;
+}
+function __spreadArray(to, from, pack) {
+    if (pack || arguments.length === 2) for(var i = 0, l = from.length, ar; i < l; i++){
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+}
+function __await(v) {
+    return this instanceof __await ? (this.v = v, this) : new __await(v);
+}
+function __asyncGenerator(thisArg, _arguments, generator) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var g = generator.apply(thisArg, _arguments || []), i, q = [];
+    return i = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i[Symbol.asyncIterator] = function() {
+        return this;
+    }, i;
+    //TURBOPACK unreachable
+    ;
+    function awaitReturn(f) {
+        return function(v) {
+            return Promise.resolve(v).then(f, reject);
+        };
+    }
+    function verb(n, f) {
+        if (g[n]) {
+            i[n] = function(v) {
+                return new Promise(function(a, b) {
+                    q.push([
+                        n,
+                        v,
+                        a,
+                        b
+                    ]) > 1 || resume(n, v);
+                });
+            };
+            if (f) i[n] = f(i[n]);
+        }
+    }
+    function resume(n, v) {
+        try {
+            step(g[n](v));
+        } catch (e) {
+            settle(q[0][3], e);
+        }
+    }
+    function step(r) {
+        r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);
+    }
+    function fulfill(value) {
+        resume("next", value);
+    }
+    function reject(value) {
+        resume("throw", value);
+    }
+    function settle(f, v) {
+        if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]);
+    }
+}
+function __asyncDelegator(o) {
+    var i, p;
+    return i = {}, verb("next"), verb("throw", function(e) {
+        throw e;
+    }), verb("return"), i[Symbol.iterator] = function() {
+        return this;
+    }, i;
+    //TURBOPACK unreachable
+    ;
+    function verb(n, f) {
+        i[n] = o[n] ? function(v) {
+            return (p = !p) ? {
+                value: __await(o[n](v)),
+                done: false
+            } : f ? f(v) : v;
+        } : f;
+    }
+}
+function __asyncValues(o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function() {
+        return this;
+    }, i);
+    //TURBOPACK unreachable
+    ;
+    function verb(n) {
+        i[n] = o[n] && function(v) {
+            return new Promise(function(resolve, reject) {
+                v = o[n](v), settle(resolve, reject, v.done, v.value);
+            });
+        };
+    }
+    function settle(resolve, reject, d, v) {
+        Promise.resolve(v).then(function(v) {
+            resolve({
+                value: v,
+                done: d
+            });
+        }, reject);
+    }
+}
+function __makeTemplateObject(cooked, raw) {
+    if (Object.defineProperty) {
+        Object.defineProperty(cooked, "raw", {
+            value: raw
+        });
+    } else {
+        cooked.raw = raw;
+    }
+    return cooked;
+}
+;
+var __setModuleDefault = Object.create ? function(o, v) {
+    Object.defineProperty(o, "default", {
+        enumerable: true,
+        value: v
+    });
+} : function(o, v) {
+    o["default"] = v;
+};
+var ownKeys = function(o) {
+    ownKeys = Object.getOwnPropertyNames || function(o) {
+        var ar = [];
+        for(var k in o)if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+        return ar;
+    };
+    return ownKeys(o);
+};
+function __importStar(mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) {
+        for(var k = ownKeys(mod), i = 0; i < k.length; i++)if (k[i] !== "default") __createBinding(result, mod, k[i]);
+    }
+    __setModuleDefault(result, mod);
+    return result;
+}
+function __importDefault(mod) {
+    return mod && mod.__esModule ? mod : {
+        default: mod
+    };
+}
+function __classPrivateFieldGet(receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}
+function __classPrivateFieldSet(receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
+}
+function __classPrivateFieldIn(state, receiver) {
+    if (receiver === null || typeof receiver !== "object" && typeof receiver !== "function") throw new TypeError("Cannot use 'in' operator on non-object");
+    return typeof state === "function" ? receiver === state : state.has(receiver);
+}
+function __addDisposableResource(env, value, async) {
+    if (value !== null && value !== void 0) {
+        if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
+        var dispose, inner;
+        if (async) {
+            if (!Symbol.asyncDispose) throw new TypeError("Symbol.asyncDispose is not defined.");
+            dispose = value[Symbol.asyncDispose];
+        }
+        if (dispose === void 0) {
+            if (!Symbol.dispose) throw new TypeError("Symbol.dispose is not defined.");
+            dispose = value[Symbol.dispose];
+            if (async) inner = dispose;
+        }
+        if (typeof dispose !== "function") throw new TypeError("Object not disposable.");
+        if (inner) dispose = function() {
+            try {
+                inner.call(this);
+            } catch (e) {
+                return Promise.reject(e);
+            }
+        };
+        env.stack.push({
+            value: value,
+            dispose: dispose,
+            async: async
+        });
+    } else if (async) {
+        env.stack.push({
+            async: true
+        });
+    }
+    return value;
+}
+var _SuppressedError = typeof SuppressedError === "function" ? SuppressedError : function(error, suppressed, message) {
+    var e = new Error(message);
+    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+};
+function __disposeResources(env) {
+    function fail(e) {
+        env.error = env.hasError ? new _SuppressedError(e, env.error, "An error was suppressed during disposal.") : e;
+        env.hasError = true;
+    }
+    var r, s = 0;
+    function next() {
+        while(r = env.stack.pop()){
+            try {
+                if (!r.async && s === 1) return s = 0, env.stack.push(r), Promise.resolve().then(next);
+                if (r.dispose) {
+                    var result = r.dispose.call(r.value);
+                    if (r.async) return s |= 2, Promise.resolve(result).then(next, function(e) {
+                        fail(e);
+                        return next();
+                    });
+                } else s |= 1;
+            } catch (e) {
+                fail(e);
+            }
+        }
+        if (s === 1) return env.hasError ? Promise.reject(env.error) : Promise.resolve();
+        if (env.hasError) throw env.error;
+    }
+    return next();
+}
+function __rewriteRelativeImportExtension(path, preserveJsx) {
+    if (typeof path === "string" && /^\.\.?\//.test(path)) {
+        return path.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function(m, tsx, d, ext, cm) {
+            return tsx ? preserveJsx ? ".jsx" : ".js" : d && (!ext || !cm) ? m : d + ext + "." + cm.toLowerCase() + "js";
+        });
+    }
+    return path;
+}
+const __TURBOPACK__default__export__ = {
+    __extends,
+    __assign,
+    __rest,
+    __decorate,
+    __param,
+    __esDecorate,
+    __runInitializers,
+    __propKey,
+    __setFunctionName,
+    __metadata,
+    __awaiter,
+    __generator,
+    __createBinding,
+    __exportStar,
+    __values,
+    __read,
+    __spread,
+    __spreadArrays,
+    __spreadArray,
+    __await,
+    __asyncGenerator,
+    __asyncDelegator,
+    __asyncValues,
+    __makeTemplateObject,
+    __importStar,
+    __importDefault,
+    __classPrivateFieldGet,
+    __classPrivateFieldSet,
+    __classPrivateFieldIn,
+    __addDisposableResource,
+    __disposeResources,
+    __rewriteRelativeImportExtension
+};
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/postgrest-js/dist/index.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "PostgrestBuilder",
+    ()=>PostgrestBuilder,
+    "PostgrestClient",
+    ()=>PostgrestClient,
+    "PostgrestError",
+    ()=>PostgrestError,
+    "PostgrestFilterBuilder",
+    ()=>PostgrestFilterBuilder,
+    "PostgrestQueryBuilder",
+    ()=>PostgrestQueryBuilder,
+    "PostgrestTransformBuilder",
+    ()=>PostgrestTransformBuilder,
+    "default",
+    ()=>src_default
+]);
+//#region src/PostgrestError.ts
+/**
+* Error format
+*
+* {@link https://postgrest.org/en/stable/api.html?highlight=options#errors-and-http-status-codes}
+*/ var PostgrestError = class extends Error {
+    /**
+	* @example
+	* ```ts
+	* import PostgrestError from '@supabase/postgrest-js'
+	*
+	* throw new PostgrestError({
+	*   message: 'Row level security prevented the request',
+	*   details: 'RLS denied the insert',
+	*   hint: 'Check your policies',
+	*   code: 'PGRST301',
+	* })
+	* ```
+	*/ constructor(context){
+        super(context.message);
+        this.name = "PostgrestError";
+        this.details = context.details;
+        this.hint = context.hint;
+        this.code = context.code;
+    }
+};
+//#endregion
+//#region src/PostgrestBuilder.ts
+var PostgrestBuilder = class {
+    /**
+	* Creates a builder configured for a specific PostgREST request.
+	*
+	* @example
+	* ```ts
+	* import PostgrestQueryBuilder from '@supabase/postgrest-js'
+	*
+	* const builder = new PostgrestQueryBuilder(
+	*   new URL('https://xyzcompany.supabase.co/rest/v1/users'),
+	*   { headers: new Headers({ apikey: 'public-anon-key' }) }
+	* )
+	* ```
+	*/ constructor(builder){
+        var _builder$shouldThrowO, _builder$isMaybeSingl, _builder$urlLengthLim;
+        this.shouldThrowOnError = false;
+        this.method = builder.method;
+        this.url = builder.url;
+        this.headers = new Headers(builder.headers);
+        this.schema = builder.schema;
+        this.body = builder.body;
+        this.shouldThrowOnError = (_builder$shouldThrowO = builder.shouldThrowOnError) !== null && _builder$shouldThrowO !== void 0 ? _builder$shouldThrowO : false;
+        this.signal = builder.signal;
+        this.isMaybeSingle = (_builder$isMaybeSingl = builder.isMaybeSingle) !== null && _builder$isMaybeSingl !== void 0 ? _builder$isMaybeSingl : false;
+        this.urlLengthLimit = (_builder$urlLengthLim = builder.urlLengthLimit) !== null && _builder$urlLengthLim !== void 0 ? _builder$urlLengthLim : 8e3;
+        if (builder.fetch) this.fetch = builder.fetch;
+        else this.fetch = fetch;
+    }
+    /**
+	* If there's an error with the query, throwOnError will reject the promise by
+	* throwing the error instead of returning it as part of a successful response.
+	*
+	* {@link https://github.com/supabase/supabase-js/issues/92}
+	*/ throwOnError() {
+        this.shouldThrowOnError = true;
+        return this;
+    }
+    /**
+	* Set an HTTP header for the request.
+	*/ setHeader(name, value) {
+        this.headers = new Headers(this.headers);
+        this.headers.set(name, value);
+        return this;
+    }
+    then(onfulfilled, onrejected) {
+        var _this = this;
+        if (this.schema === void 0) {} else if ([
+            "GET",
+            "HEAD"
+        ].includes(this.method)) this.headers.set("Accept-Profile", this.schema);
+        else this.headers.set("Content-Profile", this.schema);
+        if (this.method !== "GET" && this.method !== "HEAD") this.headers.set("Content-Type", "application/json");
+        const _fetch = this.fetch;
+        let res = _fetch(this.url.toString(), {
+            method: this.method,
+            headers: this.headers,
+            body: JSON.stringify(this.body),
+            signal: this.signal
+        }).then(async (res$1)=>{
+            let error = null;
+            let data = null;
+            let count = null;
+            let status = res$1.status;
+            let statusText = res$1.statusText;
+            if (res$1.ok) {
+                var _this$headers$get2, _res$headers$get;
+                if (_this.method !== "HEAD") {
+                    var _this$headers$get;
+                    const body = await res$1.text();
+                    if (body === "") {} else if (_this.headers.get("Accept") === "text/csv") data = body;
+                    else if (_this.headers.get("Accept") && ((_this$headers$get = _this.headers.get("Accept")) === null || _this$headers$get === void 0 ? void 0 : _this$headers$get.includes("application/vnd.pgrst.plan+text"))) data = body;
+                    else data = JSON.parse(body);
+                }
+                const countHeader = (_this$headers$get2 = _this.headers.get("Prefer")) === null || _this$headers$get2 === void 0 ? void 0 : _this$headers$get2.match(/count=(exact|planned|estimated)/);
+                const contentRange = (_res$headers$get = res$1.headers.get("content-range")) === null || _res$headers$get === void 0 ? void 0 : _res$headers$get.split("/");
+                if (countHeader && contentRange && contentRange.length > 1) count = parseInt(contentRange[1]);
+                if (_this.isMaybeSingle && _this.method === "GET" && Array.isArray(data)) if (data.length > 1) {
+                    error = {
+                        code: "PGRST116",
+                        details: `Results contain ${data.length} rows, application/vnd.pgrst.object+json requires 1 row`,
+                        hint: null,
+                        message: "JSON object requested, multiple (or no) rows returned"
+                    };
+                    data = null;
+                    count = null;
+                    status = 406;
+                    statusText = "Not Acceptable";
+                } else if (data.length === 1) data = data[0];
+                else data = null;
+            } else {
+                var _error$details;
+                const body = await res$1.text();
+                try {
+                    error = JSON.parse(body);
+                    if (Array.isArray(error) && res$1.status === 404) {
+                        data = [];
+                        error = null;
+                        status = 200;
+                        statusText = "OK";
+                    }
+                } catch (_unused) {
+                    if (res$1.status === 404 && body === "") {
+                        status = 204;
+                        statusText = "No Content";
+                    } else error = {
+                        message: body
+                    };
+                }
+                if (error && _this.isMaybeSingle && (error === null || error === void 0 || (_error$details = error.details) === null || _error$details === void 0 ? void 0 : _error$details.includes("0 rows"))) {
+                    error = null;
+                    status = 200;
+                    statusText = "OK";
+                }
+                if (error && _this.shouldThrowOnError) throw new PostgrestError(error);
+            }
+            return {
+                error,
+                data,
+                count,
+                status,
+                statusText
+            };
+        });
+        if (!this.shouldThrowOnError) res = res.catch((fetchError)=>{
+            var _fetchError$name2;
+            let errorDetails = "";
+            let hint = "";
+            let code = "";
+            const cause = fetchError === null || fetchError === void 0 ? void 0 : fetchError.cause;
+            if (cause) {
+                var _cause$message, _cause$code, _fetchError$name, _cause$name;
+                const causeMessage = (_cause$message = cause === null || cause === void 0 ? void 0 : cause.message) !== null && _cause$message !== void 0 ? _cause$message : "";
+                const causeCode = (_cause$code = cause === null || cause === void 0 ? void 0 : cause.code) !== null && _cause$code !== void 0 ? _cause$code : "";
+                errorDetails = `${(_fetchError$name = fetchError === null || fetchError === void 0 ? void 0 : fetchError.name) !== null && _fetchError$name !== void 0 ? _fetchError$name : "FetchError"}: ${fetchError === null || fetchError === void 0 ? void 0 : fetchError.message}`;
+                errorDetails += `\n\nCaused by: ${(_cause$name = cause === null || cause === void 0 ? void 0 : cause.name) !== null && _cause$name !== void 0 ? _cause$name : "Error"}: ${causeMessage}`;
+                if (causeCode) errorDetails += ` (${causeCode})`;
+                if (cause === null || cause === void 0 ? void 0 : cause.stack) errorDetails += `\n${cause.stack}`;
+            } else {
+                var _fetchError$stack;
+                errorDetails = (_fetchError$stack = fetchError === null || fetchError === void 0 ? void 0 : fetchError.stack) !== null && _fetchError$stack !== void 0 ? _fetchError$stack : "";
+            }
+            const urlLength = this.url.toString().length;
+            if ((fetchError === null || fetchError === void 0 ? void 0 : fetchError.name) === "AbortError" || (fetchError === null || fetchError === void 0 ? void 0 : fetchError.code) === "ABORT_ERR") {
+                code = "";
+                hint = "Request was aborted (timeout or manual cancellation)";
+                if (urlLength > this.urlLengthLimit) hint += `. Note: Your request URL is ${urlLength} characters, which may exceed server limits. If selecting many fields, consider using views. If filtering with large arrays (e.g., .in('id', [many IDs])), consider using an RPC function to pass values server-side.`;
+            } else if ((cause === null || cause === void 0 ? void 0 : cause.name) === "HeadersOverflowError" || (cause === null || cause === void 0 ? void 0 : cause.code) === "UND_ERR_HEADERS_OVERFLOW") {
+                code = "";
+                hint = "HTTP headers exceeded server limits (typically 16KB)";
+                if (urlLength > this.urlLengthLimit) hint += `. Your request URL is ${urlLength} characters. If selecting many fields, consider using views. If filtering with large arrays (e.g., .in('id', [200+ IDs])), consider using an RPC function instead.`;
+            }
+            return {
+                error: {
+                    message: `${(_fetchError$name2 = fetchError === null || fetchError === void 0 ? void 0 : fetchError.name) !== null && _fetchError$name2 !== void 0 ? _fetchError$name2 : "FetchError"}: ${fetchError === null || fetchError === void 0 ? void 0 : fetchError.message}`,
+                    details: errorDetails,
+                    hint,
+                    code
+                },
+                data: null,
+                count: null,
+                status: 0,
+                statusText: ""
+            };
+        });
+        return res.then(onfulfilled, onrejected);
+    }
+    /**
+	* Override the type of the returned `data`.
+	*
+	* @typeParam NewResult - The new result type to override with
+	* @deprecated Use overrideTypes<yourType, { merge: false }>() method at the end of your call chain instead
+	*/ returns() {
+        /* istanbul ignore next */ return this;
+    }
+    /**
+	* Override the type of the returned `data` field in the response.
+	*
+	* @typeParam NewResult - The new type to cast the response data to
+	* @typeParam Options - Optional type configuration (defaults to { merge: true })
+	* @typeParam Options.merge - When true, merges the new type with existing return type. When false, replaces the existing types entirely (defaults to true)
+	* @example
+	* ```typescript
+	* // Merge with existing types (default behavior)
+	* const query = supabase
+	*   .from('users')
+	*   .select()
+	*   .overrideTypes<{ custom_field: string }>()
+	*
+	* // Replace existing types completely
+	* const replaceQuery = supabase
+	*   .from('users')
+	*   .select()
+	*   .overrideTypes<{ id: number; name: string }, { merge: false }>()
+	* ```
+	* @returns A PostgrestBuilder instance with the new type
+	*/ overrideTypes() {
+        return this;
+    }
+};
+//#endregion
+//#region src/PostgrestTransformBuilder.ts
+var PostgrestTransformBuilder = class extends PostgrestBuilder {
+    /**
+	* Perform a SELECT on the query result.
+	*
+	* By default, `.insert()`, `.update()`, `.upsert()`, and `.delete()` do not
+	* return modified rows. By calling this method, modified rows are returned in
+	* `data`.
+	*
+	* @param columns - The columns to retrieve, separated by commas
+	*/ select(columns) {
+        let quoted = false;
+        const cleanedColumns = (columns !== null && columns !== void 0 ? columns : "*").split("").map((c)=>{
+            if (/\s/.test(c) && !quoted) return "";
+            if (c === "\"") quoted = !quoted;
+            return c;
+        }).join("");
+        this.url.searchParams.set("select", cleanedColumns);
+        this.headers.append("Prefer", "return=representation");
+        return this;
+    }
+    /**
+	* Order the query result by `column`.
+	*
+	* You can call this method multiple times to order by multiple columns.
+	*
+	* You can order referenced tables, but it only affects the ordering of the
+	* parent table if you use `!inner` in the query.
+	*
+	* @param column - The column to order by
+	* @param options - Named parameters
+	* @param options.ascending - If `true`, the result will be in ascending order
+	* @param options.nullsFirst - If `true`, `null`s appear first. If `false`,
+	* `null`s appear last.
+	* @param options.referencedTable - Set this to order a referenced table by
+	* its columns
+	* @param options.foreignTable - Deprecated, use `options.referencedTable`
+	* instead
+	*/ order(column, { ascending = true, nullsFirst, foreignTable, referencedTable = foreignTable } = {}) {
+        const key = referencedTable ? `${referencedTable}.order` : "order";
+        const existingOrder = this.url.searchParams.get(key);
+        this.url.searchParams.set(key, `${existingOrder ? `${existingOrder},` : ""}${column}.${ascending ? "asc" : "desc"}${nullsFirst === void 0 ? "" : nullsFirst ? ".nullsfirst" : ".nullslast"}`);
+        return this;
+    }
+    /**
+	* Limit the query result by `count`.
+	*
+	* @param count - The maximum number of rows to return
+	* @param options - Named parameters
+	* @param options.referencedTable - Set this to limit rows of referenced
+	* tables instead of the parent table
+	* @param options.foreignTable - Deprecated, use `options.referencedTable`
+	* instead
+	*/ limit(count, { foreignTable, referencedTable = foreignTable } = {}) {
+        const key = typeof referencedTable === "undefined" ? "limit" : `${referencedTable}.limit`;
+        this.url.searchParams.set(key, `${count}`);
+        return this;
+    }
+    /**
+	* Limit the query result by starting at an offset `from` and ending at the offset `to`.
+	* Only records within this range are returned.
+	* This respects the query order and if there is no order clause the range could behave unexpectedly.
+	* The `from` and `to` values are 0-based and inclusive: `range(1, 3)` will include the second, third
+	* and fourth rows of the query.
+	*
+	* @param from - The starting index from which to limit the result
+	* @param to - The last index to which to limit the result
+	* @param options - Named parameters
+	* @param options.referencedTable - Set this to limit rows of referenced
+	* tables instead of the parent table
+	* @param options.foreignTable - Deprecated, use `options.referencedTable`
+	* instead
+	*/ range(from, to, { foreignTable, referencedTable = foreignTable } = {}) {
+        const keyOffset = typeof referencedTable === "undefined" ? "offset" : `${referencedTable}.offset`;
+        const keyLimit = typeof referencedTable === "undefined" ? "limit" : `${referencedTable}.limit`;
+        this.url.searchParams.set(keyOffset, `${from}`);
+        this.url.searchParams.set(keyLimit, `${to - from + 1}`);
+        return this;
+    }
+    /**
+	* Set the AbortSignal for the fetch request.
+	*
+	* @param signal - The AbortSignal to use for the fetch request
+	*/ abortSignal(signal) {
+        this.signal = signal;
+        return this;
+    }
+    /**
+	* Return `data` as a single object instead of an array of objects.
+	*
+	* Query result must be one row (e.g. using `.limit(1)`), otherwise this
+	* returns an error.
+	*/ single() {
+        this.headers.set("Accept", "application/vnd.pgrst.object+json");
+        return this;
+    }
+    /**
+	* Return `data` as a single object instead of an array of objects.
+	*
+	* Query result must be zero or one row (e.g. using `.limit(1)`), otherwise
+	* this returns an error.
+	*/ maybeSingle() {
+        if (this.method === "GET") this.headers.set("Accept", "application/json");
+        else this.headers.set("Accept", "application/vnd.pgrst.object+json");
+        this.isMaybeSingle = true;
+        return this;
+    }
+    /**
+	* Return `data` as a string in CSV format.
+	*/ csv() {
+        this.headers.set("Accept", "text/csv");
+        return this;
+    }
+    /**
+	* Return `data` as an object in [GeoJSON](https://geojson.org) format.
+	*/ geojson() {
+        this.headers.set("Accept", "application/geo+json");
+        return this;
+    }
+    /**
+	* Return `data` as the EXPLAIN plan for the query.
+	*
+	* You need to enable the
+	* [db_plan_enabled](https://supabase.com/docs/guides/database/debugging-performance#enabling-explain)
+	* setting before using this method.
+	*
+	* @param options - Named parameters
+	*
+	* @param options.analyze - If `true`, the query will be executed and the
+	* actual run time will be returned
+	*
+	* @param options.verbose - If `true`, the query identifier will be returned
+	* and `data` will include the output columns of the query
+	*
+	* @param options.settings - If `true`, include information on configuration
+	* parameters that affect query planning
+	*
+	* @param options.buffers - If `true`, include information on buffer usage
+	*
+	* @param options.wal - If `true`, include information on WAL record generation
+	*
+	* @param options.format - The format of the output, can be `"text"` (default)
+	* or `"json"`
+	*/ explain({ analyze = false, verbose = false, settings = false, buffers = false, wal = false, format = "text" } = {}) {
+        var _this$headers$get;
+        const options = [
+            analyze ? "analyze" : null,
+            verbose ? "verbose" : null,
+            settings ? "settings" : null,
+            buffers ? "buffers" : null,
+            wal ? "wal" : null
+        ].filter(Boolean).join("|");
+        const forMediatype = (_this$headers$get = this.headers.get("Accept")) !== null && _this$headers$get !== void 0 ? _this$headers$get : "application/json";
+        this.headers.set("Accept", `application/vnd.pgrst.plan+${format}; for="${forMediatype}"; options=${options};`);
+        if (format === "json") return this;
+        else return this;
+    }
+    /**
+	* Rollback the query.
+	*
+	* `data` will still be returned, but the query is not committed.
+	*/ rollback() {
+        this.headers.append("Prefer", "tx=rollback");
+        return this;
+    }
+    /**
+	* Override the type of the returned `data`.
+	*
+	* @typeParam NewResult - The new result type to override with
+	* @deprecated Use overrideTypes<yourType, { merge: false }>() method at the end of your call chain instead
+	*/ returns() {
+        return this;
+    }
+    /**
+	* Set the maximum number of rows that can be affected by the query.
+	* Only available in PostgREST v13+ and only works with PATCH and DELETE methods.
+	*
+	* @param value - The maximum number of rows that can be affected
+	*/ maxAffected(value) {
+        this.headers.append("Prefer", "handling=strict");
+        this.headers.append("Prefer", `max-affected=${value}`);
+        return this;
+    }
+};
+//#endregion
+//#region src/PostgrestFilterBuilder.ts
+const PostgrestReservedCharsRegexp = /* @__PURE__ */ new RegExp("[,()]");
+var PostgrestFilterBuilder = class extends PostgrestTransformBuilder {
+    /**
+	* Match only rows where `column` is equal to `value`.
+	*
+	* To check if the value of `column` is NULL, you should use `.is()` instead.
+	*
+	* @param column - The column to filter on
+	* @param value - The value to filter with
+	*/ eq(column, value) {
+        this.url.searchParams.append(column, `eq.${value}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` is not equal to `value`.
+	*
+	* @param column - The column to filter on
+	* @param value - The value to filter with
+	*/ neq(column, value) {
+        this.url.searchParams.append(column, `neq.${value}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` is greater than `value`.
+	*
+	* @param column - The column to filter on
+	* @param value - The value to filter with
+	*/ gt(column, value) {
+        this.url.searchParams.append(column, `gt.${value}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` is greater than or equal to `value`.
+	*
+	* @param column - The column to filter on
+	* @param value - The value to filter with
+	*/ gte(column, value) {
+        this.url.searchParams.append(column, `gte.${value}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` is less than `value`.
+	*
+	* @param column - The column to filter on
+	* @param value - The value to filter with
+	*/ lt(column, value) {
+        this.url.searchParams.append(column, `lt.${value}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` is less than or equal to `value`.
+	*
+	* @param column - The column to filter on
+	* @param value - The value to filter with
+	*/ lte(column, value) {
+        this.url.searchParams.append(column, `lte.${value}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` matches `pattern` case-sensitively.
+	*
+	* @param column - The column to filter on
+	* @param pattern - The pattern to match with
+	*/ like(column, pattern) {
+        this.url.searchParams.append(column, `like.${pattern}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` matches all of `patterns` case-sensitively.
+	*
+	* @param column - The column to filter on
+	* @param patterns - The patterns to match with
+	*/ likeAllOf(column, patterns) {
+        this.url.searchParams.append(column, `like(all).{${patterns.join(",")}}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` matches any of `patterns` case-sensitively.
+	*
+	* @param column - The column to filter on
+	* @param patterns - The patterns to match with
+	*/ likeAnyOf(column, patterns) {
+        this.url.searchParams.append(column, `like(any).{${patterns.join(",")}}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` matches `pattern` case-insensitively.
+	*
+	* @param column - The column to filter on
+	* @param pattern - The pattern to match with
+	*/ ilike(column, pattern) {
+        this.url.searchParams.append(column, `ilike.${pattern}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` matches all of `patterns` case-insensitively.
+	*
+	* @param column - The column to filter on
+	* @param patterns - The patterns to match with
+	*/ ilikeAllOf(column, patterns) {
+        this.url.searchParams.append(column, `ilike(all).{${patterns.join(",")}}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` matches any of `patterns` case-insensitively.
+	*
+	* @param column - The column to filter on
+	* @param patterns - The patterns to match with
+	*/ ilikeAnyOf(column, patterns) {
+        this.url.searchParams.append(column, `ilike(any).{${patterns.join(",")}}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` matches the PostgreSQL regex `pattern`
+	* case-sensitively (using the `~` operator).
+	*
+	* @param column - The column to filter on
+	* @param pattern - The PostgreSQL regular expression pattern to match with
+	*/ regexMatch(column, pattern) {
+        this.url.searchParams.append(column, `match.${pattern}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` matches the PostgreSQL regex `pattern`
+	* case-insensitively (using the `~*` operator).
+	*
+	* @param column - The column to filter on
+	* @param pattern - The PostgreSQL regular expression pattern to match with
+	*/ regexIMatch(column, pattern) {
+        this.url.searchParams.append(column, `imatch.${pattern}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` IS `value`.
+	*
+	* For non-boolean columns, this is only relevant for checking if the value of
+	* `column` is NULL by setting `value` to `null`.
+	*
+	* For boolean columns, you can also set `value` to `true` or `false` and it
+	* will behave the same way as `.eq()`.
+	*
+	* @param column - The column to filter on
+	* @param value - The value to filter with
+	*/ is(column, value) {
+        this.url.searchParams.append(column, `is.${value}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` IS DISTINCT FROM `value`.
+	*
+	* Unlike `.neq()`, this treats `NULL` as a comparable value. Two `NULL` values
+	* are considered equal (not distinct), and comparing `NULL` with any non-NULL
+	* value returns true (distinct).
+	*
+	* @param column - The column to filter on
+	* @param value - The value to filter with
+	*/ isDistinct(column, value) {
+        this.url.searchParams.append(column, `isdistinct.${value}`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` is included in the `values` array.
+	*
+	* @param column - The column to filter on
+	* @param values - The values array to filter with
+	*/ in(column, values) {
+        const cleanedValues = Array.from(new Set(values)).map((s)=>{
+            if (typeof s === "string" && PostgrestReservedCharsRegexp.test(s)) return `"${s}"`;
+            else return `${s}`;
+        }).join(",");
+        this.url.searchParams.append(column, `in.(${cleanedValues})`);
+        return this;
+    }
+    /**
+	* Match only rows where `column` is NOT included in the `values` array.
+	*
+	* @param column - The column to filter on
+	* @param values - The values array to filter with
+	*/ notIn(column, values) {
+        const cleanedValues = Array.from(new Set(values)).map((s)=>{
+            if (typeof s === "string" && PostgrestReservedCharsRegexp.test(s)) return `"${s}"`;
+            else return `${s}`;
+        }).join(",");
+        this.url.searchParams.append(column, `not.in.(${cleanedValues})`);
+        return this;
+    }
+    /**
+	* Only relevant for jsonb, array, and range columns. Match only rows where
+	* `column` contains every element appearing in `value`.
+	*
+	* @param column - The jsonb, array, or range column to filter on
+	* @param value - The jsonb, array, or range value to filter with
+	*/ contains(column, value) {
+        if (typeof value === "string") this.url.searchParams.append(column, `cs.${value}`);
+        else if (Array.isArray(value)) this.url.searchParams.append(column, `cs.{${value.join(",")}}`);
+        else this.url.searchParams.append(column, `cs.${JSON.stringify(value)}`);
+        return this;
+    }
+    /**
+	* Only relevant for jsonb, array, and range columns. Match only rows where
+	* every element appearing in `column` is contained by `value`.
+	*
+	* @param column - The jsonb, array, or range column to filter on
+	* @param value - The jsonb, array, or range value to filter with
+	*/ containedBy(column, value) {
+        if (typeof value === "string") this.url.searchParams.append(column, `cd.${value}`);
+        else if (Array.isArray(value)) this.url.searchParams.append(column, `cd.{${value.join(",")}}`);
+        else this.url.searchParams.append(column, `cd.${JSON.stringify(value)}`);
+        return this;
+    }
+    /**
+	* Only relevant for range columns. Match only rows where every element in
+	* `column` is greater than any element in `range`.
+	*
+	* @param column - The range column to filter on
+	* @param range - The range to filter with
+	*/ rangeGt(column, range) {
+        this.url.searchParams.append(column, `sr.${range}`);
+        return this;
+    }
+    /**
+	* Only relevant for range columns. Match only rows where every element in
+	* `column` is either contained in `range` or greater than any element in
+	* `range`.
+	*
+	* @param column - The range column to filter on
+	* @param range - The range to filter with
+	*/ rangeGte(column, range) {
+        this.url.searchParams.append(column, `nxl.${range}`);
+        return this;
+    }
+    /**
+	* Only relevant for range columns. Match only rows where every element in
+	* `column` is less than any element in `range`.
+	*
+	* @param column - The range column to filter on
+	* @param range - The range to filter with
+	*/ rangeLt(column, range) {
+        this.url.searchParams.append(column, `sl.${range}`);
+        return this;
+    }
+    /**
+	* Only relevant for range columns. Match only rows where every element in
+	* `column` is either contained in `range` or less than any element in
+	* `range`.
+	*
+	* @param column - The range column to filter on
+	* @param range - The range to filter with
+	*/ rangeLte(column, range) {
+        this.url.searchParams.append(column, `nxr.${range}`);
+        return this;
+    }
+    /**
+	* Only relevant for range columns. Match only rows where `column` is
+	* mutually exclusive to `range` and there can be no element between the two
+	* ranges.
+	*
+	* @param column - The range column to filter on
+	* @param range - The range to filter with
+	*/ rangeAdjacent(column, range) {
+        this.url.searchParams.append(column, `adj.${range}`);
+        return this;
+    }
+    /**
+	* Only relevant for array and range columns. Match only rows where
+	* `column` and `value` have an element in common.
+	*
+	* @param column - The array or range column to filter on
+	* @param value - The array or range value to filter with
+	*/ overlaps(column, value) {
+        if (typeof value === "string") this.url.searchParams.append(column, `ov.${value}`);
+        else this.url.searchParams.append(column, `ov.{${value.join(",")}}`);
+        return this;
+    }
+    /**
+	* Only relevant for text and tsvector columns. Match only rows where
+	* `column` matches the query string in `query`.
+	*
+	* @param column - The text or tsvector column to filter on
+	* @param query - The query text to match with
+	* @param options - Named parameters
+	* @param options.config - The text search configuration to use
+	* @param options.type - Change how the `query` text is interpreted
+	*/ textSearch(column, query, { config, type } = {}) {
+        let typePart = "";
+        if (type === "plain") typePart = "pl";
+        else if (type === "phrase") typePart = "ph";
+        else if (type === "websearch") typePart = "w";
+        const configPart = config === void 0 ? "" : `(${config})`;
+        this.url.searchParams.append(column, `${typePart}fts${configPart}.${query}`);
+        return this;
+    }
+    /**
+	* Match only rows where each column in `query` keys is equal to its
+	* associated value. Shorthand for multiple `.eq()`s.
+	*
+	* @param query - The object to filter with, with column names as keys mapped
+	* to their filter values
+	*/ match(query) {
+        Object.entries(query).forEach(([column, value])=>{
+            this.url.searchParams.append(column, `eq.${value}`);
+        });
+        return this;
+    }
+    /**
+	* Match only rows which doesn't satisfy the filter.
+	*
+	* Unlike most filters, `opearator` and `value` are used as-is and need to
+	* follow [PostgREST
+	* syntax](https://postgrest.org/en/stable/api.html#operators). You also need
+	* to make sure they are properly sanitized.
+	*
+	* @param column - The column to filter on
+	* @param operator - The operator to be negated to filter with, following
+	* PostgREST syntax
+	* @param value - The value to filter with, following PostgREST syntax
+	*/ not(column, operator, value) {
+        this.url.searchParams.append(column, `not.${operator}.${value}`);
+        return this;
+    }
+    /**
+	* Match only rows which satisfy at least one of the filters.
+	*
+	* Unlike most filters, `filters` is used as-is and needs to follow [PostgREST
+	* syntax](https://postgrest.org/en/stable/api.html#operators). You also need
+	* to make sure it's properly sanitized.
+	*
+	* It's currently not possible to do an `.or()` filter across multiple tables.
+	*
+	* @param filters - The filters to use, following PostgREST syntax
+	* @param options - Named parameters
+	* @param options.referencedTable - Set this to filter on referenced tables
+	* instead of the parent table
+	* @param options.foreignTable - Deprecated, use `referencedTable` instead
+	*/ or(filters, { foreignTable, referencedTable = foreignTable } = {}) {
+        const key = referencedTable ? `${referencedTable}.or` : "or";
+        this.url.searchParams.append(key, `(${filters})`);
+        return this;
+    }
+    /**
+	* Match only rows which satisfy the filter. This is an escape hatch - you
+	* should use the specific filter methods wherever possible.
+	*
+	* Unlike most filters, `opearator` and `value` are used as-is and need to
+	* follow [PostgREST
+	* syntax](https://postgrest.org/en/stable/api.html#operators). You also need
+	* to make sure they are properly sanitized.
+	*
+	* @param column - The column to filter on
+	* @param operator - The operator to filter with, following PostgREST syntax
+	* @param value - The value to filter with, following PostgREST syntax
+	*/ filter(column, operator, value) {
+        this.url.searchParams.append(column, `${operator}.${value}`);
+        return this;
+    }
+};
+//#endregion
+//#region src/PostgrestQueryBuilder.ts
+var PostgrestQueryBuilder = class {
+    /**
+	* Creates a query builder scoped to a Postgres table or view.
+	*
+	* @example
+	* ```ts
+	* import PostgrestQueryBuilder from '@supabase/postgrest-js'
+	*
+	* const query = new PostgrestQueryBuilder(
+	*   new URL('https://xyzcompany.supabase.co/rest/v1/users'),
+	*   { headers: { apikey: 'public-anon-key' } }
+	* )
+	* ```
+	*/ constructor(url, { headers = {}, schema, fetch: fetch$1, urlLengthLimit = 8e3 }){
+        this.url = url;
+        this.headers = new Headers(headers);
+        this.schema = schema;
+        this.fetch = fetch$1;
+        this.urlLengthLimit = urlLengthLimit;
+    }
+    /**
+	* Clone URL and headers to prevent shared state between operations.
+	*/ cloneRequestState() {
+        return {
+            url: new URL(this.url.toString()),
+            headers: new Headers(this.headers)
+        };
+    }
+    /**
+	* Perform a SELECT query on the table or view.
+	*
+	* @param columns - The columns to retrieve, separated by commas. Columns can be renamed when returned with `customName:columnName`
+	*
+	* @param options - Named parameters
+	*
+	* @param options.head - When set to `true`, `data` will not be returned.
+	* Useful if you only need the count.
+	*
+	* @param options.count - Count algorithm to use to count rows in the table or view.
+	*
+	* `"exact"`: Exact but slow count algorithm. Performs a `COUNT(*)` under the
+	* hood.
+	*
+	* `"planned"`: Approximated but fast count algorithm. Uses the Postgres
+	* statistics under the hood.
+	*
+	* `"estimated"`: Uses exact count for low numbers and planned count for high
+	* numbers.
+	*
+	* @remarks
+	* When using `count` with `.range()` or `.limit()`, the returned `count` is the total number of rows
+	* that match your filters, not the number of rows in the current page. Use this to build pagination UI.
+	*/ select(columns, options) {
+        const { head = false, count } = options !== null && options !== void 0 ? options : {};
+        const method = head ? "HEAD" : "GET";
+        let quoted = false;
+        const cleanedColumns = (columns !== null && columns !== void 0 ? columns : "*").split("").map((c)=>{
+            if (/\s/.test(c) && !quoted) return "";
+            if (c === "\"") quoted = !quoted;
+            return c;
+        }).join("");
+        const { url, headers } = this.cloneRequestState();
+        url.searchParams.set("select", cleanedColumns);
+        if (count) headers.append("Prefer", `count=${count}`);
+        return new PostgrestFilterBuilder({
+            method,
+            url,
+            headers,
+            schema: this.schema,
+            fetch: this.fetch,
+            urlLengthLimit: this.urlLengthLimit
+        });
+    }
+    /**
+	* Perform an INSERT into the table or view.
+	*
+	* By default, inserted rows are not returned. To return it, chain the call
+	* with `.select()`.
+	*
+	* @param values - The values to insert. Pass an object to insert a single row
+	* or an array to insert multiple rows.
+	*
+	* @param options - Named parameters
+	*
+	* @param options.count - Count algorithm to use to count inserted rows.
+	*
+	* `"exact"`: Exact but slow count algorithm. Performs a `COUNT(*)` under the
+	* hood.
+	*
+	* `"planned"`: Approximated but fast count algorithm. Uses the Postgres
+	* statistics under the hood.
+	*
+	* `"estimated"`: Uses exact count for low numbers and planned count for high
+	* numbers.
+	*
+	* @param options.defaultToNull - Make missing fields default to `null`.
+	* Otherwise, use the default value for the column. Only applies for bulk
+	* inserts.
+	*/ insert(values, { count, defaultToNull = true } = {}) {
+        var _this$fetch;
+        const method = "POST";
+        const { url, headers } = this.cloneRequestState();
+        if (count) headers.append("Prefer", `count=${count}`);
+        if (!defaultToNull) headers.append("Prefer", `missing=default`);
+        if (Array.isArray(values)) {
+            const columns = values.reduce((acc, x)=>acc.concat(Object.keys(x)), []);
+            if (columns.length > 0) {
+                const uniqueColumns = [
+                    ...new Set(columns)
+                ].map((column)=>`"${column}"`);
+                url.searchParams.set("columns", uniqueColumns.join(","));
+            }
+        }
+        return new PostgrestFilterBuilder({
+            method,
+            url,
+            headers,
+            schema: this.schema,
+            body: values,
+            fetch: (_this$fetch = this.fetch) !== null && _this$fetch !== void 0 ? _this$fetch : fetch,
+            urlLengthLimit: this.urlLengthLimit
+        });
+    }
+    /**
+	* Perform an UPSERT on the table or view. Depending on the column(s) passed
+	* to `onConflict`, `.upsert()` allows you to perform the equivalent of
+	* `.insert()` if a row with the corresponding `onConflict` columns doesn't
+	* exist, or if it does exist, perform an alternative action depending on
+	* `ignoreDuplicates`.
+	*
+	* By default, upserted rows are not returned. To return it, chain the call
+	* with `.select()`.
+	*
+	* @param values - The values to upsert with. Pass an object to upsert a
+	* single row or an array to upsert multiple rows.
+	*
+	* @param options - Named parameters
+	*
+	* @param options.onConflict - Comma-separated UNIQUE column(s) to specify how
+	* duplicate rows are determined. Two rows are duplicates if all the
+	* `onConflict` columns are equal.
+	*
+	* @param options.ignoreDuplicates - If `true`, duplicate rows are ignored. If
+	* `false`, duplicate rows are merged with existing rows.
+	*
+	* @param options.count - Count algorithm to use to count upserted rows.
+	*
+	* `"exact"`: Exact but slow count algorithm. Performs a `COUNT(*)` under the
+	* hood.
+	*
+	* `"planned"`: Approximated but fast count algorithm. Uses the Postgres
+	* statistics under the hood.
+	*
+	* `"estimated"`: Uses exact count for low numbers and planned count for high
+	* numbers.
+	*
+	* @param options.defaultToNull - Make missing fields default to `null`.
+	* Otherwise, use the default value for the column. This only applies when
+	* inserting new rows, not when merging with existing rows under
+	* `ignoreDuplicates: false`. This also only applies when doing bulk upserts.
+	*
+	* @example Upsert a single row using a unique key
+	* ```ts
+	* // Upserting a single row, overwriting based on the 'username' unique column
+	* const { data, error } = await supabase
+	*   .from('users')
+	*   .upsert({ username: 'supabot' }, { onConflict: 'username' })
+	*
+	* // Example response:
+	* // {
+	* //   data: [
+	* //     { id: 4, message: 'bar', username: 'supabot' }
+	* //   ],
+	* //   error: null
+	* // }
+	* ```
+	*
+	* @example Upsert with conflict resolution and exact row counting
+	* ```ts
+	* // Upserting and returning exact count
+	* const { data, error, count } = await supabase
+	*   .from('users')
+	*   .upsert(
+	*     {
+	*       id: 3,
+	*       message: 'foo',
+	*       username: 'supabot'
+	*     },
+	*     {
+	*       onConflict: 'username',
+	*       count: 'exact'
+	*     }
+	*   )
+	*
+	* // Example response:
+	* // {
+	* //   data: [
+	* //     {
+	* //       id: 42,
+	* //       handle: "saoirse",
+	* //       display_name: "Saoirse"
+	* //     }
+	* //   ],
+	* //   count: 1,
+	* //   error: null
+	* // }
+	* ```
+	*/ upsert(values, { onConflict, ignoreDuplicates = false, count, defaultToNull = true } = {}) {
+        var _this$fetch2;
+        const method = "POST";
+        const { url, headers } = this.cloneRequestState();
+        headers.append("Prefer", `resolution=${ignoreDuplicates ? "ignore" : "merge"}-duplicates`);
+        if (onConflict !== void 0) url.searchParams.set("on_conflict", onConflict);
+        if (count) headers.append("Prefer", `count=${count}`);
+        if (!defaultToNull) headers.append("Prefer", "missing=default");
+        if (Array.isArray(values)) {
+            const columns = values.reduce((acc, x)=>acc.concat(Object.keys(x)), []);
+            if (columns.length > 0) {
+                const uniqueColumns = [
+                    ...new Set(columns)
+                ].map((column)=>`"${column}"`);
+                url.searchParams.set("columns", uniqueColumns.join(","));
+            }
+        }
+        return new PostgrestFilterBuilder({
+            method,
+            url,
+            headers,
+            schema: this.schema,
+            body: values,
+            fetch: (_this$fetch2 = this.fetch) !== null && _this$fetch2 !== void 0 ? _this$fetch2 : fetch,
+            urlLengthLimit: this.urlLengthLimit
+        });
+    }
+    /**
+	* Perform an UPDATE on the table or view.
+	*
+	* By default, updated rows are not returned. To return it, chain the call
+	* with `.select()` after filters.
+	*
+	* @param values - The values to update with
+	*
+	* @param options - Named parameters
+	*
+	* @param options.count - Count algorithm to use to count updated rows.
+	*
+	* `"exact"`: Exact but slow count algorithm. Performs a `COUNT(*)` under the
+	* hood.
+	*
+	* `"planned"`: Approximated but fast count algorithm. Uses the Postgres
+	* statistics under the hood.
+	*
+	* `"estimated"`: Uses exact count for low numbers and planned count for high
+	* numbers.
+	*/ update(values, { count } = {}) {
+        var _this$fetch3;
+        const method = "PATCH";
+        const { url, headers } = this.cloneRequestState();
+        if (count) headers.append("Prefer", `count=${count}`);
+        return new PostgrestFilterBuilder({
+            method,
+            url,
+            headers,
+            schema: this.schema,
+            body: values,
+            fetch: (_this$fetch3 = this.fetch) !== null && _this$fetch3 !== void 0 ? _this$fetch3 : fetch,
+            urlLengthLimit: this.urlLengthLimit
+        });
+    }
+    /**
+	* Perform a DELETE on the table or view.
+	*
+	* By default, deleted rows are not returned. To return it, chain the call
+	* with `.select()` after filters.
+	*
+	* @param options - Named parameters
+	*
+	* @param options.count - Count algorithm to use to count deleted rows.
+	*
+	* `"exact"`: Exact but slow count algorithm. Performs a `COUNT(*)` under the
+	* hood.
+	*
+	* `"planned"`: Approximated but fast count algorithm. Uses the Postgres
+	* statistics under the hood.
+	*
+	* `"estimated"`: Uses exact count for low numbers and planned count for high
+	* numbers.
+	*/ delete({ count } = {}) {
+        var _this$fetch4;
+        const method = "DELETE";
+        const { url, headers } = this.cloneRequestState();
+        if (count) headers.append("Prefer", `count=${count}`);
+        return new PostgrestFilterBuilder({
+            method,
+            url,
+            headers,
+            schema: this.schema,
+            fetch: (_this$fetch4 = this.fetch) !== null && _this$fetch4 !== void 0 ? _this$fetch4 : fetch,
+            urlLengthLimit: this.urlLengthLimit
+        });
+    }
+};
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/typeof.js
+function _typeof(o) {
+    "@babel/helpers - typeof";
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o$1) {
+        return typeof o$1;
+    } : function(o$1) {
+        return o$1 && "function" == typeof Symbol && o$1.constructor === Symbol && o$1 !== Symbol.prototype ? "symbol" : typeof o$1;
+    }, _typeof(o);
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/toPrimitive.js
+function toPrimitive(t, r) {
+    if ("object" != _typeof(t) || !t) return t;
+    var e = t[Symbol.toPrimitive];
+    if (void 0 !== e) {
+        var i = e.call(t, r || "default");
+        if ("object" != _typeof(i)) return i;
+        throw new TypeError("@@toPrimitive must return a primitive value.");
+    }
+    return ("string" === r ? String : Number)(t);
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/toPropertyKey.js
+function toPropertyKey(t) {
+    var i = toPrimitive(t, "string");
+    return "symbol" == _typeof(i) ? i : i + "";
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/defineProperty.js
+function _defineProperty(e, r, t) {
+    return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+        value: t,
+        enumerable: !0,
+        configurable: !0,
+        writable: !0
+    }) : e[r] = t, e;
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/objectSpread2.js
+function ownKeys(e, r) {
+    var t = Object.keys(e);
+    if (Object.getOwnPropertySymbols) {
+        var o = Object.getOwnPropertySymbols(e);
+        r && (o = o.filter(function(r$1) {
+            return Object.getOwnPropertyDescriptor(e, r$1).enumerable;
+        })), t.push.apply(t, o);
+    }
+    return t;
+}
+function _objectSpread2(e) {
+    for(var r = 1; r < arguments.length; r++){
+        var t = null != arguments[r] ? arguments[r] : {};
+        r % 2 ? ownKeys(Object(t), !0).forEach(function(r$1) {
+            _defineProperty(e, r$1, t[r$1]);
+        }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r$1) {
+            Object.defineProperty(e, r$1, Object.getOwnPropertyDescriptor(t, r$1));
+        });
+    }
+    return e;
+}
+//#endregion
+//#region src/PostgrestClient.ts
+/**
+* PostgREST client.
+*
+* @typeParam Database - Types for the schema from the [type
+* generator](https://supabase.com/docs/reference/javascript/next/typescript-support)
+*
+* @typeParam SchemaName - Postgres schema to switch to. Must be a string
+* literal, the same one passed to the constructor. If the schema is not
+* `"public"`, this must be supplied manually.
+*/ var PostgrestClient = class PostgrestClient {
+    /**
+	* Creates a PostgREST client.
+	*
+	* @param url - URL of the PostgREST endpoint
+	* @param options - Named parameters
+	* @param options.headers - Custom headers
+	* @param options.schema - Postgres schema to switch to
+	* @param options.fetch - Custom fetch
+	* @param options.timeout - Optional timeout in milliseconds for all requests. When set, requests will automatically abort after this duration to prevent indefinite hangs.
+	* @param options.urlLengthLimit - Maximum URL length in characters before warnings/errors are triggered. Defaults to 8000.
+	* @example
+	* ```ts
+	* import PostgrestClient from '@supabase/postgrest-js'
+	*
+	* const postgrest = new PostgrestClient('https://xyzcompany.supabase.co/rest/v1', {
+	*   headers: { apikey: 'public-anon-key' },
+	*   schema: 'public',
+	*   timeout: 30000, // 30 second timeout
+	* })
+	* ```
+	*/ constructor(url, { headers = {}, schema, fetch: fetch$1, timeout, urlLengthLimit = 8e3 } = {}){
+        this.url = url;
+        this.headers = new Headers(headers);
+        this.schemaName = schema;
+        this.urlLengthLimit = urlLengthLimit;
+        const originalFetch = fetch$1 !== null && fetch$1 !== void 0 ? fetch$1 : globalThis.fetch;
+        if (timeout !== void 0 && timeout > 0) this.fetch = (input, init)=>{
+            const controller = new AbortController();
+            const timeoutId = setTimeout(()=>controller.abort(), timeout);
+            const existingSignal = init === null || init === void 0 ? void 0 : init.signal;
+            if (existingSignal) {
+                if (existingSignal.aborted) {
+                    clearTimeout(timeoutId);
+                    return originalFetch(input, init);
+                }
+                const abortHandler = ()=>{
+                    clearTimeout(timeoutId);
+                    controller.abort();
+                };
+                existingSignal.addEventListener("abort", abortHandler, {
+                    once: true
+                });
+                return originalFetch(input, _objectSpread2(_objectSpread2({}, init), {}, {
+                    signal: controller.signal
+                })).finally(()=>{
+                    clearTimeout(timeoutId);
+                    existingSignal.removeEventListener("abort", abortHandler);
+                });
+            }
+            return originalFetch(input, _objectSpread2(_objectSpread2({}, init), {}, {
+                signal: controller.signal
+            })).finally(()=>clearTimeout(timeoutId));
+        };
+        else this.fetch = originalFetch;
+    }
+    /**
+	* Perform a query on a table or a view.
+	*
+	* @param relation - The table or view name to query
+	*/ from(relation) {
+        if (!relation || typeof relation !== "string" || relation.trim() === "") throw new Error("Invalid relation name: relation must be a non-empty string.");
+        return new PostgrestQueryBuilder(new URL(`${this.url}/${relation}`), {
+            headers: new Headers(this.headers),
+            schema: this.schemaName,
+            fetch: this.fetch,
+            urlLengthLimit: this.urlLengthLimit
+        });
+    }
+    /**
+	* Select a schema to query or perform an function (rpc) call.
+	*
+	* The schema needs to be on the list of exposed schemas inside Supabase.
+	*
+	* @param schema - The schema to query
+	*/ schema(schema) {
+        return new PostgrestClient(this.url, {
+            headers: this.headers,
+            schema,
+            fetch: this.fetch,
+            urlLengthLimit: this.urlLengthLimit
+        });
+    }
+    /**
+	* Perform a function call.
+	*
+	* @param fn - The function name to call
+	* @param args - The arguments to pass to the function call
+	* @param options - Named parameters
+	* @param options.head - When set to `true`, `data` will not be returned.
+	* Useful if you only need the count.
+	* @param options.get - When set to `true`, the function will be called with
+	* read-only access mode.
+	* @param options.count - Count algorithm to use to count rows returned by the
+	* function. Only applicable for [set-returning
+	* functions](https://www.postgresql.org/docs/current/functions-srf.html).
+	*
+	* `"exact"`: Exact but slow count algorithm. Performs a `COUNT(*)` under the
+	* hood.
+	*
+	* `"planned"`: Approximated but fast count algorithm. Uses the Postgres
+	* statistics under the hood.
+	*
+	* `"estimated"`: Uses exact count for low numbers and planned count for high
+	* numbers.
+	*
+	* @example
+	* ```ts
+	* // For cross-schema functions where type inference fails, use overrideTypes:
+	* const { data } = await supabase
+	*   .schema('schema_b')
+	*   .rpc('function_a', {})
+	*   .overrideTypes<{ id: string; user_id: string }[]>()
+	* ```
+	*/ rpc(fn, args = {}, { head = false, get = false, count } = {}) {
+        var _this$fetch;
+        let method;
+        const url = new URL(`${this.url}/rpc/${fn}`);
+        let body;
+        const _isObject = (v)=>v !== null && typeof v === "object" && (!Array.isArray(v) || v.some(_isObject));
+        const _hasObjectArg = head && Object.values(args).some(_isObject);
+        if (_hasObjectArg) {
+            method = "POST";
+            body = args;
+        } else if (head || get) {
+            method = head ? "HEAD" : "GET";
+            Object.entries(args).filter(([_, value])=>value !== void 0).map(([name, value])=>[
+                    name,
+                    Array.isArray(value) ? `{${value.join(",")}}` : `${value}`
+                ]).forEach(([name, value])=>{
+                url.searchParams.append(name, value);
+            });
+        } else {
+            method = "POST";
+            body = args;
+        }
+        const headers = new Headers(this.headers);
+        if (_hasObjectArg) headers.set("Prefer", count ? `count=${count},return=minimal` : "return=minimal");
+        else if (count) headers.set("Prefer", `count=${count}`);
+        return new PostgrestFilterBuilder({
+            method,
+            url,
+            headers,
+            schema: this.schemaName,
+            body,
+            fetch: (_this$fetch = this.fetch) !== null && _this$fetch !== void 0 ? _this$fetch : fetch,
+            urlLengthLimit: this.urlLengthLimit
+        });
+    }
+};
+//#endregion
+//#region src/index.ts
+var src_default = {
+    PostgrestClient,
+    PostgrestQueryBuilder,
+    PostgrestFilterBuilder,
+    PostgrestTransformBuilder,
+    PostgrestBuilder,
+    PostgrestError
+};
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/websocket-factory.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+/**
+ * Utilities for creating WebSocket instances across runtimes.
+ */ __turbopack_context__.s([
+    "WebSocketFactory",
+    ()=>WebSocketFactory,
+    "default",
+    ()=>__TURBOPACK__default__export__
+]);
+class WebSocketFactory {
+    /**
+     * Static-only utility – prevent instantiation.
+     */ constructor(){}
+    static detectEnvironment() {
+        var _a;
+        if (typeof WebSocket !== 'undefined') {
+            return {
+                type: 'native',
+                constructor: WebSocket
+            };
+        }
+        if (typeof globalThis !== 'undefined' && typeof globalThis.WebSocket !== 'undefined') {
+            return {
+                type: 'native',
+                constructor: globalThis.WebSocket
+            };
+        }
+        if (("TURBOPACK compile-time value", "object") !== 'undefined' && typeof /*TURBOPACK member replacement*/ __turbopack_context__.g.WebSocket !== 'undefined') {
+            return {
+                type: 'native',
+                constructor: /*TURBOPACK member replacement*/ __turbopack_context__.g.WebSocket
+            };
+        }
+        if (typeof globalThis !== 'undefined' && typeof globalThis.WebSocketPair !== 'undefined' && typeof globalThis.WebSocket === 'undefined') {
+            return {
+                type: 'cloudflare',
+                error: 'Cloudflare Workers detected. WebSocket clients are not supported in Cloudflare Workers.',
+                workaround: 'Use Cloudflare Workers WebSocket API for server-side WebSocket handling, or deploy to a different runtime.'
+            };
+        }
+        if (typeof globalThis !== 'undefined' && globalThis.EdgeRuntime || typeof navigator !== 'undefined' && ((_a = navigator.userAgent) === null || _a === void 0 ? void 0 : _a.includes('Vercel-Edge'))) {
+            return {
+                type: 'unsupported',
+                error: 'Edge runtime detected (Vercel Edge/Netlify Edge). WebSockets are not supported in edge functions.',
+                workaround: 'Use serverless functions or a different deployment target for WebSocket functionality.'
+            };
+        }
+        // Use dynamic property access to avoid Next.js Edge Runtime static analysis warnings
+        const _process = globalThis['process'];
+        if (_process) {
+            const processVersions = _process['versions'];
+            if (processVersions && processVersions['node']) {
+                // Remove 'v' prefix if present and parse the major version
+                const versionString = processVersions['node'];
+                const nodeVersion = parseInt(versionString.replace(/^v/, '').split('.')[0]);
+                // Node.js 22+ should have native WebSocket
+                if (nodeVersion >= 22) {
+                    // Check if native WebSocket is available (should be in Node.js 22+)
+                    if (typeof globalThis.WebSocket !== 'undefined') {
+                        return {
+                            type: 'native',
+                            constructor: globalThis.WebSocket
+                        };
+                    }
+                    // If not available, user needs to provide it
+                    return {
+                        type: 'unsupported',
+                        error: `Node.js ${nodeVersion} detected but native WebSocket not found.`,
+                        workaround: 'Provide a WebSocket implementation via the transport option.'
+                    };
+                }
+                // Node.js < 22 doesn't have native WebSocket
+                return {
+                    type: 'unsupported',
+                    error: `Node.js ${nodeVersion} detected without native WebSocket support.`,
+                    workaround: 'For Node.js < 22, install "ws" package and provide it via the transport option:\n' + 'import ws from "ws"\n' + 'new RealtimeClient(url, { transport: ws })'
+                };
+            }
+        }
+        return {
+            type: 'unsupported',
+            error: 'Unknown JavaScript runtime without WebSocket support.',
+            workaround: "Ensure you're running in a supported environment (browser, Node.js, Deno) or provide a custom WebSocket implementation."
+        };
+    }
+    /**
+     * Returns the best available WebSocket constructor for the current runtime.
+     *
+     * @example
+     * ```ts
+     * const WS = WebSocketFactory.getWebSocketConstructor()
+     * const socket = new WS('wss://realtime.supabase.co/socket')
+     * ```
+     */ static getWebSocketConstructor() {
+        const env = this.detectEnvironment();
+        if (env.constructor) {
+            return env.constructor;
+        }
+        let errorMessage = env.error || 'WebSocket not supported in this environment.';
+        if (env.workaround) {
+            errorMessage += `\n\nSuggested solution: ${env.workaround}`;
+        }
+        throw new Error(errorMessage);
+    }
+    /**
+     * Creates a WebSocket using the detected constructor.
+     *
+     * @example
+     * ```ts
+     * const socket = WebSocketFactory.createWebSocket('wss://realtime.supabase.co/socket')
+     * ```
+     */ static createWebSocket(url, protocols) {
+        const WS = this.getWebSocketConstructor();
+        return new WS(url, protocols);
+    }
+    /**
+     * Detects whether the runtime can establish WebSocket connections.
+     *
+     * @example
+     * ```ts
+     * if (!WebSocketFactory.isWebSocketSupported()) {
+     *   console.warn('Falling back to long polling')
+     * }
+     * ```
+     */ static isWebSocketSupported() {
+        try {
+            const env = this.detectEnvironment();
+            return env.type === 'native' || env.type === 'ws';
+        } catch (_a) {
+            return false;
+        }
+    }
+}
+const __TURBOPACK__default__export__ = WebSocketFactory;
+ //# sourceMappingURL=websocket-factory.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/version.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+// Generated automatically during releases by scripts/update-version-files.ts
+// This file provides runtime access to the package version for:
+// - HTTP request headers (e.g., X-Client-Info header for API requests)
+// - Debugging and support (identifying which version is running)
+// - Telemetry and logging (version reporting in errors/analytics)
+// - Ensuring build artifacts match the published package version
+__turbopack_context__.s([
+    "version",
+    ()=>version
+]);
+const version = '2.95.3'; //# sourceMappingURL=version.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/constants.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "CHANNEL_EVENTS",
+    ()=>CHANNEL_EVENTS,
+    "CHANNEL_STATES",
+    ()=>CHANNEL_STATES,
+    "CONNECTION_STATE",
+    ()=>CONNECTION_STATE,
+    "DEFAULT_TIMEOUT",
+    ()=>DEFAULT_TIMEOUT,
+    "DEFAULT_VERSION",
+    ()=>DEFAULT_VERSION,
+    "DEFAULT_VSN",
+    ()=>DEFAULT_VSN,
+    "MAX_PUSH_BUFFER_SIZE",
+    ()=>MAX_PUSH_BUFFER_SIZE,
+    "SOCKET_STATES",
+    ()=>SOCKET_STATES,
+    "TRANSPORTS",
+    ()=>TRANSPORTS,
+    "VERSION",
+    ()=>VERSION,
+    "VSN_1_0_0",
+    ()=>VSN_1_0_0,
+    "VSN_2_0_0",
+    ()=>VSN_2_0_0,
+    "WS_CLOSE_NORMAL",
+    ()=>WS_CLOSE_NORMAL
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$version$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/version.js [app-ssr] (ecmascript)");
+;
+const DEFAULT_VERSION = `realtime-js/${__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$version$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["version"]}`;
+const VSN_1_0_0 = '1.0.0';
+const VSN_2_0_0 = '2.0.0';
+const DEFAULT_VSN = VSN_2_0_0;
+const VERSION = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$version$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["version"];
+const DEFAULT_TIMEOUT = 10000;
+const WS_CLOSE_NORMAL = 1000;
+const MAX_PUSH_BUFFER_SIZE = 100;
+var SOCKET_STATES;
+(function(SOCKET_STATES) {
+    SOCKET_STATES[SOCKET_STATES["connecting"] = 0] = "connecting";
+    SOCKET_STATES[SOCKET_STATES["open"] = 1] = "open";
+    SOCKET_STATES[SOCKET_STATES["closing"] = 2] = "closing";
+    SOCKET_STATES[SOCKET_STATES["closed"] = 3] = "closed";
+})(SOCKET_STATES || (SOCKET_STATES = {}));
+var CHANNEL_STATES;
+(function(CHANNEL_STATES) {
+    CHANNEL_STATES["closed"] = "closed";
+    CHANNEL_STATES["errored"] = "errored";
+    CHANNEL_STATES["joined"] = "joined";
+    CHANNEL_STATES["joining"] = "joining";
+    CHANNEL_STATES["leaving"] = "leaving";
+})(CHANNEL_STATES || (CHANNEL_STATES = {}));
+var CHANNEL_EVENTS;
+(function(CHANNEL_EVENTS) {
+    CHANNEL_EVENTS["close"] = "phx_close";
+    CHANNEL_EVENTS["error"] = "phx_error";
+    CHANNEL_EVENTS["join"] = "phx_join";
+    CHANNEL_EVENTS["reply"] = "phx_reply";
+    CHANNEL_EVENTS["leave"] = "phx_leave";
+    CHANNEL_EVENTS["access_token"] = "access_token";
+})(CHANNEL_EVENTS || (CHANNEL_EVENTS = {}));
+var TRANSPORTS;
+(function(TRANSPORTS) {
+    TRANSPORTS["websocket"] = "websocket";
+})(TRANSPORTS || (TRANSPORTS = {}));
+var CONNECTION_STATE;
+(function(CONNECTION_STATE) {
+    CONNECTION_STATE["Connecting"] = "connecting";
+    CONNECTION_STATE["Open"] = "open";
+    CONNECTION_STATE["Closing"] = "closing";
+    CONNECTION_STATE["Closed"] = "closed";
+})(CONNECTION_STATE || (CONNECTION_STATE = {})); //# sourceMappingURL=constants.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/serializer.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>Serializer
+]);
+class Serializer {
+    constructor(allowedMetadataKeys){
+        this.HEADER_LENGTH = 1;
+        this.USER_BROADCAST_PUSH_META_LENGTH = 6;
+        this.KINDS = {
+            userBroadcastPush: 3,
+            userBroadcast: 4
+        };
+        this.BINARY_ENCODING = 0;
+        this.JSON_ENCODING = 1;
+        this.BROADCAST_EVENT = 'broadcast';
+        this.allowedMetadataKeys = [];
+        this.allowedMetadataKeys = allowedMetadataKeys !== null && allowedMetadataKeys !== void 0 ? allowedMetadataKeys : [];
+    }
+    encode(msg, callback) {
+        if (msg.event === this.BROADCAST_EVENT && !(msg.payload instanceof ArrayBuffer) && typeof msg.payload.event === 'string') {
+            return callback(this._binaryEncodeUserBroadcastPush(msg));
+        }
+        let payload = [
+            msg.join_ref,
+            msg.ref,
+            msg.topic,
+            msg.event,
+            msg.payload
+        ];
+        return callback(JSON.stringify(payload));
+    }
+    _binaryEncodeUserBroadcastPush(message) {
+        var _a;
+        if (this._isArrayBuffer((_a = message.payload) === null || _a === void 0 ? void 0 : _a.payload)) {
+            return this._encodeBinaryUserBroadcastPush(message);
+        } else {
+            return this._encodeJsonUserBroadcastPush(message);
+        }
+    }
+    _encodeBinaryUserBroadcastPush(message) {
+        var _a, _b;
+        const userPayload = (_b = (_a = message.payload) === null || _a === void 0 ? void 0 : _a.payload) !== null && _b !== void 0 ? _b : new ArrayBuffer(0);
+        return this._encodeUserBroadcastPush(message, this.BINARY_ENCODING, userPayload);
+    }
+    _encodeJsonUserBroadcastPush(message) {
+        var _a, _b;
+        const userPayload = (_b = (_a = message.payload) === null || _a === void 0 ? void 0 : _a.payload) !== null && _b !== void 0 ? _b : {};
+        const encoder = new TextEncoder();
+        const encodedUserPayload = encoder.encode(JSON.stringify(userPayload)).buffer;
+        return this._encodeUserBroadcastPush(message, this.JSON_ENCODING, encodedUserPayload);
+    }
+    _encodeUserBroadcastPush(message, encodingType, encodedPayload) {
+        var _a, _b;
+        const topic = message.topic;
+        const ref = (_a = message.ref) !== null && _a !== void 0 ? _a : '';
+        const joinRef = (_b = message.join_ref) !== null && _b !== void 0 ? _b : '';
+        const userEvent = message.payload.event;
+        // Filter metadata based on allowed keys
+        const rest = this.allowedMetadataKeys ? this._pick(message.payload, this.allowedMetadataKeys) : {};
+        const metadata = Object.keys(rest).length === 0 ? '' : JSON.stringify(rest);
+        // Validate lengths don't exceed uint8 max value (255)
+        if (joinRef.length > 255) {
+            throw new Error(`joinRef length ${joinRef.length} exceeds maximum of 255`);
+        }
+        if (ref.length > 255) {
+            throw new Error(`ref length ${ref.length} exceeds maximum of 255`);
+        }
+        if (topic.length > 255) {
+            throw new Error(`topic length ${topic.length} exceeds maximum of 255`);
+        }
+        if (userEvent.length > 255) {
+            throw new Error(`userEvent length ${userEvent.length} exceeds maximum of 255`);
+        }
+        if (metadata.length > 255) {
+            throw new Error(`metadata length ${metadata.length} exceeds maximum of 255`);
+        }
+        const metaLength = this.USER_BROADCAST_PUSH_META_LENGTH + joinRef.length + ref.length + topic.length + userEvent.length + metadata.length;
+        const header = new ArrayBuffer(this.HEADER_LENGTH + metaLength);
+        let view = new DataView(header);
+        let offset = 0;
+        view.setUint8(offset++, this.KINDS.userBroadcastPush); // kind
+        view.setUint8(offset++, joinRef.length);
+        view.setUint8(offset++, ref.length);
+        view.setUint8(offset++, topic.length);
+        view.setUint8(offset++, userEvent.length);
+        view.setUint8(offset++, metadata.length);
+        view.setUint8(offset++, encodingType);
+        Array.from(joinRef, (char)=>view.setUint8(offset++, char.charCodeAt(0)));
+        Array.from(ref, (char)=>view.setUint8(offset++, char.charCodeAt(0)));
+        Array.from(topic, (char)=>view.setUint8(offset++, char.charCodeAt(0)));
+        Array.from(userEvent, (char)=>view.setUint8(offset++, char.charCodeAt(0)));
+        Array.from(metadata, (char)=>view.setUint8(offset++, char.charCodeAt(0)));
+        var combined = new Uint8Array(header.byteLength + encodedPayload.byteLength);
+        combined.set(new Uint8Array(header), 0);
+        combined.set(new Uint8Array(encodedPayload), header.byteLength);
+        return combined.buffer;
+    }
+    decode(rawPayload, callback) {
+        if (this._isArrayBuffer(rawPayload)) {
+            let result = this._binaryDecode(rawPayload);
+            return callback(result);
+        }
+        if (typeof rawPayload === 'string') {
+            const jsonPayload = JSON.parse(rawPayload);
+            const [join_ref, ref, topic, event, payload] = jsonPayload;
+            return callback({
+                join_ref,
+                ref,
+                topic,
+                event,
+                payload
+            });
+        }
+        return callback({});
+    }
+    _binaryDecode(buffer) {
+        const view = new DataView(buffer);
+        const kind = view.getUint8(0);
+        const decoder = new TextDecoder();
+        switch(kind){
+            case this.KINDS.userBroadcast:
+                return this._decodeUserBroadcast(buffer, view, decoder);
+        }
+    }
+    _decodeUserBroadcast(buffer, view, decoder) {
+        const topicSize = view.getUint8(1);
+        const userEventSize = view.getUint8(2);
+        const metadataSize = view.getUint8(3);
+        const payloadEncoding = view.getUint8(4);
+        let offset = this.HEADER_LENGTH + 4;
+        const topic = decoder.decode(buffer.slice(offset, offset + topicSize));
+        offset = offset + topicSize;
+        const userEvent = decoder.decode(buffer.slice(offset, offset + userEventSize));
+        offset = offset + userEventSize;
+        const metadata = decoder.decode(buffer.slice(offset, offset + metadataSize));
+        offset = offset + metadataSize;
+        const payload = buffer.slice(offset, buffer.byteLength);
+        const parsedPayload = payloadEncoding === this.JSON_ENCODING ? JSON.parse(decoder.decode(payload)) : payload;
+        const data = {
+            type: this.BROADCAST_EVENT,
+            event: userEvent,
+            payload: parsedPayload
+        };
+        // Metadata is optional and always JSON encoded
+        if (metadataSize > 0) {
+            data['meta'] = JSON.parse(metadata);
+        }
+        return {
+            join_ref: null,
+            ref: null,
+            topic: topic,
+            event: this.BROADCAST_EVENT,
+            payload: data
+        };
+    }
+    _isArrayBuffer(buffer) {
+        var _a;
+        return buffer instanceof ArrayBuffer || ((_a = buffer === null || buffer === void 0 ? void 0 : buffer.constructor) === null || _a === void 0 ? void 0 : _a.name) === 'ArrayBuffer';
+    }
+    _pick(obj, keys) {
+        if (!obj || typeof obj !== 'object') {
+            return {};
+        }
+        return Object.fromEntries(Object.entries(obj).filter(([key])=>keys.includes(key)));
+    }
+} //# sourceMappingURL=serializer.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/timer.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+/**
+ * Creates a timer that accepts a `timerCalc` function to perform calculated timeout retries, such as exponential backoff.
+ *
+ * @example
+ *    let reconnectTimer = new Timer(() => this.connect(), function(tries){
+ *      return [1000, 5000, 10000][tries - 1] || 10000
+ *    })
+ *    reconnectTimer.scheduleTimeout() // fires after 1000
+ *    reconnectTimer.scheduleTimeout() // fires after 5000
+ *    reconnectTimer.reset()
+ *    reconnectTimer.scheduleTimeout() // fires after 1000
+ */ __turbopack_context__.s([
+    "default",
+    ()=>Timer
+]);
+class Timer {
+    constructor(callback, timerCalc){
+        this.callback = callback;
+        this.timerCalc = timerCalc;
+        this.timer = undefined;
+        this.tries = 0;
+        this.callback = callback;
+        this.timerCalc = timerCalc;
+    }
+    reset() {
+        this.tries = 0;
+        clearTimeout(this.timer);
+        this.timer = undefined;
+    }
+    // Cancels any previous scheduleTimeout and schedules callback
+    scheduleTimeout() {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(()=>{
+            this.tries = this.tries + 1;
+            this.callback();
+        }, this.timerCalc(this.tries + 1));
+    }
+} //# sourceMappingURL=timer.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/transformers.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+/**
+ * Helpers to convert the change Payload into native JS types.
+ */ // Adapted from epgsql (src/epgsql_binary.erl), this module licensed under
+// 3-clause BSD found here: https://raw.githubusercontent.com/epgsql/epgsql/devel/LICENSE
+__turbopack_context__.s([
+    "PostgresTypes",
+    ()=>PostgresTypes,
+    "convertCell",
+    ()=>convertCell,
+    "convertChangeData",
+    ()=>convertChangeData,
+    "convertColumn",
+    ()=>convertColumn,
+    "httpEndpointURL",
+    ()=>httpEndpointURL,
+    "toArray",
+    ()=>toArray,
+    "toBoolean",
+    ()=>toBoolean,
+    "toJson",
+    ()=>toJson,
+    "toNumber",
+    ()=>toNumber,
+    "toTimestampString",
+    ()=>toTimestampString
+]);
+var PostgresTypes;
+(function(PostgresTypes) {
+    PostgresTypes["abstime"] = "abstime";
+    PostgresTypes["bool"] = "bool";
+    PostgresTypes["date"] = "date";
+    PostgresTypes["daterange"] = "daterange";
+    PostgresTypes["float4"] = "float4";
+    PostgresTypes["float8"] = "float8";
+    PostgresTypes["int2"] = "int2";
+    PostgresTypes["int4"] = "int4";
+    PostgresTypes["int4range"] = "int4range";
+    PostgresTypes["int8"] = "int8";
+    PostgresTypes["int8range"] = "int8range";
+    PostgresTypes["json"] = "json";
+    PostgresTypes["jsonb"] = "jsonb";
+    PostgresTypes["money"] = "money";
+    PostgresTypes["numeric"] = "numeric";
+    PostgresTypes["oid"] = "oid";
+    PostgresTypes["reltime"] = "reltime";
+    PostgresTypes["text"] = "text";
+    PostgresTypes["time"] = "time";
+    PostgresTypes["timestamp"] = "timestamp";
+    PostgresTypes["timestamptz"] = "timestamptz";
+    PostgresTypes["timetz"] = "timetz";
+    PostgresTypes["tsrange"] = "tsrange";
+    PostgresTypes["tstzrange"] = "tstzrange";
+})(PostgresTypes || (PostgresTypes = {}));
+const convertChangeData = (columns, record, options = {})=>{
+    var _a;
+    const skipTypes = (_a = options.skipTypes) !== null && _a !== void 0 ? _a : [];
+    if (!record) {
+        return {};
+    }
+    return Object.keys(record).reduce((acc, rec_key)=>{
+        acc[rec_key] = convertColumn(rec_key, columns, record, skipTypes);
+        return acc;
+    }, {});
+};
+const convertColumn = (columnName, columns, record, skipTypes)=>{
+    const column = columns.find((x)=>x.name === columnName);
+    const colType = column === null || column === void 0 ? void 0 : column.type;
+    const value = record[columnName];
+    if (colType && !skipTypes.includes(colType)) {
+        return convertCell(colType, value);
+    }
+    return noop(value);
+};
+const convertCell = (type, value)=>{
+    // if data type is an array
+    if (type.charAt(0) === '_') {
+        const dataType = type.slice(1, type.length);
+        return toArray(value, dataType);
+    }
+    // If not null, convert to correct type.
+    switch(type){
+        case PostgresTypes.bool:
+            return toBoolean(value);
+        case PostgresTypes.float4:
+        case PostgresTypes.float8:
+        case PostgresTypes.int2:
+        case PostgresTypes.int4:
+        case PostgresTypes.int8:
+        case PostgresTypes.numeric:
+        case PostgresTypes.oid:
+            return toNumber(value);
+        case PostgresTypes.json:
+        case PostgresTypes.jsonb:
+            return toJson(value);
+        case PostgresTypes.timestamp:
+            return toTimestampString(value); // Format to be consistent with PostgREST
+        case PostgresTypes.abstime:
+        case PostgresTypes.date:
+        case PostgresTypes.daterange:
+        case PostgresTypes.int4range:
+        case PostgresTypes.int8range:
+        case PostgresTypes.money:
+        case PostgresTypes.reltime:
+        case PostgresTypes.text:
+        case PostgresTypes.time:
+        case PostgresTypes.timestamptz:
+        case PostgresTypes.timetz:
+        case PostgresTypes.tsrange:
+        case PostgresTypes.tstzrange:
+            return noop(value);
+        default:
+            // Return the value for remaining types
+            return noop(value);
+    }
+};
+const noop = (value)=>{
+    return value;
+};
+const toBoolean = (value)=>{
+    switch(value){
+        case 't':
+            return true;
+        case 'f':
+            return false;
+        default:
+            return value;
+    }
+};
+const toNumber = (value)=>{
+    if (typeof value === 'string') {
+        const parsedValue = parseFloat(value);
+        if (!Number.isNaN(parsedValue)) {
+            return parsedValue;
+        }
+    }
+    return value;
+};
+const toJson = (value)=>{
+    if (typeof value === 'string') {
+        try {
+            return JSON.parse(value);
+        } catch (_a) {
+            return value;
+        }
+    }
+    return value;
+};
+const toArray = (value, type)=>{
+    if (typeof value !== 'string') {
+        return value;
+    }
+    const lastIdx = value.length - 1;
+    const closeBrace = value[lastIdx];
+    const openBrace = value[0];
+    // Confirm value is a Postgres array by checking curly brackets
+    if (openBrace === '{' && closeBrace === '}') {
+        let arr;
+        const valTrim = value.slice(1, lastIdx);
+        // TODO: find a better solution to separate Postgres array data
+        try {
+            arr = JSON.parse('[' + valTrim + ']');
+        } catch (_) {
+            // WARNING: splitting on comma does not cover all edge cases
+            arr = valTrim ? valTrim.split(',') : [];
+        }
+        return arr.map((val)=>convertCell(type, val));
+    }
+    return value;
+};
+const toTimestampString = (value)=>{
+    if (typeof value === 'string') {
+        return value.replace(' ', 'T');
+    }
+    return value;
+};
+const httpEndpointURL = (socketUrl)=>{
+    const wsUrl = new URL(socketUrl);
+    wsUrl.protocol = wsUrl.protocol.replace(/^ws/i, 'http');
+    wsUrl.pathname = wsUrl.pathname.replace(/\/+$/, '') // remove all trailing slashes
+    .replace(/\/socket\/websocket$/i, '') // remove the socket/websocket path
+    .replace(/\/socket$/i, '') // remove the socket path
+    .replace(/\/websocket$/i, ''); // remove the websocket path
+    if (wsUrl.pathname === '' || wsUrl.pathname === '/') {
+        wsUrl.pathname = '/api/broadcast';
+    } else {
+        wsUrl.pathname = wsUrl.pathname + '/api/broadcast';
+    }
+    return wsUrl.href;
+}; //# sourceMappingURL=transformers.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/push.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>Push
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/constants.js [app-ssr] (ecmascript)");
+;
+class Push {
+    /**
+     * Initializes the Push
+     *
+     * @param channel The Channel
+     * @param event The event, for example `"phx_join"`
+     * @param payload The payload, for example `{user_id: 123}`
+     * @param timeout The push timeout in milliseconds
+     */ constructor(channel, event, payload = {}, timeout = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_TIMEOUT"]){
+        this.channel = channel;
+        this.event = event;
+        this.payload = payload;
+        this.timeout = timeout;
+        this.sent = false;
+        this.timeoutTimer = undefined;
+        this.ref = '';
+        this.receivedResp = null;
+        this.recHooks = [];
+        this.refEvent = null;
+    }
+    resend(timeout) {
+        this.timeout = timeout;
+        this._cancelRefEvent();
+        this.ref = '';
+        this.refEvent = null;
+        this.receivedResp = null;
+        this.sent = false;
+        this.send();
+    }
+    send() {
+        if (this._hasReceived('timeout')) {
+            return;
+        }
+        this.startTimeout();
+        this.sent = true;
+        this.channel.socket.push({
+            topic: this.channel.topic,
+            event: this.event,
+            payload: this.payload,
+            ref: this.ref,
+            join_ref: this.channel._joinRef()
+        });
+    }
+    updatePayload(payload) {
+        this.payload = Object.assign(Object.assign({}, this.payload), payload);
+    }
+    receive(status, callback) {
+        var _a;
+        if (this._hasReceived(status)) {
+            callback((_a = this.receivedResp) === null || _a === void 0 ? void 0 : _a.response);
+        }
+        this.recHooks.push({
+            status,
+            callback
+        });
+        return this;
+    }
+    startTimeout() {
+        if (this.timeoutTimer) {
+            return;
+        }
+        this.ref = this.channel.socket._makeRef();
+        this.refEvent = this.channel._replyEventName(this.ref);
+        const callback = (payload)=>{
+            this._cancelRefEvent();
+            this._cancelTimeout();
+            this.receivedResp = payload;
+            this._matchReceive(payload);
+        };
+        this.channel._on(this.refEvent, {}, callback);
+        this.timeoutTimer = setTimeout(()=>{
+            this.trigger('timeout', {});
+        }, this.timeout);
+    }
+    trigger(status, response) {
+        if (this.refEvent) this.channel._trigger(this.refEvent, {
+            status,
+            response
+        });
+    }
+    destroy() {
+        this._cancelRefEvent();
+        this._cancelTimeout();
+    }
+    _cancelRefEvent() {
+        if (!this.refEvent) {
+            return;
+        }
+        this.channel._off(this.refEvent, {});
+    }
+    _cancelTimeout() {
+        clearTimeout(this.timeoutTimer);
+        this.timeoutTimer = undefined;
+    }
+    _matchReceive({ status, response }) {
+        this.recHooks.filter((h)=>h.status === status).forEach((h)=>h.callback(response));
+    }
+    _hasReceived(status) {
+        return this.receivedResp && this.receivedResp.status === status;
+    }
+} //# sourceMappingURL=push.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/RealtimePresence.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+/*
+  This file draws heavily from https://github.com/phoenixframework/phoenix/blob/d344ec0a732ab4ee204215b31de69cf4be72e3bf/assets/js/phoenix/presence.js
+  License: https://github.com/phoenixframework/phoenix/blob/d344ec0a732ab4ee204215b31de69cf4be72e3bf/LICENSE.md
+*/ __turbopack_context__.s([
+    "REALTIME_PRESENCE_LISTEN_EVENTS",
+    ()=>REALTIME_PRESENCE_LISTEN_EVENTS,
+    "default",
+    ()=>RealtimePresence
+]);
+var REALTIME_PRESENCE_LISTEN_EVENTS;
+(function(REALTIME_PRESENCE_LISTEN_EVENTS) {
+    REALTIME_PRESENCE_LISTEN_EVENTS["SYNC"] = "sync";
+    REALTIME_PRESENCE_LISTEN_EVENTS["JOIN"] = "join";
+    REALTIME_PRESENCE_LISTEN_EVENTS["LEAVE"] = "leave";
+})(REALTIME_PRESENCE_LISTEN_EVENTS || (REALTIME_PRESENCE_LISTEN_EVENTS = {}));
+class RealtimePresence {
+    /**
+     * Creates a Presence helper that keeps the local presence state in sync with the server.
+     *
+     * @param channel - The realtime channel to bind to.
+     * @param opts - Optional custom event names, e.g. `{ events: { state: 'state', diff: 'diff' } }`.
+     *
+     * @example
+     * ```ts
+     * const presence = new RealtimePresence(channel)
+     *
+     * channel.on('presence', ({ event, key }) => {
+     *   console.log(`Presence ${event} on ${key}`)
+     * })
+     * ```
+     */ constructor(channel, opts){
+        this.channel = channel;
+        this.state = {};
+        this.pendingDiffs = [];
+        this.joinRef = null;
+        this.enabled = false;
+        this.caller = {
+            onJoin: ()=>{},
+            onLeave: ()=>{},
+            onSync: ()=>{}
+        };
+        const events = (opts === null || opts === void 0 ? void 0 : opts.events) || {
+            state: 'presence_state',
+            diff: 'presence_diff'
+        };
+        this.channel._on(events.state, {}, (newState)=>{
+            const { onJoin, onLeave, onSync } = this.caller;
+            this.joinRef = this.channel._joinRef();
+            this.state = RealtimePresence.syncState(this.state, newState, onJoin, onLeave);
+            this.pendingDiffs.forEach((diff)=>{
+                this.state = RealtimePresence.syncDiff(this.state, diff, onJoin, onLeave);
+            });
+            this.pendingDiffs = [];
+            onSync();
+        });
+        this.channel._on(events.diff, {}, (diff)=>{
+            const { onJoin, onLeave, onSync } = this.caller;
+            if (this.inPendingSyncState()) {
+                this.pendingDiffs.push(diff);
+            } else {
+                this.state = RealtimePresence.syncDiff(this.state, diff, onJoin, onLeave);
+                onSync();
+            }
+        });
+        this.onJoin((key, currentPresences, newPresences)=>{
+            this.channel._trigger('presence', {
+                event: 'join',
+                key,
+                currentPresences,
+                newPresences
+            });
+        });
+        this.onLeave((key, currentPresences, leftPresences)=>{
+            this.channel._trigger('presence', {
+                event: 'leave',
+                key,
+                currentPresences,
+                leftPresences
+            });
+        });
+        this.onSync(()=>{
+            this.channel._trigger('presence', {
+                event: 'sync'
+            });
+        });
+    }
+    /**
+     * Used to sync the list of presences on the server with the
+     * client's state.
+     *
+     * An optional `onJoin` and `onLeave` callback can be provided to
+     * react to changes in the client's local presences across
+     * disconnects and reconnects with the server.
+     *
+     * @internal
+     */ static syncState(currentState, newState, onJoin, onLeave) {
+        const state = this.cloneDeep(currentState);
+        const transformedState = this.transformState(newState);
+        const joins = {};
+        const leaves = {};
+        this.map(state, (key, presences)=>{
+            if (!transformedState[key]) {
+                leaves[key] = presences;
+            }
+        });
+        this.map(transformedState, (key, newPresences)=>{
+            const currentPresences = state[key];
+            if (currentPresences) {
+                const newPresenceRefs = newPresences.map((m)=>m.presence_ref);
+                const curPresenceRefs = currentPresences.map((m)=>m.presence_ref);
+                const joinedPresences = newPresences.filter((m)=>curPresenceRefs.indexOf(m.presence_ref) < 0);
+                const leftPresences = currentPresences.filter((m)=>newPresenceRefs.indexOf(m.presence_ref) < 0);
+                if (joinedPresences.length > 0) {
+                    joins[key] = joinedPresences;
+                }
+                if (leftPresences.length > 0) {
+                    leaves[key] = leftPresences;
+                }
+            } else {
+                joins[key] = newPresences;
+            }
+        });
+        return this.syncDiff(state, {
+            joins,
+            leaves
+        }, onJoin, onLeave);
+    }
+    /**
+     * Used to sync a diff of presence join and leave events from the
+     * server, as they happen.
+     *
+     * Like `syncState`, `syncDiff` accepts optional `onJoin` and
+     * `onLeave` callbacks to react to a user joining or leaving from a
+     * device.
+     *
+     * @internal
+     */ static syncDiff(state, diff, onJoin, onLeave) {
+        const { joins, leaves } = {
+            joins: this.transformState(diff.joins),
+            leaves: this.transformState(diff.leaves)
+        };
+        if (!onJoin) {
+            onJoin = ()=>{};
+        }
+        if (!onLeave) {
+            onLeave = ()=>{};
+        }
+        this.map(joins, (key, newPresences)=>{
+            var _a;
+            const currentPresences = (_a = state[key]) !== null && _a !== void 0 ? _a : [];
+            state[key] = this.cloneDeep(newPresences);
+            if (currentPresences.length > 0) {
+                const joinedPresenceRefs = state[key].map((m)=>m.presence_ref);
+                const curPresences = currentPresences.filter((m)=>joinedPresenceRefs.indexOf(m.presence_ref) < 0);
+                state[key].unshift(...curPresences);
+            }
+            onJoin(key, currentPresences, newPresences);
+        });
+        this.map(leaves, (key, leftPresences)=>{
+            let currentPresences = state[key];
+            if (!currentPresences) return;
+            const presenceRefsToRemove = leftPresences.map((m)=>m.presence_ref);
+            currentPresences = currentPresences.filter((m)=>presenceRefsToRemove.indexOf(m.presence_ref) < 0);
+            state[key] = currentPresences;
+            onLeave(key, currentPresences, leftPresences);
+            if (currentPresences.length === 0) delete state[key];
+        });
+        return state;
+    }
+    /** @internal */ static map(obj, func) {
+        return Object.getOwnPropertyNames(obj).map((key)=>func(key, obj[key]));
+    }
+    /**
+     * Remove 'metas' key
+     * Change 'phx_ref' to 'presence_ref'
+     * Remove 'phx_ref' and 'phx_ref_prev'
+     *
+     * @example
+     * // returns {
+     *  abc123: [
+     *    { presence_ref: '2', user_id: 1 },
+     *    { presence_ref: '3', user_id: 2 }
+     *  ]
+     * }
+     * RealtimePresence.transformState({
+     *  abc123: {
+     *    metas: [
+     *      { phx_ref: '2', phx_ref_prev: '1' user_id: 1 },
+     *      { phx_ref: '3', user_id: 2 }
+     *    ]
+     *  }
+     * })
+     *
+     * @internal
+     */ static transformState(state) {
+        state = this.cloneDeep(state);
+        return Object.getOwnPropertyNames(state).reduce((newState, key)=>{
+            const presences = state[key];
+            if ('metas' in presences) {
+                newState[key] = presences.metas.map((presence)=>{
+                    presence['presence_ref'] = presence['phx_ref'];
+                    delete presence['phx_ref'];
+                    delete presence['phx_ref_prev'];
+                    return presence;
+                });
+            } else {
+                newState[key] = presences;
+            }
+            return newState;
+        }, {});
+    }
+    /** @internal */ static cloneDeep(obj) {
+        return JSON.parse(JSON.stringify(obj));
+    }
+    /** @internal */ onJoin(callback) {
+        this.caller.onJoin = callback;
+    }
+    /** @internal */ onLeave(callback) {
+        this.caller.onLeave = callback;
+    }
+    /** @internal */ onSync(callback) {
+        this.caller.onSync = callback;
+    }
+    /** @internal */ inPendingSyncState() {
+        return !this.joinRef || this.joinRef !== this.channel._joinRef();
+    }
+} //# sourceMappingURL=RealtimePresence.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/RealtimeChannel.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "REALTIME_CHANNEL_STATES",
+    ()=>REALTIME_CHANNEL_STATES,
+    "REALTIME_LISTEN_TYPES",
+    ()=>REALTIME_LISTEN_TYPES,
+    "REALTIME_POSTGRES_CHANGES_LISTEN_EVENT",
+    ()=>REALTIME_POSTGRES_CHANGES_LISTEN_EVENT,
+    "REALTIME_SUBSCRIBE_STATES",
+    ()=>REALTIME_SUBSCRIBE_STATES,
+    "default",
+    ()=>RealtimeChannel
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/constants.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$push$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/push.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$timer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/timer.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$RealtimePresence$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/RealtimePresence.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$transformers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/transformers.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+;
+;
+var REALTIME_POSTGRES_CHANGES_LISTEN_EVENT;
+(function(REALTIME_POSTGRES_CHANGES_LISTEN_EVENT) {
+    REALTIME_POSTGRES_CHANGES_LISTEN_EVENT["ALL"] = "*";
+    REALTIME_POSTGRES_CHANGES_LISTEN_EVENT["INSERT"] = "INSERT";
+    REALTIME_POSTGRES_CHANGES_LISTEN_EVENT["UPDATE"] = "UPDATE";
+    REALTIME_POSTGRES_CHANGES_LISTEN_EVENT["DELETE"] = "DELETE";
+})(REALTIME_POSTGRES_CHANGES_LISTEN_EVENT || (REALTIME_POSTGRES_CHANGES_LISTEN_EVENT = {}));
+var REALTIME_LISTEN_TYPES;
+(function(REALTIME_LISTEN_TYPES) {
+    REALTIME_LISTEN_TYPES["BROADCAST"] = "broadcast";
+    REALTIME_LISTEN_TYPES["PRESENCE"] = "presence";
+    REALTIME_LISTEN_TYPES["POSTGRES_CHANGES"] = "postgres_changes";
+    REALTIME_LISTEN_TYPES["SYSTEM"] = "system";
+})(REALTIME_LISTEN_TYPES || (REALTIME_LISTEN_TYPES = {}));
+var REALTIME_SUBSCRIBE_STATES;
+(function(REALTIME_SUBSCRIBE_STATES) {
+    REALTIME_SUBSCRIBE_STATES["SUBSCRIBED"] = "SUBSCRIBED";
+    REALTIME_SUBSCRIBE_STATES["TIMED_OUT"] = "TIMED_OUT";
+    REALTIME_SUBSCRIBE_STATES["CLOSED"] = "CLOSED";
+    REALTIME_SUBSCRIBE_STATES["CHANNEL_ERROR"] = "CHANNEL_ERROR";
+})(REALTIME_SUBSCRIBE_STATES || (REALTIME_SUBSCRIBE_STATES = {}));
+const REALTIME_CHANNEL_STATES = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"];
+class RealtimeChannel {
+    /**
+     * Creates a channel that can broadcast messages, sync presence, and listen to Postgres changes.
+     *
+     * The topic determines which realtime stream you are subscribing to. Config options let you
+     * enable acknowledgement for broadcasts, presence tracking, or private channels.
+     *
+     * @example
+     * ```ts
+     * import RealtimeClient from '@supabase/realtime-js'
+     *
+     * const client = new RealtimeClient('https://xyzcompany.supabase.co/realtime/v1', {
+     *   params: { apikey: 'public-anon-key' },
+     * })
+     * const channel = new RealtimeChannel('realtime:public:messages', { config: {} }, client)
+     * ```
+     */ constructor(/** Topic name can be any string. */ topic, params = {
+        config: {}
+    }, socket){
+        var _a, _b;
+        this.topic = topic;
+        this.params = params;
+        this.socket = socket;
+        this.bindings = {};
+        this.state = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].closed;
+        this.joinedOnce = false;
+        this.pushBuffer = [];
+        this.subTopic = topic.replace(/^realtime:/i, '');
+        this.params.config = Object.assign({
+            broadcast: {
+                ack: false,
+                self: false
+            },
+            presence: {
+                key: '',
+                enabled: false
+            },
+            private: false
+        }, params.config);
+        this.timeout = this.socket.timeout;
+        this.joinPush = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$push$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"](this, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_EVENTS"].join, this.params, this.timeout);
+        this.rejoinTimer = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$timer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"](()=>this._rejoinUntilConnected(), this.socket.reconnectAfterMs);
+        this.joinPush.receive('ok', ()=>{
+            this.state = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].joined;
+            this.rejoinTimer.reset();
+            this.pushBuffer.forEach((pushEvent)=>pushEvent.send());
+            this.pushBuffer = [];
+        });
+        this._onClose(()=>{
+            this.rejoinTimer.reset();
+            this.socket.log('channel', `close ${this.topic} ${this._joinRef()}`);
+            this.state = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].closed;
+            this.socket._remove(this);
+        });
+        this._onError((reason)=>{
+            if (this._isLeaving() || this._isClosed()) {
+                return;
+            }
+            this.socket.log('channel', `error ${this.topic}`, reason);
+            this.state = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].errored;
+            this.rejoinTimer.scheduleTimeout();
+        });
+        this.joinPush.receive('timeout', ()=>{
+            if (!this._isJoining()) {
+                return;
+            }
+            this.socket.log('channel', `timeout ${this.topic}`, this.joinPush.timeout);
+            this.state = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].errored;
+            this.rejoinTimer.scheduleTimeout();
+        });
+        this.joinPush.receive('error', (reason)=>{
+            if (this._isLeaving() || this._isClosed()) {
+                return;
+            }
+            this.socket.log('channel', `error ${this.topic}`, reason);
+            this.state = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].errored;
+            this.rejoinTimer.scheduleTimeout();
+        });
+        this._on(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_EVENTS"].reply, {}, (payload, ref)=>{
+            this._trigger(this._replyEventName(ref), payload);
+        });
+        this.presence = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$RealtimePresence$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"](this);
+        this.broadcastEndpointURL = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$transformers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["httpEndpointURL"])(this.socket.endPoint);
+        this.private = this.params.config.private || false;
+        if (!this.private && ((_b = (_a = this.params.config) === null || _a === void 0 ? void 0 : _a.broadcast) === null || _b === void 0 ? void 0 : _b.replay)) {
+            throw `tried to use replay on public channel '${this.topic}'. It must be a private channel.`;
+        }
+    }
+    /** Subscribe registers your client with the server */ subscribe(callback, timeout = this.timeout) {
+        var _a, _b, _c;
+        if (!this.socket.isConnected()) {
+            this.socket.connect();
+        }
+        if (this.state == __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].closed) {
+            const { config: { broadcast, presence, private: isPrivate } } = this.params;
+            const postgres_changes = (_b = (_a = this.bindings.postgres_changes) === null || _a === void 0 ? void 0 : _a.map((r)=>r.filter)) !== null && _b !== void 0 ? _b : [];
+            const presence_enabled = !!this.bindings[REALTIME_LISTEN_TYPES.PRESENCE] && this.bindings[REALTIME_LISTEN_TYPES.PRESENCE].length > 0 || ((_c = this.params.config.presence) === null || _c === void 0 ? void 0 : _c.enabled) === true;
+            const accessTokenPayload = {};
+            const config = {
+                broadcast,
+                presence: Object.assign(Object.assign({}, presence), {
+                    enabled: presence_enabled
+                }),
+                postgres_changes,
+                private: isPrivate
+            };
+            if (this.socket.accessTokenValue) {
+                accessTokenPayload.access_token = this.socket.accessTokenValue;
+            }
+            this._onError((e)=>callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR, e));
+            this._onClose(()=>callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CLOSED));
+            this.updateJoinPayload(Object.assign({
+                config
+            }, accessTokenPayload));
+            this.joinedOnce = true;
+            this._rejoin(timeout);
+            this.joinPush.receive('ok', async ({ postgres_changes })=>{
+                var _a;
+                // Only refresh auth if using callback-based tokens
+                if (!this.socket._isManualToken()) {
+                    this.socket.setAuth();
+                }
+                if (postgres_changes === undefined) {
+                    callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.SUBSCRIBED);
+                    return;
+                } else {
+                    const clientPostgresBindings = this.bindings.postgres_changes;
+                    const bindingsLen = (_a = clientPostgresBindings === null || clientPostgresBindings === void 0 ? void 0 : clientPostgresBindings.length) !== null && _a !== void 0 ? _a : 0;
+                    const newPostgresBindings = [];
+                    for(let i = 0; i < bindingsLen; i++){
+                        const clientPostgresBinding = clientPostgresBindings[i];
+                        const { filter: { event, schema, table, filter } } = clientPostgresBinding;
+                        const serverPostgresFilter = postgres_changes && postgres_changes[i];
+                        if (serverPostgresFilter && serverPostgresFilter.event === event && RealtimeChannel.isFilterValueEqual(serverPostgresFilter.schema, schema) && RealtimeChannel.isFilterValueEqual(serverPostgresFilter.table, table) && RealtimeChannel.isFilterValueEqual(serverPostgresFilter.filter, filter)) {
+                            newPostgresBindings.push(Object.assign(Object.assign({}, clientPostgresBinding), {
+                                id: serverPostgresFilter.id
+                            }));
+                        } else {
+                            this.unsubscribe();
+                            this.state = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].errored;
+                            callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR, new Error('mismatch between server and client bindings for postgres changes'));
+                            return;
+                        }
+                    }
+                    this.bindings.postgres_changes = newPostgresBindings;
+                    callback && callback(REALTIME_SUBSCRIBE_STATES.SUBSCRIBED);
+                    return;
+                }
+            }).receive('error', (error)=>{
+                this.state = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].errored;
+                callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR, new Error(JSON.stringify(Object.values(error).join(', ') || 'error')));
+                return;
+            }).receive('timeout', ()=>{
+                callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.TIMED_OUT);
+                return;
+            });
+        }
+        return this;
+    }
+    /**
+     * Returns the current presence state for this channel.
+     *
+     * The shape is a map keyed by presence key (for example a user id) where each entry contains the
+     * tracked metadata for that user.
+     */ presenceState() {
+        return this.presence.state;
+    }
+    /**
+     * Sends the supplied payload to the presence tracker so other subscribers can see that this
+     * client is online. Use `untrack` to stop broadcasting presence for the same key.
+     */ async track(payload, opts = {}) {
+        return await this.send({
+            type: 'presence',
+            event: 'track',
+            payload
+        }, opts.timeout || this.timeout);
+    }
+    /**
+     * Removes the current presence state for this client.
+     */ async untrack(opts = {}) {
+        return await this.send({
+            type: 'presence',
+            event: 'untrack'
+        }, opts);
+    }
+    on(type, filter, callback) {
+        if (this.state === __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].joined && type === REALTIME_LISTEN_TYPES.PRESENCE) {
+            this.socket.log('channel', `resubscribe to ${this.topic} due to change in presence callbacks on joined channel`);
+            this.unsubscribe().then(async ()=>await this.subscribe());
+        }
+        return this._on(type, filter, callback);
+    }
+    /**
+     * Sends a broadcast message explicitly via REST API.
+     *
+     * This method always uses the REST API endpoint regardless of WebSocket connection state.
+     * Useful when you want to guarantee REST delivery or when gradually migrating from implicit REST fallback.
+     *
+     * @param event The name of the broadcast event
+     * @param payload Payload to be sent (required)
+     * @param opts Options including timeout
+     * @returns Promise resolving to object with success status, and error details if failed
+     */ async httpSend(event, payload, opts = {}) {
+        var _a;
+        if (payload === undefined || payload === null) {
+            return Promise.reject('Payload is required for httpSend()');
+        }
+        const headers = {
+            apikey: this.socket.apiKey ? this.socket.apiKey : '',
+            'Content-Type': 'application/json'
+        };
+        if (this.socket.accessTokenValue) {
+            headers['Authorization'] = `Bearer ${this.socket.accessTokenValue}`;
+        }
+        const options = {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                messages: [
+                    {
+                        topic: this.subTopic,
+                        event,
+                        payload: payload,
+                        private: this.private
+                    }
+                ]
+            })
+        };
+        const response = await this._fetchWithTimeout(this.broadcastEndpointURL, options, (_a = opts.timeout) !== null && _a !== void 0 ? _a : this.timeout);
+        if (response.status === 202) {
+            return {
+                success: true
+            };
+        }
+        let errorMessage = response.statusText;
+        try {
+            const errorBody = await response.json();
+            errorMessage = errorBody.error || errorBody.message || errorMessage;
+        } catch (_b) {}
+        return Promise.reject(new Error(errorMessage));
+    }
+    /**
+     * Sends a message into the channel.
+     *
+     * @param args Arguments to send to channel
+     * @param args.type The type of event to send
+     * @param args.event The name of the event being sent
+     * @param args.payload Payload to be sent
+     * @param opts Options to be used during the send process
+     */ async send(args, opts = {}) {
+        var _a, _b;
+        if (!this._canPush() && args.type === 'broadcast') {
+            console.warn('Realtime send() is automatically falling back to REST API. ' + 'This behavior will be deprecated in the future. ' + 'Please use httpSend() explicitly for REST delivery.');
+            const { event, payload: endpoint_payload } = args;
+            const headers = {
+                apikey: this.socket.apiKey ? this.socket.apiKey : '',
+                'Content-Type': 'application/json'
+            };
+            if (this.socket.accessTokenValue) {
+                headers['Authorization'] = `Bearer ${this.socket.accessTokenValue}`;
+            }
+            const options = {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    messages: [
+                        {
+                            topic: this.subTopic,
+                            event,
+                            payload: endpoint_payload,
+                            private: this.private
+                        }
+                    ]
+                })
+            };
+            try {
+                const response = await this._fetchWithTimeout(this.broadcastEndpointURL, options, (_a = opts.timeout) !== null && _a !== void 0 ? _a : this.timeout);
+                await ((_b = response.body) === null || _b === void 0 ? void 0 : _b.cancel());
+                return response.ok ? 'ok' : 'error';
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    return 'timed out';
+                } else {
+                    return 'error';
+                }
+            }
+        } else {
+            return new Promise((resolve)=>{
+                var _a, _b, _c;
+                const push = this._push(args.type, args, opts.timeout || this.timeout);
+                if (args.type === 'broadcast' && !((_c = (_b = (_a = this.params) === null || _a === void 0 ? void 0 : _a.config) === null || _b === void 0 ? void 0 : _b.broadcast) === null || _c === void 0 ? void 0 : _c.ack)) {
+                    resolve('ok');
+                }
+                push.receive('ok', ()=>resolve('ok'));
+                push.receive('error', ()=>resolve('error'));
+                push.receive('timeout', ()=>resolve('timed out'));
+            });
+        }
+    }
+    /**
+     * Updates the payload that will be sent the next time the channel joins (reconnects).
+     * Useful for rotating access tokens or updating config without re-creating the channel.
+     */ updateJoinPayload(payload) {
+        this.joinPush.updatePayload(payload);
+    }
+    /**
+     * Leaves the channel.
+     *
+     * Unsubscribes from server events, and instructs channel to terminate on server.
+     * Triggers onClose() hooks.
+     *
+     * To receive leave acknowledgements, use the a `receive` hook to bind to the server ack, ie:
+     * channel.unsubscribe().receive("ok", () => alert("left!") )
+     */ unsubscribe(timeout = this.timeout) {
+        this.state = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].leaving;
+        const onClose = ()=>{
+            this.socket.log('channel', `leave ${this.topic}`);
+            this._trigger(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_EVENTS"].close, 'leave', this._joinRef());
+        };
+        this.joinPush.destroy();
+        let leavePush = null;
+        return new Promise((resolve)=>{
+            leavePush = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$push$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"](this, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_EVENTS"].leave, {}, timeout);
+            leavePush.receive('ok', ()=>{
+                onClose();
+                resolve('ok');
+            }).receive('timeout', ()=>{
+                onClose();
+                resolve('timed out');
+            }).receive('error', ()=>{
+                resolve('error');
+            });
+            leavePush.send();
+            if (!this._canPush()) {
+                leavePush.trigger('ok', {});
+            }
+        }).finally(()=>{
+            leavePush === null || leavePush === void 0 ? void 0 : leavePush.destroy();
+        });
+    }
+    /**
+     * Teardown the channel.
+     *
+     * Destroys and stops related timers.
+     */ teardown() {
+        this.pushBuffer.forEach((push)=>push.destroy());
+        this.pushBuffer = [];
+        this.rejoinTimer.reset();
+        this.joinPush.destroy();
+        this.state = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].closed;
+        this.bindings = {};
+    }
+    /** @internal */ async _fetchWithTimeout(url, options, timeout) {
+        const controller = new AbortController();
+        const id = setTimeout(()=>controller.abort(), timeout);
+        const response = await this.socket.fetch(url, Object.assign(Object.assign({}, options), {
+            signal: controller.signal
+        }));
+        clearTimeout(id);
+        return response;
+    }
+    /** @internal */ _push(event, payload, timeout = this.timeout) {
+        if (!this.joinedOnce) {
+            throw `tried to push '${event}' to '${this.topic}' before joining. Use channel.subscribe() before pushing events`;
+        }
+        let pushEvent = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$push$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"](this, event, payload, timeout);
+        if (this._canPush()) {
+            pushEvent.send();
+        } else {
+            this._addToPushBuffer(pushEvent);
+        }
+        return pushEvent;
+    }
+    /** @internal */ _addToPushBuffer(pushEvent) {
+        pushEvent.startTimeout();
+        this.pushBuffer.push(pushEvent);
+        // Enforce buffer size limit
+        if (this.pushBuffer.length > __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["MAX_PUSH_BUFFER_SIZE"]) {
+            const removedPush = this.pushBuffer.shift();
+            if (removedPush) {
+                removedPush.destroy();
+                this.socket.log('channel', `discarded push due to buffer overflow: ${removedPush.event}`, removedPush.payload);
+            }
+        }
+    }
+    /**
+     * Overridable message hook
+     *
+     * Receives all events for specialized message handling before dispatching to the channel callbacks.
+     * Must return the payload, modified or unmodified.
+     *
+     * @internal
+     */ _onMessage(_event, payload, _ref) {
+        return payload;
+    }
+    /** @internal */ _isMember(topic) {
+        return this.topic === topic;
+    }
+    /** @internal */ _joinRef() {
+        return this.joinPush.ref;
+    }
+    /** @internal */ _trigger(type, payload, ref) {
+        var _a, _b;
+        const typeLower = type.toLocaleLowerCase();
+        const { close, error, leave, join } = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_EVENTS"];
+        const events = [
+            close,
+            error,
+            leave,
+            join
+        ];
+        if (ref && events.indexOf(typeLower) >= 0 && ref !== this._joinRef()) {
+            return;
+        }
+        let handledPayload = this._onMessage(typeLower, payload, ref);
+        if (payload && !handledPayload) {
+            throw 'channel onMessage callbacks must return the payload, modified or unmodified';
+        }
+        if ([
+            'insert',
+            'update',
+            'delete'
+        ].includes(typeLower)) {
+            (_a = this.bindings.postgres_changes) === null || _a === void 0 ? void 0 : _a.filter((bind)=>{
+                var _a, _b, _c;
+                return ((_a = bind.filter) === null || _a === void 0 ? void 0 : _a.event) === '*' || ((_c = (_b = bind.filter) === null || _b === void 0 ? void 0 : _b.event) === null || _c === void 0 ? void 0 : _c.toLocaleLowerCase()) === typeLower;
+            }).map((bind)=>bind.callback(handledPayload, ref));
+        } else {
+            (_b = this.bindings[typeLower]) === null || _b === void 0 ? void 0 : _b.filter((bind)=>{
+                var _a, _b, _c, _d, _e, _f;
+                if ([
+                    'broadcast',
+                    'presence',
+                    'postgres_changes'
+                ].includes(typeLower)) {
+                    if ('id' in bind) {
+                        const bindId = bind.id;
+                        const bindEvent = (_a = bind.filter) === null || _a === void 0 ? void 0 : _a.event;
+                        return bindId && ((_b = payload.ids) === null || _b === void 0 ? void 0 : _b.includes(bindId)) && (bindEvent === '*' || (bindEvent === null || bindEvent === void 0 ? void 0 : bindEvent.toLocaleLowerCase()) === ((_c = payload.data) === null || _c === void 0 ? void 0 : _c.type.toLocaleLowerCase()));
+                    } else {
+                        const bindEvent = (_e = (_d = bind === null || bind === void 0 ? void 0 : bind.filter) === null || _d === void 0 ? void 0 : _d.event) === null || _e === void 0 ? void 0 : _e.toLocaleLowerCase();
+                        return bindEvent === '*' || bindEvent === ((_f = payload === null || payload === void 0 ? void 0 : payload.event) === null || _f === void 0 ? void 0 : _f.toLocaleLowerCase());
+                    }
+                } else {
+                    return bind.type.toLocaleLowerCase() === typeLower;
+                }
+            }).map((bind)=>{
+                if (typeof handledPayload === 'object' && 'ids' in handledPayload) {
+                    const postgresChanges = handledPayload.data;
+                    const { schema, table, commit_timestamp, type, errors } = postgresChanges;
+                    const enrichedPayload = {
+                        schema: schema,
+                        table: table,
+                        commit_timestamp: commit_timestamp,
+                        eventType: type,
+                        new: {},
+                        old: {},
+                        errors: errors
+                    };
+                    handledPayload = Object.assign(Object.assign({}, enrichedPayload), this._getPayloadRecords(postgresChanges));
+                }
+                bind.callback(handledPayload, ref);
+            });
+        }
+    }
+    /** @internal */ _isClosed() {
+        return this.state === __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].closed;
+    }
+    /** @internal */ _isJoined() {
+        return this.state === __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].joined;
+    }
+    /** @internal */ _isJoining() {
+        return this.state === __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].joining;
+    }
+    /** @internal */ _isLeaving() {
+        return this.state === __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].leaving;
+    }
+    /** @internal */ _replyEventName(ref) {
+        return `chan_reply_${ref}`;
+    }
+    /** @internal */ _on(type, filter, callback) {
+        const typeLower = type.toLocaleLowerCase();
+        const binding = {
+            type: typeLower,
+            filter: filter,
+            callback: callback
+        };
+        if (this.bindings[typeLower]) {
+            this.bindings[typeLower].push(binding);
+        } else {
+            this.bindings[typeLower] = [
+                binding
+            ];
+        }
+        return this;
+    }
+    /** @internal */ _off(type, filter) {
+        const typeLower = type.toLocaleLowerCase();
+        if (this.bindings[typeLower]) {
+            this.bindings[typeLower] = this.bindings[typeLower].filter((bind)=>{
+                var _a;
+                return !(((_a = bind.type) === null || _a === void 0 ? void 0 : _a.toLocaleLowerCase()) === typeLower && RealtimeChannel.isEqual(bind.filter, filter));
+            });
+        }
+        return this;
+    }
+    /** @internal */ static isEqual(obj1, obj2) {
+        if (Object.keys(obj1).length !== Object.keys(obj2).length) {
+            return false;
+        }
+        for(const k in obj1){
+            if (obj1[k] !== obj2[k]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    /**
+     * Compares two optional filter values for equality.
+     * Treats undefined, null, and empty string as equivalent empty values.
+     * @internal
+     */ static isFilterValueEqual(serverValue, clientValue) {
+        const normalizedServer = serverValue !== null && serverValue !== void 0 ? serverValue : undefined;
+        const normalizedClient = clientValue !== null && clientValue !== void 0 ? clientValue : undefined;
+        return normalizedServer === normalizedClient;
+    }
+    /** @internal */ _rejoinUntilConnected() {
+        this.rejoinTimer.scheduleTimeout();
+        if (this.socket.isConnected()) {
+            this._rejoin();
+        }
+    }
+    /**
+     * Registers a callback that will be executed when the channel closes.
+     *
+     * @internal
+     */ _onClose(callback) {
+        this._on(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_EVENTS"].close, {}, callback);
+    }
+    /**
+     * Registers a callback that will be executed when the channel encounteres an error.
+     *
+     * @internal
+     */ _onError(callback) {
+        this._on(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_EVENTS"].error, {}, (reason)=>callback(reason));
+    }
+    /**
+     * Returns `true` if the socket is connected and the channel has been joined.
+     *
+     * @internal
+     */ _canPush() {
+        return this.socket.isConnected() && this._isJoined();
+    }
+    /** @internal */ _rejoin(timeout = this.timeout) {
+        if (this._isLeaving()) {
+            return;
+        }
+        this.socket._leaveOpenTopic(this.topic);
+        this.state = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_STATES"].joining;
+        this.joinPush.resend(timeout);
+    }
+    /** @internal */ _getPayloadRecords(payload) {
+        const records = {
+            new: {},
+            old: {}
+        };
+        if (payload.type === 'INSERT' || payload.type === 'UPDATE') {
+            records.new = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$transformers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["convertChangeData"](payload.columns, payload.record);
+        }
+        if (payload.type === 'UPDATE' || payload.type === 'DELETE') {
+            records.old = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$transformers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["convertChangeData"](payload.columns, payload.old_record);
+        }
+        return records;
+    }
+} //# sourceMappingURL=RealtimeChannel.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>RealtimeClient
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$websocket$2d$factory$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/websocket-factory.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/constants.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$serializer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/serializer.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$timer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/timer.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$transformers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/transformers.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$RealtimeChannel$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/RealtimeChannel.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+;
+;
+const noop = ()=>{};
+// Connection-related constants
+const CONNECTION_TIMEOUTS = {
+    HEARTBEAT_INTERVAL: 25000,
+    RECONNECT_DELAY: 10,
+    HEARTBEAT_TIMEOUT_FALLBACK: 100
+};
+const RECONNECT_INTERVALS = [
+    1000,
+    2000,
+    5000,
+    10000
+];
+const DEFAULT_RECONNECT_FALLBACK = 10000;
+const WORKER_SCRIPT = `
+  addEventListener("message", (e) => {
+    if (e.data.event === "start") {
+      setInterval(() => postMessage({ event: "keepAlive" }), e.data.interval);
+    }
+  });`;
+class RealtimeClient {
+    /**
+     * Initializes the Socket.
+     *
+     * @param endPoint The string WebSocket endpoint, ie, "ws://example.com/socket", "wss://example.com", "/socket" (inherited host & protocol)
+     * @param httpEndpoint The string HTTP endpoint, ie, "https://example.com", "/" (inherited host & protocol)
+     * @param options.transport The Websocket Transport, for example WebSocket. This can be a custom implementation
+     * @param options.timeout The default timeout in milliseconds to trigger push timeouts.
+     * @param options.params The optional params to pass when connecting.
+     * @param options.headers Deprecated: headers cannot be set on websocket connections and this option will be removed in the future.
+     * @param options.heartbeatIntervalMs The millisec interval to send a heartbeat message.
+     * @param options.heartbeatCallback The optional function to handle heartbeat status and latency.
+     * @param options.logger The optional function for specialized logging, ie: logger: (kind, msg, data) => { console.log(`${kind}: ${msg}`, data) }
+     * @param options.logLevel Sets the log level for Realtime
+     * @param options.encode The function to encode outgoing messages. Defaults to JSON: (payload, callback) => callback(JSON.stringify(payload))
+     * @param options.decode The function to decode incoming messages. Defaults to Serializer's decode.
+     * @param options.reconnectAfterMs he optional function that returns the millsec reconnect interval. Defaults to stepped backoff off.
+     * @param options.worker Use Web Worker to set a side flow. Defaults to false.
+     * @param options.workerUrl The URL of the worker script. Defaults to https://realtime.supabase.com/worker.js that includes a heartbeat event call to keep the connection alive.
+     * @param options.vsn The protocol version to use when connecting. Supported versions are "1.0.0" and "2.0.0". Defaults to "2.0.0".
+     * @example
+     * ```ts
+     * import RealtimeClient from '@supabase/realtime-js'
+     *
+     * const client = new RealtimeClient('https://xyzcompany.supabase.co/realtime/v1', {
+     *   params: { apikey: 'public-anon-key' },
+     * })
+     * client.connect()
+     * ```
+     */ constructor(endPoint, options){
+        var _a;
+        this.accessTokenValue = null;
+        this.apiKey = null;
+        this._manuallySetToken = false;
+        this.channels = new Array();
+        this.endPoint = '';
+        this.httpEndpoint = '';
+        /** @deprecated headers cannot be set on websocket connections */ this.headers = {};
+        this.params = {};
+        this.timeout = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_TIMEOUT"];
+        this.transport = null;
+        this.heartbeatIntervalMs = CONNECTION_TIMEOUTS.HEARTBEAT_INTERVAL;
+        this.heartbeatTimer = undefined;
+        this.pendingHeartbeatRef = null;
+        this.heartbeatCallback = noop;
+        this.ref = 0;
+        this.reconnectTimer = null;
+        this.vsn = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_VSN"];
+        this.logger = noop;
+        this.conn = null;
+        this.sendBuffer = [];
+        this.serializer = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$serializer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]();
+        this.stateChangeCallbacks = {
+            open: [],
+            close: [],
+            error: [],
+            message: []
+        };
+        this.accessToken = null;
+        this._connectionState = 'disconnected';
+        this._wasManualDisconnect = false;
+        this._authPromise = null;
+        this._heartbeatSentAt = null;
+        /**
+         * Use either custom fetch, if provided, or default fetch to make HTTP requests
+         *
+         * @internal
+         */ this._resolveFetch = (customFetch)=>{
+            if (customFetch) {
+                return (...args)=>customFetch(...args);
+            }
+            return (...args)=>fetch(...args);
+        };
+        // Validate required parameters
+        if (!((_a = options === null || options === void 0 ? void 0 : options.params) === null || _a === void 0 ? void 0 : _a.apikey)) {
+            throw new Error('API key is required to connect to Realtime');
+        }
+        this.apiKey = options.params.apikey;
+        // Initialize endpoint URLs
+        this.endPoint = `${endPoint}/${__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TRANSPORTS"].websocket}`;
+        this.httpEndpoint = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$transformers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["httpEndpointURL"])(endPoint);
+        this._initializeOptions(options);
+        this._setupReconnectionTimer();
+        this.fetch = this._resolveFetch(options === null || options === void 0 ? void 0 : options.fetch);
+    }
+    /**
+     * Connects the socket, unless already connected.
+     */ connect() {
+        // Skip if already connecting, disconnecting, or connected
+        if (this.isConnecting() || this.isDisconnecting() || this.conn !== null && this.isConnected()) {
+            return;
+        }
+        this._setConnectionState('connecting');
+        // Trigger auth if needed and not already in progress
+        // This ensures auth is called for standalone RealtimeClient usage
+        // while avoiding race conditions with SupabaseClient's immediate setAuth call
+        if (this.accessToken && !this._authPromise) {
+            this._setAuthSafely('connect');
+        }
+        // Establish WebSocket connection
+        if (this.transport) {
+            // Use custom transport if provided
+            this.conn = new this.transport(this.endpointURL());
+        } else {
+            // Try to use native WebSocket
+            try {
+                this.conn = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$websocket$2d$factory$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].createWebSocket(this.endpointURL());
+            } catch (error) {
+                this._setConnectionState('disconnected');
+                const errorMessage = error.message;
+                // Provide helpful error message based on environment
+                if (errorMessage.includes('Node.js')) {
+                    throw new Error(`${errorMessage}\n\n` + 'To use Realtime in Node.js, you need to provide a WebSocket implementation:\n\n' + 'Option 1: Use Node.js 22+ which has native WebSocket support\n' + 'Option 2: Install and provide the "ws" package:\n\n' + '  npm install ws\n\n' + '  import ws from "ws"\n' + '  const client = new RealtimeClient(url, {\n' + '    ...options,\n' + '    transport: ws\n' + '  })');
+                }
+                throw new Error(`WebSocket not available: ${errorMessage}`);
+            }
+        }
+        this._setupConnectionHandlers();
+    }
+    /**
+     * Returns the URL of the websocket.
+     * @returns string The URL of the websocket.
+     */ endpointURL() {
+        return this._appendParams(this.endPoint, Object.assign({}, this.params, {
+            vsn: this.vsn
+        }));
+    }
+    /**
+     * Disconnects the socket.
+     *
+     * @param code A numeric status code to send on disconnect.
+     * @param reason A custom reason for the disconnect.
+     */ disconnect(code, reason) {
+        if (this.isDisconnecting()) {
+            return;
+        }
+        this._setConnectionState('disconnecting', true);
+        if (this.conn) {
+            // Setup fallback timer to prevent hanging in disconnecting state
+            const fallbackTimer = setTimeout(()=>{
+                this._setConnectionState('disconnected');
+            }, 100);
+            this.conn.onclose = ()=>{
+                clearTimeout(fallbackTimer);
+                this._setConnectionState('disconnected');
+            };
+            // Close the WebSocket connection if close method exists
+            if (typeof this.conn.close === 'function') {
+                if (code) {
+                    this.conn.close(code, reason !== null && reason !== void 0 ? reason : '');
+                } else {
+                    this.conn.close();
+                }
+            }
+            this._teardownConnection();
+        } else {
+            this._setConnectionState('disconnected');
+        }
+    }
+    /**
+     * Returns all created channels
+     */ getChannels() {
+        return this.channels;
+    }
+    /**
+     * Unsubscribes and removes a single channel
+     * @param channel A RealtimeChannel instance
+     */ async removeChannel(channel) {
+        const status = await channel.unsubscribe();
+        // Only remove from channels list if unsubscribe was successful
+        if (status === 'ok') {
+            this._remove(channel);
+        }
+        if (this.channels.length === 0) {
+            this.disconnect();
+        }
+        return status;
+    }
+    /**
+     * Unsubscribes and removes all channels
+     */ async removeAllChannels() {
+        const values_1 = await Promise.all(this.channels.map((channel)=>channel.unsubscribe()));
+        this.channels = [];
+        this.disconnect();
+        return values_1;
+    }
+    /**
+     * Logs the message.
+     *
+     * For customized logging, `this.logger` can be overridden.
+     */ log(kind, msg, data) {
+        this.logger(kind, msg, data);
+    }
+    /**
+     * Returns the current state of the socket.
+     */ connectionState() {
+        switch(this.conn && this.conn.readyState){
+            case __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SOCKET_STATES"].connecting:
+                return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CONNECTION_STATE"].Connecting;
+            case __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SOCKET_STATES"].open:
+                return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CONNECTION_STATE"].Open;
+            case __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SOCKET_STATES"].closing:
+                return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CONNECTION_STATE"].Closing;
+            default:
+                return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CONNECTION_STATE"].Closed;
+        }
+    }
+    /**
+     * Returns `true` is the connection is open.
+     */ isConnected() {
+        return this.connectionState() === __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CONNECTION_STATE"].Open;
+    }
+    /**
+     * Returns `true` if the connection is currently connecting.
+     */ isConnecting() {
+        return this._connectionState === 'connecting';
+    }
+    /**
+     * Returns `true` if the connection is currently disconnecting.
+     */ isDisconnecting() {
+        return this._connectionState === 'disconnecting';
+    }
+    /**
+     * Creates (or reuses) a {@link RealtimeChannel} for the provided topic.
+     *
+     * Topics are automatically prefixed with `realtime:` to match the Realtime service.
+     * If a channel with the same topic already exists it will be returned instead of creating
+     * a duplicate connection.
+     */ channel(topic, params = {
+        config: {}
+    }) {
+        const realtimeTopic = `realtime:${topic}`;
+        const exists = this.getChannels().find((c)=>c.topic === realtimeTopic);
+        if (!exists) {
+            const chan = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$RealtimeChannel$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"](`realtime:${topic}`, params, this);
+            this.channels.push(chan);
+            return chan;
+        } else {
+            return exists;
+        }
+    }
+    /**
+     * Push out a message if the socket is connected.
+     *
+     * If the socket is not connected, the message gets enqueued within a local buffer, and sent out when a connection is next established.
+     */ push(data) {
+        const { topic, event, payload, ref } = data;
+        const callback = ()=>{
+            this.encode(data, (result)=>{
+                var _a;
+                (_a = this.conn) === null || _a === void 0 ? void 0 : _a.send(result);
+            });
+        };
+        this.log('push', `${topic} ${event} (${ref})`, payload);
+        if (this.isConnected()) {
+            callback();
+        } else {
+            this.sendBuffer.push(callback);
+        }
+    }
+    /**
+     * Sets the JWT access token used for channel subscription authorization and Realtime RLS.
+     *
+     * If param is null it will use the `accessToken` callback function or the token set on the client.
+     *
+     * On callback used, it will set the value of the token internal to the client.
+     *
+     * When a token is explicitly provided, it will be preserved across channel operations
+     * (including removeChannel and resubscribe). The `accessToken` callback will not be
+     * invoked until `setAuth()` is called without arguments.
+     *
+     * @param token A JWT string to override the token set on the client.
+     *
+     * @example
+     * // Use a manual token (preserved across resubscribes, ignores accessToken callback)
+     * client.realtime.setAuth('my-custom-jwt')
+     *
+     * // Switch back to using the accessToken callback
+     * client.realtime.setAuth()
+     */ async setAuth(token = null) {
+        this._authPromise = this._performAuth(token);
+        try {
+            await this._authPromise;
+        } finally{
+            this._authPromise = null;
+        }
+    }
+    /**
+     * Returns true if the current access token was explicitly set via setAuth(token),
+     * false if it was obtained via the accessToken callback.
+     * @internal
+     */ _isManualToken() {
+        return this._manuallySetToken;
+    }
+    /**
+     * Sends a heartbeat message if the socket is connected.
+     */ async sendHeartbeat() {
+        var _a;
+        if (!this.isConnected()) {
+            try {
+                this.heartbeatCallback('disconnected');
+            } catch (e) {
+                this.log('error', 'error in heartbeat callback', e);
+            }
+            return;
+        }
+        // Handle heartbeat timeout and force reconnection if needed
+        if (this.pendingHeartbeatRef) {
+            this.pendingHeartbeatRef = null;
+            this._heartbeatSentAt = null;
+            this.log('transport', 'heartbeat timeout. Attempting to re-establish connection');
+            try {
+                this.heartbeatCallback('timeout');
+            } catch (e) {
+                this.log('error', 'error in heartbeat callback', e);
+            }
+            // Force reconnection after heartbeat timeout
+            this._wasManualDisconnect = false;
+            (_a = this.conn) === null || _a === void 0 ? void 0 : _a.close(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["WS_CLOSE_NORMAL"], 'heartbeat timeout');
+            setTimeout(()=>{
+                var _a;
+                if (!this.isConnected()) {
+                    (_a = this.reconnectTimer) === null || _a === void 0 ? void 0 : _a.scheduleTimeout();
+                }
+            }, CONNECTION_TIMEOUTS.HEARTBEAT_TIMEOUT_FALLBACK);
+            return;
+        }
+        // Send heartbeat message to server
+        this._heartbeatSentAt = Date.now();
+        this.pendingHeartbeatRef = this._makeRef();
+        this.push({
+            topic: 'phoenix',
+            event: 'heartbeat',
+            payload: {},
+            ref: this.pendingHeartbeatRef
+        });
+        try {
+            this.heartbeatCallback('sent');
+        } catch (e) {
+            this.log('error', 'error in heartbeat callback', e);
+        }
+        this._setAuthSafely('heartbeat');
+    }
+    /**
+     * Sets a callback that receives lifecycle events for internal heartbeat messages.
+     * Useful for instrumenting connection health (e.g. sent/ok/timeout/disconnected).
+     */ onHeartbeat(callback) {
+        this.heartbeatCallback = callback;
+    }
+    /**
+     * Flushes send buffer
+     */ flushSendBuffer() {
+        if (this.isConnected() && this.sendBuffer.length > 0) {
+            this.sendBuffer.forEach((callback)=>callback());
+            this.sendBuffer = [];
+        }
+    }
+    /**
+     * Return the next message ref, accounting for overflows
+     *
+     * @internal
+     */ _makeRef() {
+        let newRef = this.ref + 1;
+        if (newRef === this.ref) {
+            this.ref = 0;
+        } else {
+            this.ref = newRef;
+        }
+        return this.ref.toString();
+    }
+    /**
+     * Unsubscribe from channels with the specified topic.
+     *
+     * @internal
+     */ _leaveOpenTopic(topic) {
+        let dupChannel = this.channels.find((c)=>c.topic === topic && (c._isJoined() || c._isJoining()));
+        if (dupChannel) {
+            this.log('transport', `leaving duplicate topic "${topic}"`);
+            dupChannel.unsubscribe();
+        }
+    }
+    /**
+     * Removes a subscription from the socket.
+     *
+     * @param channel An open subscription.
+     *
+     * @internal
+     */ _remove(channel) {
+        this.channels = this.channels.filter((c)=>c.topic !== channel.topic);
+    }
+    /** @internal */ _onConnMessage(rawMessage) {
+        this.decode(rawMessage.data, (msg)=>{
+            // Handle heartbeat responses
+            if (msg.topic === 'phoenix' && msg.event === 'phx_reply' && msg.ref && msg.ref === this.pendingHeartbeatRef) {
+                const latency = this._heartbeatSentAt ? Date.now() - this._heartbeatSentAt : undefined;
+                try {
+                    this.heartbeatCallback(msg.payload.status === 'ok' ? 'ok' : 'error', latency);
+                } catch (e) {
+                    this.log('error', 'error in heartbeat callback', e);
+                }
+                this._heartbeatSentAt = null;
+                this.pendingHeartbeatRef = null;
+            }
+            // Log incoming message
+            const { topic, event, payload, ref } = msg;
+            const refString = ref ? `(${ref})` : '';
+            const status = payload.status || '';
+            this.log('receive', `${status} ${topic} ${event} ${refString}`.trim(), payload);
+            // Route message to appropriate channels
+            this.channels.filter((channel)=>channel._isMember(topic)).forEach((channel)=>channel._trigger(event, payload, ref));
+            this._triggerStateCallbacks('message', msg);
+        });
+    }
+    /**
+     * Clear specific timer
+     * @internal
+     */ _clearTimer(timer) {
+        var _a;
+        if (timer === 'heartbeat' && this.heartbeatTimer) {
+            clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = undefined;
+        } else if (timer === 'reconnect') {
+            (_a = this.reconnectTimer) === null || _a === void 0 ? void 0 : _a.reset();
+        }
+    }
+    /**
+     * Clear all timers
+     * @internal
+     */ _clearAllTimers() {
+        this._clearTimer('heartbeat');
+        this._clearTimer('reconnect');
+    }
+    /**
+     * Setup connection handlers for WebSocket events
+     * @internal
+     */ _setupConnectionHandlers() {
+        if (!this.conn) return;
+        // Set binary type if supported (browsers and most WebSocket implementations)
+        if ('binaryType' in this.conn) {
+            ;
+            this.conn.binaryType = 'arraybuffer';
+        }
+        this.conn.onopen = ()=>this._onConnOpen();
+        this.conn.onerror = (error)=>this._onConnError(error);
+        this.conn.onmessage = (event)=>this._onConnMessage(event);
+        this.conn.onclose = (event)=>this._onConnClose(event);
+        if (this.conn.readyState === __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SOCKET_STATES"].open) {
+            this._onConnOpen();
+        }
+    }
+    /**
+     * Teardown connection and cleanup resources
+     * @internal
+     */ _teardownConnection() {
+        if (this.conn) {
+            if (this.conn.readyState === __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SOCKET_STATES"].open || this.conn.readyState === __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SOCKET_STATES"].connecting) {
+                try {
+                    this.conn.close();
+                } catch (e) {
+                    this.log('error', 'Error closing connection', e);
+                }
+            }
+            this.conn.onopen = null;
+            this.conn.onerror = null;
+            this.conn.onmessage = null;
+            this.conn.onclose = null;
+            this.conn = null;
+        }
+        this._clearAllTimers();
+        this._terminateWorker();
+        this.channels.forEach((channel)=>channel.teardown());
+    }
+    /** @internal */ _onConnOpen() {
+        this._setConnectionState('connected');
+        this.log('transport', `connected to ${this.endpointURL()}`);
+        // Wait for any pending auth operations before flushing send buffer
+        // This ensures channel join messages include the correct access token
+        const authPromise = this._authPromise || (this.accessToken && !this.accessTokenValue ? this.setAuth() : Promise.resolve());
+        authPromise.then(()=>{
+            this.flushSendBuffer();
+        }).catch((e)=>{
+            this.log('error', 'error waiting for auth on connect', e);
+            // Proceed anyway to avoid hanging connections
+            this.flushSendBuffer();
+        });
+        this._clearTimer('reconnect');
+        if (!this.worker) {
+            this._startHeartbeat();
+        } else {
+            if (!this.workerRef) {
+                this._startWorkerHeartbeat();
+            }
+        }
+        this._triggerStateCallbacks('open');
+    }
+    /** @internal */ _startHeartbeat() {
+        this.heartbeatTimer && clearInterval(this.heartbeatTimer);
+        this.heartbeatTimer = setInterval(()=>this.sendHeartbeat(), this.heartbeatIntervalMs);
+    }
+    /** @internal */ _startWorkerHeartbeat() {
+        if (this.workerUrl) {
+            this.log('worker', `starting worker for from ${this.workerUrl}`);
+        } else {
+            this.log('worker', `starting default worker`);
+        }
+        const objectUrl = this._workerObjectUrl(this.workerUrl);
+        this.workerRef = new Worker(objectUrl);
+        this.workerRef.onerror = (error)=>{
+            this.log('worker', 'worker error', error.message);
+            this._terminateWorker();
+        };
+        this.workerRef.onmessage = (event)=>{
+            if (event.data.event === 'keepAlive') {
+                this.sendHeartbeat();
+            }
+        };
+        this.workerRef.postMessage({
+            event: 'start',
+            interval: this.heartbeatIntervalMs
+        });
+    }
+    /**
+     * Terminate the Web Worker and clear the reference
+     * @internal
+     */ _terminateWorker() {
+        if (this.workerRef) {
+            this.log('worker', 'terminating worker');
+            this.workerRef.terminate();
+            this.workerRef = undefined;
+        }
+    }
+    /** @internal */ _onConnClose(event) {
+        var _a;
+        this._setConnectionState('disconnected');
+        this.log('transport', 'close', event);
+        this._triggerChanError();
+        this._clearTimer('heartbeat');
+        // Only schedule reconnection if it wasn't a manual disconnect
+        if (!this._wasManualDisconnect) {
+            (_a = this.reconnectTimer) === null || _a === void 0 ? void 0 : _a.scheduleTimeout();
+        }
+        this._triggerStateCallbacks('close', event);
+    }
+    /** @internal */ _onConnError(error) {
+        this._setConnectionState('disconnected');
+        this.log('transport', `${error}`);
+        this._triggerChanError();
+        this._triggerStateCallbacks('error', error);
+        try {
+            this.heartbeatCallback('error');
+        } catch (e) {
+            this.log('error', 'error in heartbeat callback', e);
+        }
+    }
+    /** @internal */ _triggerChanError() {
+        this.channels.forEach((channel)=>channel._trigger(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_EVENTS"].error));
+    }
+    /** @internal */ _appendParams(url, params) {
+        if (Object.keys(params).length === 0) {
+            return url;
+        }
+        const prefix = url.match(/\?/) ? '&' : '?';
+        const query = new URLSearchParams(params);
+        return `${url}${prefix}${query}`;
+    }
+    _workerObjectUrl(url) {
+        let result_url;
+        if (url) {
+            result_url = url;
+        } else {
+            const blob = new Blob([
+                WORKER_SCRIPT
+            ], {
+                type: 'application/javascript'
+            });
+            result_url = URL.createObjectURL(blob);
+        }
+        return result_url;
+    }
+    /**
+     * Set connection state with proper state management
+     * @internal
+     */ _setConnectionState(state, manual = false) {
+        this._connectionState = state;
+        if (state === 'connecting') {
+            this._wasManualDisconnect = false;
+        } else if (state === 'disconnecting') {
+            this._wasManualDisconnect = manual;
+        }
+    }
+    /**
+     * Perform the actual auth operation
+     * @internal
+     */ async _performAuth(token = null) {
+        let tokenToSend;
+        let isManualToken = false;
+        if (token) {
+            tokenToSend = token;
+            // Track if this is a manually-provided token
+            isManualToken = true;
+        } else if (this.accessToken) {
+            // Call the accessToken callback to get fresh token
+            try {
+                tokenToSend = await this.accessToken();
+            } catch (e) {
+                this.log('error', 'Error fetching access token from callback', e);
+                // Fall back to cached value if callback fails
+                tokenToSend = this.accessTokenValue;
+            }
+        } else {
+            tokenToSend = this.accessTokenValue;
+        }
+        // Track whether this token was manually set or fetched via callback
+        if (isManualToken) {
+            this._manuallySetToken = true;
+        } else if (this.accessToken) {
+            // If we used the callback, clear the manual flag
+            this._manuallySetToken = false;
+        }
+        if (this.accessTokenValue != tokenToSend) {
+            this.accessTokenValue = tokenToSend;
+            this.channels.forEach((channel)=>{
+                const payload = {
+                    access_token: tokenToSend,
+                    version: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_VERSION"]
+                };
+                tokenToSend && channel.updateJoinPayload(payload);
+                if (channel.joinedOnce && channel._isJoined()) {
+                    channel._push(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CHANNEL_EVENTS"].access_token, {
+                        access_token: tokenToSend
+                    });
+                }
+            });
+        }
+    }
+    /**
+     * Wait for any in-flight auth operations to complete
+     * @internal
+     */ async _waitForAuthIfNeeded() {
+        if (this._authPromise) {
+            await this._authPromise;
+        }
+    }
+    /**
+     * Safely call setAuth with standardized error handling
+     * @internal
+     */ _setAuthSafely(context = 'general') {
+        // Only refresh auth if using callback-based tokens
+        if (!this._isManualToken()) {
+            this.setAuth().catch((e)=>{
+                this.log('error', `Error setting auth in ${context}`, e);
+            });
+        }
+    }
+    /**
+     * Trigger state change callbacks with proper error handling
+     * @internal
+     */ _triggerStateCallbacks(event, data) {
+        try {
+            this.stateChangeCallbacks[event].forEach((callback)=>{
+                try {
+                    callback(data);
+                } catch (e) {
+                    this.log('error', `error in ${event} callback`, e);
+                }
+            });
+        } catch (e) {
+            this.log('error', `error triggering ${event} callbacks`, e);
+        }
+    }
+    /**
+     * Setup reconnection timer with proper configuration
+     * @internal
+     */ _setupReconnectionTimer() {
+        this.reconnectTimer = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$timer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"](async ()=>{
+            setTimeout(async ()=>{
+                await this._waitForAuthIfNeeded();
+                if (!this.isConnected()) {
+                    this.connect();
+                }
+            }, CONNECTION_TIMEOUTS.RECONNECT_DELAY);
+        }, this.reconnectAfterMs);
+    }
+    /**
+     * Initialize client options with defaults
+     * @internal
+     */ _initializeOptions(options) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        // Set defaults
+        this.transport = (_a = options === null || options === void 0 ? void 0 : options.transport) !== null && _a !== void 0 ? _a : null;
+        this.timeout = (_b = options === null || options === void 0 ? void 0 : options.timeout) !== null && _b !== void 0 ? _b : __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_TIMEOUT"];
+        this.heartbeatIntervalMs = (_c = options === null || options === void 0 ? void 0 : options.heartbeatIntervalMs) !== null && _c !== void 0 ? _c : CONNECTION_TIMEOUTS.HEARTBEAT_INTERVAL;
+        this.worker = (_d = options === null || options === void 0 ? void 0 : options.worker) !== null && _d !== void 0 ? _d : false;
+        this.accessToken = (_e = options === null || options === void 0 ? void 0 : options.accessToken) !== null && _e !== void 0 ? _e : null;
+        this.heartbeatCallback = (_f = options === null || options === void 0 ? void 0 : options.heartbeatCallback) !== null && _f !== void 0 ? _f : noop;
+        this.vsn = (_g = options === null || options === void 0 ? void 0 : options.vsn) !== null && _g !== void 0 ? _g : __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_VSN"];
+        // Handle special cases
+        if (options === null || options === void 0 ? void 0 : options.params) this.params = options.params;
+        if (options === null || options === void 0 ? void 0 : options.logger) this.logger = options.logger;
+        if ((options === null || options === void 0 ? void 0 : options.logLevel) || (options === null || options === void 0 ? void 0 : options.log_level)) {
+            this.logLevel = options.logLevel || options.log_level;
+            this.params = Object.assign(Object.assign({}, this.params), {
+                log_level: this.logLevel
+            });
+        }
+        // Set up functions with defaults
+        this.reconnectAfterMs = (_h = options === null || options === void 0 ? void 0 : options.reconnectAfterMs) !== null && _h !== void 0 ? _h : (tries)=>{
+            return RECONNECT_INTERVALS[tries - 1] || DEFAULT_RECONNECT_FALLBACK;
+        };
+        switch(this.vsn){
+            case __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["VSN_1_0_0"]:
+                this.encode = (_j = options === null || options === void 0 ? void 0 : options.encode) !== null && _j !== void 0 ? _j : (payload, callback)=>{
+                    return callback(JSON.stringify(payload));
+                };
+                this.decode = (_k = options === null || options === void 0 ? void 0 : options.decode) !== null && _k !== void 0 ? _k : (payload, callback)=>{
+                    return callback(JSON.parse(payload));
+                };
+                break;
+            case __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["VSN_2_0_0"]:
+                this.encode = (_l = options === null || options === void 0 ? void 0 : options.encode) !== null && _l !== void 0 ? _l : this.serializer.encode.bind(this.serializer);
+                this.decode = (_m = options === null || options === void 0 ? void 0 : options.decode) !== null && _m !== void 0 ? _m : this.serializer.decode.bind(this.serializer);
+                break;
+            default:
+                throw new Error(`Unsupported serializer version: ${this.vsn}`);
+        }
+        // Handle worker setup
+        if (this.worker) {
+            if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+            ;
+            this.workerUrl = options === null || options === void 0 ? void 0 : options.workerUrl;
+        }
+    }
+} //# sourceMappingURL=RealtimeClient.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/index.js [app-ssr] (ecmascript) <locals>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$RealtimeClient$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$RealtimeChannel$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/RealtimeChannel.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$RealtimePresence$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/RealtimePresence.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$lib$2f$websocket$2d$factory$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/lib/websocket-factory.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+;
+ //# sourceMappingURL=index.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js [app-ssr] (ecmascript) <export default as RealtimeClient>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "RealtimeClient",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$RealtimeClient$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$RealtimeClient$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/iceberg-js/dist/index.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "IcebergError",
+    ()=>IcebergError,
+    "IcebergRestCatalog",
+    ()=>IcebergRestCatalog,
+    "getCurrentSchema",
+    ()=>getCurrentSchema,
+    "isDecimalType",
+    ()=>isDecimalType,
+    "isFixedType",
+    ()=>isFixedType,
+    "parseDecimalType",
+    ()=>parseDecimalType,
+    "parseFixedType",
+    ()=>parseFixedType,
+    "typesEqual",
+    ()=>typesEqual
+]);
+// src/errors/IcebergError.ts
+var IcebergError = class extends Error {
+    constructor(message, opts){
+        super(message);
+        this.name = "IcebergError";
+        this.status = opts.status;
+        this.icebergType = opts.icebergType;
+        this.icebergCode = opts.icebergCode;
+        this.details = opts.details;
+        this.isCommitStateUnknown = opts.icebergType === "CommitStateUnknownException" || [
+            500,
+            502,
+            504
+        ].includes(opts.status) && opts.icebergType?.includes("CommitState") === true;
+    }
+    /**
+   * Returns true if the error is a 404 Not Found error.
+   */ isNotFound() {
+        return this.status === 404;
+    }
+    /**
+   * Returns true if the error is a 409 Conflict error.
+   */ isConflict() {
+        return this.status === 409;
+    }
+    /**
+   * Returns true if the error is a 419 Authentication Timeout error.
+   */ isAuthenticationTimeout() {
+        return this.status === 419;
+    }
+};
+// src/utils/url.ts
+function buildUrl(baseUrl, path, query) {
+    const url = new URL(path, baseUrl);
+    if (query) {
+        for (const [key, value] of Object.entries(query)){
+            if (value !== void 0) {
+                url.searchParams.set(key, value);
+            }
+        }
+    }
+    return url.toString();
+}
+// src/http/createFetchClient.ts
+async function buildAuthHeaders(auth) {
+    if (!auth || auth.type === "none") {
+        return {};
+    }
+    if (auth.type === "bearer") {
+        return {
+            Authorization: `Bearer ${auth.token}`
+        };
+    }
+    if (auth.type === "header") {
+        return {
+            [auth.name]: auth.value
+        };
+    }
+    if (auth.type === "custom") {
+        return await auth.getHeaders();
+    }
+    return {};
+}
+function createFetchClient(options) {
+    const fetchFn = options.fetchImpl ?? globalThis.fetch;
+    return {
+        async request ({ method, path, query, body, headers }) {
+            const url = buildUrl(options.baseUrl, path, query);
+            const authHeaders = await buildAuthHeaders(options.auth);
+            const res = await fetchFn(url, {
+                method,
+                headers: {
+                    ...body ? {
+                        "Content-Type": "application/json"
+                    } : {},
+                    ...authHeaders,
+                    ...headers
+                },
+                body: body ? JSON.stringify(body) : void 0
+            });
+            const text = await res.text();
+            const isJson = (res.headers.get("content-type") || "").includes("application/json");
+            const data = isJson && text ? JSON.parse(text) : text;
+            if (!res.ok) {
+                const errBody = isJson ? data : void 0;
+                const errorDetail = errBody?.error;
+                throw new IcebergError(errorDetail?.message ?? `Request failed with status ${res.status}`, {
+                    status: res.status,
+                    icebergType: errorDetail?.type,
+                    icebergCode: errorDetail?.code,
+                    details: errBody
+                });
+            }
+            return {
+                status: res.status,
+                headers: res.headers,
+                data
+            };
+        }
+    };
+}
+// src/catalog/namespaces.ts
+function namespaceToPath(namespace) {
+    return namespace.join("");
+}
+var NamespaceOperations = class {
+    constructor(client, prefix = ""){
+        this.client = client;
+        this.prefix = prefix;
+    }
+    async listNamespaces(parent) {
+        const query = parent ? {
+            parent: namespaceToPath(parent.namespace)
+        } : void 0;
+        const response = await this.client.request({
+            method: "GET",
+            path: `${this.prefix}/namespaces`,
+            query
+        });
+        return response.data.namespaces.map((ns)=>({
+                namespace: ns
+            }));
+    }
+    async createNamespace(id, metadata) {
+        const request = {
+            namespace: id.namespace,
+            properties: metadata?.properties
+        };
+        const response = await this.client.request({
+            method: "POST",
+            path: `${this.prefix}/namespaces`,
+            body: request
+        });
+        return response.data;
+    }
+    async dropNamespace(id) {
+        await this.client.request({
+            method: "DELETE",
+            path: `${this.prefix}/namespaces/${namespaceToPath(id.namespace)}`
+        });
+    }
+    async loadNamespaceMetadata(id) {
+        const response = await this.client.request({
+            method: "GET",
+            path: `${this.prefix}/namespaces/${namespaceToPath(id.namespace)}`
+        });
+        return {
+            properties: response.data.properties
+        };
+    }
+    async namespaceExists(id) {
+        try {
+            await this.client.request({
+                method: "HEAD",
+                path: `${this.prefix}/namespaces/${namespaceToPath(id.namespace)}`
+            });
+            return true;
+        } catch (error) {
+            if (error instanceof IcebergError && error.status === 404) {
+                return false;
+            }
+            throw error;
+        }
+    }
+    async createNamespaceIfNotExists(id, metadata) {
+        try {
+            return await this.createNamespace(id, metadata);
+        } catch (error) {
+            if (error instanceof IcebergError && error.status === 409) {
+                return;
+            }
+            throw error;
+        }
+    }
+};
+// src/catalog/tables.ts
+function namespaceToPath2(namespace) {
+    return namespace.join("");
+}
+var TableOperations = class {
+    constructor(client, prefix = "", accessDelegation){
+        this.client = client;
+        this.prefix = prefix;
+        this.accessDelegation = accessDelegation;
+    }
+    async listTables(namespace) {
+        const response = await this.client.request({
+            method: "GET",
+            path: `${this.prefix}/namespaces/${namespaceToPath2(namespace.namespace)}/tables`
+        });
+        return response.data.identifiers;
+    }
+    async createTable(namespace, request) {
+        const headers = {};
+        if (this.accessDelegation) {
+            headers["X-Iceberg-Access-Delegation"] = this.accessDelegation;
+        }
+        const response = await this.client.request({
+            method: "POST",
+            path: `${this.prefix}/namespaces/${namespaceToPath2(namespace.namespace)}/tables`,
+            body: request,
+            headers
+        });
+        return response.data.metadata;
+    }
+    async updateTable(id, request) {
+        const response = await this.client.request({
+            method: "POST",
+            path: `${this.prefix}/namespaces/${namespaceToPath2(id.namespace)}/tables/${id.name}`,
+            body: request
+        });
+        return {
+            "metadata-location": response.data["metadata-location"],
+            metadata: response.data.metadata
+        };
+    }
+    async dropTable(id, options) {
+        await this.client.request({
+            method: "DELETE",
+            path: `${this.prefix}/namespaces/${namespaceToPath2(id.namespace)}/tables/${id.name}`,
+            query: {
+                purgeRequested: String(options?.purge ?? false)
+            }
+        });
+    }
+    async loadTable(id) {
+        const headers = {};
+        if (this.accessDelegation) {
+            headers["X-Iceberg-Access-Delegation"] = this.accessDelegation;
+        }
+        const response = await this.client.request({
+            method: "GET",
+            path: `${this.prefix}/namespaces/${namespaceToPath2(id.namespace)}/tables/${id.name}`,
+            headers
+        });
+        return response.data.metadata;
+    }
+    async tableExists(id) {
+        const headers = {};
+        if (this.accessDelegation) {
+            headers["X-Iceberg-Access-Delegation"] = this.accessDelegation;
+        }
+        try {
+            await this.client.request({
+                method: "HEAD",
+                path: `${this.prefix}/namespaces/${namespaceToPath2(id.namespace)}/tables/${id.name}`,
+                headers
+            });
+            return true;
+        } catch (error) {
+            if (error instanceof IcebergError && error.status === 404) {
+                return false;
+            }
+            throw error;
+        }
+    }
+    async createTableIfNotExists(namespace, request) {
+        try {
+            return await this.createTable(namespace, request);
+        } catch (error) {
+            if (error instanceof IcebergError && error.status === 409) {
+                return await this.loadTable({
+                    namespace: namespace.namespace,
+                    name: request.name
+                });
+            }
+            throw error;
+        }
+    }
+};
+// src/catalog/IcebergRestCatalog.ts
+var IcebergRestCatalog = class {
+    /**
+   * Creates a new Iceberg REST Catalog client.
+   *
+   * @param options - Configuration options for the catalog client
+   */ constructor(options){
+        let prefix = "v1";
+        if (options.catalogName) {
+            prefix += `/${options.catalogName}`;
+        }
+        const baseUrl = options.baseUrl.endsWith("/") ? options.baseUrl : `${options.baseUrl}/`;
+        this.client = createFetchClient({
+            baseUrl,
+            auth: options.auth,
+            fetchImpl: options.fetch
+        });
+        this.accessDelegation = options.accessDelegation?.join(",");
+        this.namespaceOps = new NamespaceOperations(this.client, prefix);
+        this.tableOps = new TableOperations(this.client, prefix, this.accessDelegation);
+    }
+    /**
+   * Lists all namespaces in the catalog.
+   *
+   * @param parent - Optional parent namespace to list children under
+   * @returns Array of namespace identifiers
+   *
+   * @example
+   * ```typescript
+   * // List all top-level namespaces
+   * const namespaces = await catalog.listNamespaces();
+   *
+   * // List namespaces under a parent
+   * const children = await catalog.listNamespaces({ namespace: ['analytics'] });
+   * ```
+   */ async listNamespaces(parent) {
+        return this.namespaceOps.listNamespaces(parent);
+    }
+    /**
+   * Creates a new namespace in the catalog.
+   *
+   * @param id - Namespace identifier to create
+   * @param metadata - Optional metadata properties for the namespace
+   * @returns Response containing the created namespace and its properties
+   *
+   * @example
+   * ```typescript
+   * const response = await catalog.createNamespace(
+   *   { namespace: ['analytics'] },
+   *   { properties: { owner: 'data-team' } }
+   * );
+   * console.log(response.namespace); // ['analytics']
+   * console.log(response.properties); // { owner: 'data-team', ... }
+   * ```
+   */ async createNamespace(id, metadata) {
+        return this.namespaceOps.createNamespace(id, metadata);
+    }
+    /**
+   * Drops a namespace from the catalog.
+   *
+   * The namespace must be empty (contain no tables) before it can be dropped.
+   *
+   * @param id - Namespace identifier to drop
+   *
+   * @example
+   * ```typescript
+   * await catalog.dropNamespace({ namespace: ['analytics'] });
+   * ```
+   */ async dropNamespace(id) {
+        await this.namespaceOps.dropNamespace(id);
+    }
+    /**
+   * Loads metadata for a namespace.
+   *
+   * @param id - Namespace identifier to load
+   * @returns Namespace metadata including properties
+   *
+   * @example
+   * ```typescript
+   * const metadata = await catalog.loadNamespaceMetadata({ namespace: ['analytics'] });
+   * console.log(metadata.properties);
+   * ```
+   */ async loadNamespaceMetadata(id) {
+        return this.namespaceOps.loadNamespaceMetadata(id);
+    }
+    /**
+   * Lists all tables in a namespace.
+   *
+   * @param namespace - Namespace identifier to list tables from
+   * @returns Array of table identifiers
+   *
+   * @example
+   * ```typescript
+   * const tables = await catalog.listTables({ namespace: ['analytics'] });
+   * console.log(tables); // [{ namespace: ['analytics'], name: 'events' }, ...]
+   * ```
+   */ async listTables(namespace) {
+        return this.tableOps.listTables(namespace);
+    }
+    /**
+   * Creates a new table in the catalog.
+   *
+   * @param namespace - Namespace to create the table in
+   * @param request - Table creation request including name, schema, partition spec, etc.
+   * @returns Table metadata for the created table
+   *
+   * @example
+   * ```typescript
+   * const metadata = await catalog.createTable(
+   *   { namespace: ['analytics'] },
+   *   {
+   *     name: 'events',
+   *     schema: {
+   *       type: 'struct',
+   *       fields: [
+   *         { id: 1, name: 'id', type: 'long', required: true },
+   *         { id: 2, name: 'timestamp', type: 'timestamp', required: true }
+   *       ],
+   *       'schema-id': 0
+   *     },
+   *     'partition-spec': {
+   *       'spec-id': 0,
+   *       fields: [
+   *         { source_id: 2, field_id: 1000, name: 'ts_day', transform: 'day' }
+   *       ]
+   *     }
+   *   }
+   * );
+   * ```
+   */ async createTable(namespace, request) {
+        return this.tableOps.createTable(namespace, request);
+    }
+    /**
+   * Updates an existing table's metadata.
+   *
+   * Can update the schema, partition spec, or properties of a table.
+   *
+   * @param id - Table identifier to update
+   * @param request - Update request with fields to modify
+   * @returns Response containing the metadata location and updated table metadata
+   *
+   * @example
+   * ```typescript
+   * const response = await catalog.updateTable(
+   *   { namespace: ['analytics'], name: 'events' },
+   *   {
+   *     properties: { 'read.split.target-size': '134217728' }
+   *   }
+   * );
+   * console.log(response['metadata-location']); // s3://...
+   * console.log(response.metadata); // TableMetadata object
+   * ```
+   */ async updateTable(id, request) {
+        return this.tableOps.updateTable(id, request);
+    }
+    /**
+   * Drops a table from the catalog.
+   *
+   * @param id - Table identifier to drop
+   *
+   * @example
+   * ```typescript
+   * await catalog.dropTable({ namespace: ['analytics'], name: 'events' });
+   * ```
+   */ async dropTable(id, options) {
+        await this.tableOps.dropTable(id, options);
+    }
+    /**
+   * Loads metadata for a table.
+   *
+   * @param id - Table identifier to load
+   * @returns Table metadata including schema, partition spec, location, etc.
+   *
+   * @example
+   * ```typescript
+   * const metadata = await catalog.loadTable({ namespace: ['analytics'], name: 'events' });
+   * console.log(metadata.schema);
+   * console.log(metadata.location);
+   * ```
+   */ async loadTable(id) {
+        return this.tableOps.loadTable(id);
+    }
+    /**
+   * Checks if a namespace exists in the catalog.
+   *
+   * @param id - Namespace identifier to check
+   * @returns True if the namespace exists, false otherwise
+   *
+   * @example
+   * ```typescript
+   * const exists = await catalog.namespaceExists({ namespace: ['analytics'] });
+   * console.log(exists); // true or false
+   * ```
+   */ async namespaceExists(id) {
+        return this.namespaceOps.namespaceExists(id);
+    }
+    /**
+   * Checks if a table exists in the catalog.
+   *
+   * @param id - Table identifier to check
+   * @returns True if the table exists, false otherwise
+   *
+   * @example
+   * ```typescript
+   * const exists = await catalog.tableExists({ namespace: ['analytics'], name: 'events' });
+   * console.log(exists); // true or false
+   * ```
+   */ async tableExists(id) {
+        return this.tableOps.tableExists(id);
+    }
+    /**
+   * Creates a namespace if it does not exist.
+   *
+   * If the namespace already exists, returns void. If created, returns the response.
+   *
+   * @param id - Namespace identifier to create
+   * @param metadata - Optional metadata properties for the namespace
+   * @returns Response containing the created namespace and its properties, or void if it already exists
+   *
+   * @example
+   * ```typescript
+   * const response = await catalog.createNamespaceIfNotExists(
+   *   { namespace: ['analytics'] },
+   *   { properties: { owner: 'data-team' } }
+   * );
+   * if (response) {
+   *   console.log('Created:', response.namespace);
+   * } else {
+   *   console.log('Already exists');
+   * }
+   * ```
+   */ async createNamespaceIfNotExists(id, metadata) {
+        return this.namespaceOps.createNamespaceIfNotExists(id, metadata);
+    }
+    /**
+   * Creates a table if it does not exist.
+   *
+   * If the table already exists, returns its metadata instead.
+   *
+   * @param namespace - Namespace to create the table in
+   * @param request - Table creation request including name, schema, partition spec, etc.
+   * @returns Table metadata for the created or existing table
+   *
+   * @example
+   * ```typescript
+   * const metadata = await catalog.createTableIfNotExists(
+   *   { namespace: ['analytics'] },
+   *   {
+   *     name: 'events',
+   *     schema: {
+   *       type: 'struct',
+   *       fields: [
+   *         { id: 1, name: 'id', type: 'long', required: true },
+   *         { id: 2, name: 'timestamp', type: 'timestamp', required: true }
+   *       ],
+   *       'schema-id': 0
+   *     }
+   *   }
+   * );
+   * ```
+   */ async createTableIfNotExists(namespace, request) {
+        return this.tableOps.createTableIfNotExists(namespace, request);
+    }
+};
+// src/catalog/types.ts
+var DECIMAL_REGEX = /^decimal\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)$/;
+var FIXED_REGEX = /^fixed\s*\[\s*(\d+)\s*\]$/;
+function parseDecimalType(type) {
+    const match = type.match(DECIMAL_REGEX);
+    if (!match) return null;
+    return {
+        precision: parseInt(match[1], 10),
+        scale: parseInt(match[2], 10)
+    };
+}
+function parseFixedType(type) {
+    const match = type.match(FIXED_REGEX);
+    if (!match) return null;
+    return {
+        length: parseInt(match[1], 10)
+    };
+}
+function isDecimalType(type) {
+    return DECIMAL_REGEX.test(type);
+}
+function isFixedType(type) {
+    return FIXED_REGEX.test(type);
+}
+function typesEqual(a, b) {
+    const decimalA = parseDecimalType(a);
+    const decimalB = parseDecimalType(b);
+    if (decimalA && decimalB) {
+        return decimalA.precision === decimalB.precision && decimalA.scale === decimalB.scale;
+    }
+    const fixedA = parseFixedType(a);
+    const fixedB = parseFixedType(b);
+    if (fixedA && fixedB) {
+        return fixedA.length === fixedB.length;
+    }
+    return a === b;
+}
+function getCurrentSchema(metadata) {
+    return metadata.schemas.find((s)=>s["schema-id"] === metadata["current-schema-id"]);
+}
+;
+ //# sourceMappingURL=index.mjs.map
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/storage-js/dist/index.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "StorageAnalyticsClient",
+    ()=>StorageAnalyticsClient,
+    "StorageApiError",
+    ()=>StorageApiError,
+    "StorageClient",
+    ()=>StorageClient,
+    "StorageError",
+    ()=>StorageError,
+    "StorageUnknownError",
+    ()=>StorageUnknownError,
+    "StorageVectorsApiError",
+    ()=>StorageVectorsApiError,
+    "StorageVectorsClient",
+    ()=>StorageVectorsClient,
+    "StorageVectorsError",
+    ()=>StorageVectorsError,
+    "StorageVectorsErrorCode",
+    ()=>StorageVectorsErrorCode,
+    "StorageVectorsUnknownError",
+    ()=>StorageVectorsUnknownError,
+    "VectorBucketApi",
+    ()=>VectorBucketApi,
+    "VectorBucketScope",
+    ()=>VectorBucketScope,
+    "VectorDataApi",
+    ()=>VectorDataApi,
+    "VectorIndexApi",
+    ()=>VectorIndexApi,
+    "VectorIndexScope",
+    ()=>VectorIndexScope,
+    "isStorageError",
+    ()=>isStorageError,
+    "isStorageVectorsError",
+    ()=>isStorageVectorsError
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$iceberg$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/iceberg-js/dist/index.mjs [app-ssr] (ecmascript)");
+;
+//#region src/lib/common/errors.ts
+/**
+* Base error class for all Storage errors
+* Supports both 'storage' and 'vectors' namespaces
+*/ var StorageError = class extends Error {
+    constructor(message, namespace = "storage", status, statusCode){
+        super(message);
+        this.__isStorageError = true;
+        this.namespace = namespace;
+        this.name = namespace === "vectors" ? "StorageVectorsError" : "StorageError";
+        this.status = status;
+        this.statusCode = statusCode;
+    }
+};
+/**
+* Type guard to check if an error is a StorageError
+* @param error - The error to check
+* @returns True if the error is a StorageError
+*/ function isStorageError(error) {
+    return typeof error === "object" && error !== null && "__isStorageError" in error;
+}
+/**
+* API error returned from Storage service
+* Includes HTTP status code and service-specific error code
+*/ var StorageApiError = class extends StorageError {
+    constructor(message, status, statusCode, namespace = "storage"){
+        super(message, namespace, status, statusCode);
+        this.name = namespace === "vectors" ? "StorageVectorsApiError" : "StorageApiError";
+        this.status = status;
+        this.statusCode = statusCode;
+    }
+    toJSON() {
+        return {
+            name: this.name,
+            message: this.message,
+            status: this.status,
+            statusCode: this.statusCode
+        };
+    }
+};
+/**
+* Unknown error that doesn't match expected error patterns
+* Wraps the original error for debugging
+*/ var StorageUnknownError = class extends StorageError {
+    constructor(message, originalError, namespace = "storage"){
+        super(message, namespace);
+        this.name = namespace === "vectors" ? "StorageVectorsUnknownError" : "StorageUnknownError";
+        this.originalError = originalError;
+    }
+};
+/**
+* @deprecated Use StorageError with namespace='vectors' instead
+* Alias for backward compatibility with existing vector storage code
+*/ var StorageVectorsError = class extends StorageError {
+    constructor(message){
+        super(message, "vectors");
+    }
+};
+/**
+* Type guard to check if an error is a StorageVectorsError
+* @param error - The error to check
+* @returns True if the error is a StorageVectorsError
+*/ function isStorageVectorsError(error) {
+    return isStorageError(error) && error["namespace"] === "vectors";
+}
+/**
+* @deprecated Use StorageApiError with namespace='vectors' instead
+* Alias for backward compatibility with existing vector storage code
+*/ var StorageVectorsApiError = class extends StorageApiError {
+    constructor(message, status, statusCode){
+        super(message, status, statusCode, "vectors");
+    }
+};
+/**
+* @deprecated Use StorageUnknownError with namespace='vectors' instead
+* Alias for backward compatibility with existing vector storage code
+*/ var StorageVectorsUnknownError = class extends StorageUnknownError {
+    constructor(message, originalError){
+        super(message, originalError, "vectors");
+    }
+};
+/**
+* Error codes specific to S3 Vectors API
+* Maps AWS service errors to application-friendly error codes
+*/ let StorageVectorsErrorCode = /* @__PURE__ */ function(StorageVectorsErrorCode$1) {
+    /** Internal server fault (HTTP 500) */ StorageVectorsErrorCode$1["InternalError"] = "InternalError";
+    /** Resource already exists / conflict (HTTP 409) */ StorageVectorsErrorCode$1["S3VectorConflictException"] = "S3VectorConflictException";
+    /** Resource not found (HTTP 404) */ StorageVectorsErrorCode$1["S3VectorNotFoundException"] = "S3VectorNotFoundException";
+    /** Delete bucket while not empty (HTTP 400) */ StorageVectorsErrorCode$1["S3VectorBucketNotEmpty"] = "S3VectorBucketNotEmpty";
+    /** Exceeds bucket quota/limit (HTTP 400) */ StorageVectorsErrorCode$1["S3VectorMaxBucketsExceeded"] = "S3VectorMaxBucketsExceeded";
+    /** Exceeds index quota/limit (HTTP 400) */ StorageVectorsErrorCode$1["S3VectorMaxIndexesExceeded"] = "S3VectorMaxIndexesExceeded";
+    return StorageVectorsErrorCode$1;
+}({});
+//#endregion
+//#region src/lib/common/helpers.ts
+/**
+* Resolves the fetch implementation to use
+* Uses custom fetch if provided, otherwise uses native fetch
+*
+* @param customFetch - Optional custom fetch implementation
+* @returns Resolved fetch function
+*/ const resolveFetch = (customFetch)=>{
+    if (customFetch) return (...args)=>customFetch(...args);
+    return (...args)=>fetch(...args);
+};
+/**
+* Determine if input is a plain object
+* An object is plain if it's created by either {}, new Object(), or Object.create(null)
+*
+* @param value - Value to check
+* @returns True if value is a plain object
+* @source https://github.com/sindresorhus/is-plain-obj
+*/ const isPlainObject = (value)=>{
+    if (typeof value !== "object" || value === null) return false;
+    const prototype = Object.getPrototypeOf(value);
+    return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value) && !(Symbol.iterator in value);
+};
+/**
+* Recursively converts object keys from snake_case to camelCase
+* Used for normalizing API responses
+*
+* @param item - Object to convert
+* @returns Converted object with camelCase keys
+*/ const recursiveToCamel = (item)=>{
+    if (Array.isArray(item)) return item.map((el)=>recursiveToCamel(el));
+    else if (typeof item === "function" || item !== Object(item)) return item;
+    const result = {};
+    Object.entries(item).forEach(([key, value])=>{
+        const newKey = key.replace(/([-_][a-z])/gi, (c)=>c.toUpperCase().replace(/[-_]/g, ""));
+        result[newKey] = recursiveToCamel(value);
+    });
+    return result;
+};
+/**
+* Validates if a given bucket name is valid according to Supabase Storage API rules
+* Mirrors backend validation from: storage/src/storage/limits.ts:isValidBucketName()
+*
+* Rules:
+* - Length: 1-100 characters
+* - Allowed characters: alphanumeric (a-z, A-Z, 0-9), underscore (_), and safe special characters
+* - Safe special characters: ! - . * ' ( ) space & $ @ = ; : + , ?
+* - Forbidden: path separators (/, \), path traversal (..), leading/trailing whitespace
+*
+* AWS S3 Reference: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
+*
+* @param bucketName - The bucket name to validate
+* @returns true if valid, false otherwise
+*/ const isValidBucketName = (bucketName)=>{
+    if (!bucketName || typeof bucketName !== "string") return false;
+    if (bucketName.length === 0 || bucketName.length > 100) return false;
+    if (bucketName.trim() !== bucketName) return false;
+    if (bucketName.includes("/") || bucketName.includes("\\")) return false;
+    return /^[\w!.\*'() &$@=;:+,?-]+$/.test(bucketName);
+};
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/typeof.js
+function _typeof(o) {
+    "@babel/helpers - typeof";
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o$1) {
+        return typeof o$1;
+    } : function(o$1) {
+        return o$1 && "function" == typeof Symbol && o$1.constructor === Symbol && o$1 !== Symbol.prototype ? "symbol" : typeof o$1;
+    }, _typeof(o);
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/toPrimitive.js
+function toPrimitive(t, r) {
+    if ("object" != _typeof(t) || !t) return t;
+    var e = t[Symbol.toPrimitive];
+    if (void 0 !== e) {
+        var i = e.call(t, r || "default");
+        if ("object" != _typeof(i)) return i;
+        throw new TypeError("@@toPrimitive must return a primitive value.");
+    }
+    return ("string" === r ? String : Number)(t);
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/toPropertyKey.js
+function toPropertyKey(t) {
+    var i = toPrimitive(t, "string");
+    return "symbol" == _typeof(i) ? i : i + "";
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/defineProperty.js
+function _defineProperty(e, r, t) {
+    return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+        value: t,
+        enumerable: !0,
+        configurable: !0,
+        writable: !0
+    }) : e[r] = t, e;
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/objectSpread2.js
+function ownKeys(e, r) {
+    var t = Object.keys(e);
+    if (Object.getOwnPropertySymbols) {
+        var o = Object.getOwnPropertySymbols(e);
+        r && (o = o.filter(function(r$1) {
+            return Object.getOwnPropertyDescriptor(e, r$1).enumerable;
+        })), t.push.apply(t, o);
+    }
+    return t;
+}
+function _objectSpread2(e) {
+    for(var r = 1; r < arguments.length; r++){
+        var t = null != arguments[r] ? arguments[r] : {};
+        r % 2 ? ownKeys(Object(t), !0).forEach(function(r$1) {
+            _defineProperty(e, r$1, t[r$1]);
+        }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r$1) {
+            Object.defineProperty(e, r$1, Object.getOwnPropertyDescriptor(t, r$1));
+        });
+    }
+    return e;
+}
+//#endregion
+//#region src/lib/common/fetch.ts
+/**
+* Extracts error message from various error response formats
+* @param err - Error object from API
+* @returns Human-readable error message
+*/ const _getErrorMessage = (err)=>{
+    var _err$error;
+    return err.msg || err.message || err.error_description || (typeof err.error === "string" ? err.error : (_err$error = err.error) === null || _err$error === void 0 ? void 0 : _err$error.message) || JSON.stringify(err);
+};
+/**
+* Handles fetch errors and converts them to Storage error types
+* @param error - The error caught from fetch
+* @param reject - Promise rejection function
+* @param options - Fetch options that may affect error handling
+* @param namespace - Error namespace ('storage' or 'vectors')
+*/ const handleError = async (error, reject, options, namespace)=>{
+    if (error && typeof error === "object" && "status" in error && "ok" in error && typeof error.status === "number" && !(options === null || options === void 0 ? void 0 : options.noResolveJson)) {
+        const responseError = error;
+        const status = responseError.status || 500;
+        if (typeof responseError.json === "function") responseError.json().then((err)=>{
+            const statusCode = (err === null || err === void 0 ? void 0 : err.statusCode) || (err === null || err === void 0 ? void 0 : err.code) || status + "";
+            reject(new StorageApiError(_getErrorMessage(err), status, statusCode, namespace));
+        }).catch(()=>{
+            if (namespace === "vectors") {
+                const statusCode = status + "";
+                reject(new StorageApiError(responseError.statusText || `HTTP ${status} error`, status, statusCode, namespace));
+            } else {
+                const statusCode = status + "";
+                reject(new StorageApiError(responseError.statusText || `HTTP ${status} error`, status, statusCode, namespace));
+            }
+        });
+        else {
+            const statusCode = status + "";
+            reject(new StorageApiError(responseError.statusText || `HTTP ${status} error`, status, statusCode, namespace));
+        }
+    } else reject(new StorageUnknownError(_getErrorMessage(error), error, namespace));
+};
+/**
+* Builds request parameters for fetch calls
+* @param method - HTTP method
+* @param options - Custom fetch options
+* @param parameters - Additional fetch parameters like AbortSignal
+* @param body - Request body (will be JSON stringified if plain object)
+* @returns Complete fetch request parameters
+*/ const _getRequestParams = (method, options, parameters, body)=>{
+    const params = {
+        method,
+        headers: (options === null || options === void 0 ? void 0 : options.headers) || {}
+    };
+    if (method === "GET" || method === "HEAD" || !body) return _objectSpread2(_objectSpread2({}, params), parameters);
+    if (isPlainObject(body)) {
+        params.headers = _objectSpread2({
+            "Content-Type": "application/json"
+        }, options === null || options === void 0 ? void 0 : options.headers);
+        params.body = JSON.stringify(body);
+    } else params.body = body;
+    if (options === null || options === void 0 ? void 0 : options.duplex) params.duplex = options.duplex;
+    return _objectSpread2(_objectSpread2({}, params), parameters);
+};
+/**
+* Internal request handler that wraps fetch with error handling
+* @param fetcher - Fetch function to use
+* @param method - HTTP method
+* @param url - Request URL
+* @param options - Custom fetch options
+* @param parameters - Additional fetch parameters
+* @param body - Request body
+* @param namespace - Error namespace ('storage' or 'vectors')
+* @returns Promise with parsed response or error
+*/ async function _handleRequest(fetcher, method, url, options, parameters, body, namespace) {
+    return new Promise((resolve, reject)=>{
+        fetcher(url, _getRequestParams(method, options, parameters, body)).then((result)=>{
+            if (!result.ok) throw result;
+            if (options === null || options === void 0 ? void 0 : options.noResolveJson) return result;
+            if (namespace === "vectors") {
+                const contentType = result.headers.get("content-type");
+                if (result.headers.get("content-length") === "0" || result.status === 204) return {};
+                if (!contentType || !contentType.includes("application/json")) return {};
+            }
+            return result.json();
+        }).then((data)=>resolve(data)).catch((error)=>handleError(error, reject, options, namespace));
+    });
+}
+/**
+* Creates a fetch API with the specified namespace
+* @param namespace - Error namespace ('storage' or 'vectors')
+* @returns Object with HTTP method functions
+*/ function createFetchApi(namespace = "storage") {
+    return {
+        get: async (fetcher, url, options, parameters)=>{
+            return _handleRequest(fetcher, "GET", url, options, parameters, void 0, namespace);
+        },
+        post: async (fetcher, url, body, options, parameters)=>{
+            return _handleRequest(fetcher, "POST", url, options, parameters, body, namespace);
+        },
+        put: async (fetcher, url, body, options, parameters)=>{
+            return _handleRequest(fetcher, "PUT", url, options, parameters, body, namespace);
+        },
+        head: async (fetcher, url, options, parameters)=>{
+            return _handleRequest(fetcher, "HEAD", url, _objectSpread2(_objectSpread2({}, options), {}, {
+                noResolveJson: true
+            }), parameters, void 0, namespace);
+        },
+        remove: async (fetcher, url, body, options, parameters)=>{
+            return _handleRequest(fetcher, "DELETE", url, options, parameters, body, namespace);
+        }
+    };
+}
+const defaultApi = createFetchApi("storage");
+const { get, post, put, head, remove } = defaultApi;
+const vectorsApi = createFetchApi("vectors");
+//#endregion
+//#region src/lib/common/BaseApiClient.ts
+/**
+* @ignore
+* Base API client class for all Storage API classes
+* Provides common infrastructure for error handling and configuration
+*
+* @typeParam TError - The error type (StorageError or subclass)
+*/ var BaseApiClient = class {
+    /**
+	* Creates a new BaseApiClient instance
+	* @param url - Base URL for API requests
+	* @param headers - Default headers for API requests
+	* @param fetch - Optional custom fetch implementation
+	* @param namespace - Error namespace ('storage' or 'vectors')
+	*/ constructor(url, headers = {}, fetch$1, namespace = "storage"){
+        this.shouldThrowOnError = false;
+        this.url = url;
+        this.headers = headers;
+        this.fetch = resolveFetch(fetch$1);
+        this.namespace = namespace;
+    }
+    /**
+	* Enable throwing errors instead of returning them.
+	* When enabled, errors are thrown instead of returned in { data, error } format.
+	*
+	* @returns this - For method chaining
+	*/ throwOnError() {
+        this.shouldThrowOnError = true;
+        return this;
+    }
+    /**
+	* Handles API operation with standardized error handling
+	* Eliminates repetitive try-catch blocks across all API methods
+	*
+	* This wrapper:
+	* 1. Executes the operation
+	* 2. Returns { data, error: null } on success
+	* 3. Returns { data: null, error } on failure (if shouldThrowOnError is false)
+	* 4. Throws error on failure (if shouldThrowOnError is true)
+	*
+	* @typeParam T - The expected data type from the operation
+	* @param operation - Async function that performs the API call
+	* @returns Promise with { data, error } tuple
+	*
+	* @example
+	* ```typescript
+	* async listBuckets() {
+	*   return this.handleOperation(async () => {
+	*     return await get(this.fetch, `${this.url}/bucket`, {
+	*       headers: this.headers,
+	*     })
+	*   })
+	* }
+	* ```
+	*/ async handleOperation(operation) {
+        var _this = this;
+        try {
+            return {
+                data: await operation(),
+                error: null
+            };
+        } catch (error) {
+            if (_this.shouldThrowOnError) throw error;
+            if (isStorageError(error)) return {
+                data: null,
+                error
+            };
+            throw error;
+        }
+    }
+};
+//#endregion
+//#region src/packages/StreamDownloadBuilder.ts
+var StreamDownloadBuilder = class {
+    constructor(downloadFn, shouldThrowOnError){
+        this.downloadFn = downloadFn;
+        this.shouldThrowOnError = shouldThrowOnError;
+    }
+    then(onfulfilled, onrejected) {
+        return this.execute().then(onfulfilled, onrejected);
+    }
+    async execute() {
+        var _this = this;
+        try {
+            return {
+                data: (await _this.downloadFn()).body,
+                error: null
+            };
+        } catch (error) {
+            if (_this.shouldThrowOnError) throw error;
+            if (isStorageError(error)) return {
+                data: null,
+                error
+            };
+            throw error;
+        }
+    }
+};
+//#endregion
+//#region src/packages/BlobDownloadBuilder.ts
+let _Symbol$toStringTag;
+_Symbol$toStringTag = Symbol.toStringTag;
+var BlobDownloadBuilder = class {
+    constructor(downloadFn, shouldThrowOnError){
+        this.downloadFn = downloadFn;
+        this.shouldThrowOnError = shouldThrowOnError;
+        this[_Symbol$toStringTag] = "BlobDownloadBuilder";
+        this.promise = null;
+    }
+    asStream() {
+        return new StreamDownloadBuilder(this.downloadFn, this.shouldThrowOnError);
+    }
+    then(onfulfilled, onrejected) {
+        return this.getPromise().then(onfulfilled, onrejected);
+    }
+    catch(onrejected) {
+        return this.getPromise().catch(onrejected);
+    }
+    finally(onfinally) {
+        return this.getPromise().finally(onfinally);
+    }
+    getPromise() {
+        if (!this.promise) this.promise = this.execute();
+        return this.promise;
+    }
+    async execute() {
+        var _this = this;
+        try {
+            return {
+                data: await (await _this.downloadFn()).blob(),
+                error: null
+            };
+        } catch (error) {
+            if (_this.shouldThrowOnError) throw error;
+            if (isStorageError(error)) return {
+                data: null,
+                error
+            };
+            throw error;
+        }
+    }
+};
+//#endregion
+//#region src/packages/StorageFileApi.ts
+const DEFAULT_SEARCH_OPTIONS = {
+    limit: 100,
+    offset: 0,
+    sortBy: {
+        column: "name",
+        order: "asc"
+    }
+};
+const DEFAULT_FILE_OPTIONS = {
+    cacheControl: "3600",
+    contentType: "text/plain;charset=UTF-8",
+    upsert: false
+};
+var StorageFileApi = class extends BaseApiClient {
+    constructor(url, headers = {}, bucketId, fetch$1){
+        super(url, headers, fetch$1, "storage");
+        this.bucketId = bucketId;
+    }
+    /**
+	* Uploads a file to an existing bucket or replaces an existing file at the specified path with a new one.
+	*
+	* @param method HTTP method.
+	* @param path The relative file path. Should be of the format `folder/subfolder/filename.png`. The bucket must already exist before attempting to upload.
+	* @param fileBody The body of the file to be stored in the bucket.
+	*/ async uploadOrUpdate(method, path, fileBody, fileOptions) {
+        var _this = this;
+        return _this.handleOperation(async ()=>{
+            let body;
+            const options = _objectSpread2(_objectSpread2({}, DEFAULT_FILE_OPTIONS), fileOptions);
+            let headers = _objectSpread2(_objectSpread2({}, _this.headers), method === "POST" && {
+                "x-upsert": String(options.upsert)
+            });
+            const metadata = options.metadata;
+            if (typeof Blob !== "undefined" && fileBody instanceof Blob) {
+                body = new FormData();
+                body.append("cacheControl", options.cacheControl);
+                if (metadata) body.append("metadata", _this.encodeMetadata(metadata));
+                body.append("", fileBody);
+            } else if (typeof FormData !== "undefined" && fileBody instanceof FormData) {
+                body = fileBody;
+                if (!body.has("cacheControl")) body.append("cacheControl", options.cacheControl);
+                if (metadata && !body.has("metadata")) body.append("metadata", _this.encodeMetadata(metadata));
+            } else {
+                body = fileBody;
+                headers["cache-control"] = `max-age=${options.cacheControl}`;
+                headers["content-type"] = options.contentType;
+                if (metadata) headers["x-metadata"] = _this.toBase64(_this.encodeMetadata(metadata));
+                if ((typeof ReadableStream !== "undefined" && body instanceof ReadableStream || body && typeof body === "object" && "pipe" in body && typeof body.pipe === "function") && !options.duplex) options.duplex = "half";
+            }
+            if (fileOptions === null || fileOptions === void 0 ? void 0 : fileOptions.headers) headers = _objectSpread2(_objectSpread2({}, headers), fileOptions.headers);
+            const cleanPath = _this._removeEmptyFolders(path);
+            const _path = _this._getFinalPath(cleanPath);
+            const data = await (method == "PUT" ? put : post)(_this.fetch, `${_this.url}/object/${_path}`, body, _objectSpread2({
+                headers
+            }, (options === null || options === void 0 ? void 0 : options.duplex) ? {
+                duplex: options.duplex
+            } : {}));
+            return {
+                path: cleanPath,
+                id: data.Id,
+                fullPath: data.Key
+            };
+        });
+    }
+    /**
+	* Uploads a file to an existing bucket.
+	*
+	* @category File Buckets
+	* @param path The file path, including the file name. Should be of the format `folder/subfolder/filename.png`. The bucket must already exist before attempting to upload.
+	* @param fileBody The body of the file to be stored in the bucket.
+	* @param fileOptions Optional file upload options including cacheControl, contentType, upsert, and metadata.
+	* @returns Promise with response containing file path, id, and fullPath or error
+	*
+	* @example Upload file
+	* ```js
+	* const avatarFile = event.target.files[0]
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .upload('public/avatar1.png', avatarFile, {
+	*     cacheControl: '3600',
+	*     upsert: false
+	*   })
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "path": "public/avatar1.png",
+	*     "fullPath": "avatars/public/avatar1.png"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*
+	* @example Upload file using `ArrayBuffer` from base64 file data
+	* ```js
+	* import { decode } from 'base64-arraybuffer'
+	*
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .upload('public/avatar1.png', decode('base64FileData'), {
+	*     contentType: 'image/png'
+	*   })
+	* ```
+	*/ async upload(path, fileBody, fileOptions) {
+        return this.uploadOrUpdate("POST", path, fileBody, fileOptions);
+    }
+    /**
+	* Upload a file with a token generated from `createSignedUploadUrl`.
+	*
+	* @category File Buckets
+	* @param path The file path, including the file name. Should be of the format `folder/subfolder/filename.png`. The bucket must already exist before attempting to upload.
+	* @param token The token generated from `createSignedUploadUrl`
+	* @param fileBody The body of the file to be stored in the bucket.
+	* @param fileOptions HTTP headers (cacheControl, contentType, etc.).
+	* **Note:** The `upsert` option has no effect here. To enable upsert behavior,
+	* pass `{ upsert: true }` when calling `createSignedUploadUrl()` instead.
+	* @returns Promise with response containing file path and fullPath or error
+	*
+	* @example Upload to a signed URL
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .uploadToSignedUrl('folder/cat.jpg', 'token-from-createSignedUploadUrl', file)
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "path": "folder/cat.jpg",
+	*     "fullPath": "avatars/folder/cat.jpg"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*/ async uploadToSignedUrl(path, token, fileBody, fileOptions) {
+        var _this3 = this;
+        const cleanPath = _this3._removeEmptyFolders(path);
+        const _path = _this3._getFinalPath(cleanPath);
+        const url = new URL(_this3.url + `/object/upload/sign/${_path}`);
+        url.searchParams.set("token", token);
+        return _this3.handleOperation(async ()=>{
+            let body;
+            const options = _objectSpread2({
+                upsert: DEFAULT_FILE_OPTIONS.upsert
+            }, fileOptions);
+            const headers = _objectSpread2(_objectSpread2({}, _this3.headers), {
+                "x-upsert": String(options.upsert)
+            });
+            if (typeof Blob !== "undefined" && fileBody instanceof Blob) {
+                body = new FormData();
+                body.append("cacheControl", options.cacheControl);
+                body.append("", fileBody);
+            } else if (typeof FormData !== "undefined" && fileBody instanceof FormData) {
+                body = fileBody;
+                body.append("cacheControl", options.cacheControl);
+            } else {
+                body = fileBody;
+                headers["cache-control"] = `max-age=${options.cacheControl}`;
+                headers["content-type"] = options.contentType;
+            }
+            return {
+                path: cleanPath,
+                fullPath: (await put(_this3.fetch, url.toString(), body, {
+                    headers
+                })).Key
+            };
+        });
+    }
+    /**
+	* Creates a signed upload URL.
+	* Signed upload URLs can be used to upload files to the bucket without further authentication.
+	* They are valid for 2 hours.
+	*
+	* @category File Buckets
+	* @param path The file path, including the current file name. For example `folder/image.png`.
+	* @param options.upsert If set to true, allows the file to be overwritten if it already exists.
+	* @returns Promise with response containing signed upload URL, token, and path or error
+	*
+	* @example Create Signed Upload URL
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .createSignedUploadUrl('folder/cat.jpg')
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "signedUrl": "https://example.supabase.co/storage/v1/object/upload/sign/avatars/folder/cat.jpg?token=<TOKEN>",
+	*     "path": "folder/cat.jpg",
+	*     "token": "<TOKEN>"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*/ async createSignedUploadUrl(path, options) {
+        var _this4 = this;
+        return _this4.handleOperation(async ()=>{
+            let _path = _this4._getFinalPath(path);
+            const headers = _objectSpread2({}, _this4.headers);
+            if (options === null || options === void 0 ? void 0 : options.upsert) headers["x-upsert"] = "true";
+            const data = await post(_this4.fetch, `${_this4.url}/object/upload/sign/${_path}`, {}, {
+                headers
+            });
+            const url = new URL(_this4.url + data.url);
+            const token = url.searchParams.get("token");
+            if (!token) throw new StorageError("No token returned by API");
+            return {
+                signedUrl: url.toString(),
+                path,
+                token
+            };
+        });
+    }
+    /**
+	* Replaces an existing file at the specified path with a new one.
+	*
+	* @category File Buckets
+	* @param path The relative file path. Should be of the format `folder/subfolder/filename.png`. The bucket must already exist before attempting to update.
+	* @param fileBody The body of the file to be stored in the bucket.
+	* @param fileOptions Optional file upload options including cacheControl, contentType, upsert, and metadata.
+	* @returns Promise with response containing file path, id, and fullPath or error
+	*
+	* @example Update file
+	* ```js
+	* const avatarFile = event.target.files[0]
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .update('public/avatar1.png', avatarFile, {
+	*     cacheControl: '3600',
+	*     upsert: true
+	*   })
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "path": "public/avatar1.png",
+	*     "fullPath": "avatars/public/avatar1.png"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*
+	* @example Update file using `ArrayBuffer` from base64 file data
+	* ```js
+	* import {decode} from 'base64-arraybuffer'
+	*
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .update('public/avatar1.png', decode('base64FileData'), {
+	*     contentType: 'image/png'
+	*   })
+	* ```
+	*/ async update(path, fileBody, fileOptions) {
+        return this.uploadOrUpdate("PUT", path, fileBody, fileOptions);
+    }
+    /**
+	* Moves an existing file to a new path in the same bucket.
+	*
+	* @category File Buckets
+	* @param fromPath The original file path, including the current file name. For example `folder/image.png`.
+	* @param toPath The new file path, including the new file name. For example `folder/image-new.png`.
+	* @param options The destination options.
+	* @returns Promise with response containing success message or error
+	*
+	* @example Move file
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .move('public/avatar1.png', 'private/avatar2.png')
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "message": "Successfully moved"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*/ async move(fromPath, toPath, options) {
+        var _this6 = this;
+        return _this6.handleOperation(async ()=>{
+            return await post(_this6.fetch, `${_this6.url}/object/move`, {
+                bucketId: _this6.bucketId,
+                sourceKey: fromPath,
+                destinationKey: toPath,
+                destinationBucket: options === null || options === void 0 ? void 0 : options.destinationBucket
+            }, {
+                headers: _this6.headers
+            });
+        });
+    }
+    /**
+	* Copies an existing file to a new path in the same bucket.
+	*
+	* @category File Buckets
+	* @param fromPath The original file path, including the current file name. For example `folder/image.png`.
+	* @param toPath The new file path, including the new file name. For example `folder/image-copy.png`.
+	* @param options The destination options.
+	* @returns Promise with response containing copied file path or error
+	*
+	* @example Copy file
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .copy('public/avatar1.png', 'private/avatar2.png')
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "path": "avatars/private/avatar2.png"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*/ async copy(fromPath, toPath, options) {
+        var _this7 = this;
+        return _this7.handleOperation(async ()=>{
+            return {
+                path: (await post(_this7.fetch, `${_this7.url}/object/copy`, {
+                    bucketId: _this7.bucketId,
+                    sourceKey: fromPath,
+                    destinationKey: toPath,
+                    destinationBucket: options === null || options === void 0 ? void 0 : options.destinationBucket
+                }, {
+                    headers: _this7.headers
+                })).Key
+            };
+        });
+    }
+    /**
+	* Creates a signed URL. Use a signed URL to share a file for a fixed amount of time.
+	*
+	* @category File Buckets
+	* @param path The file path, including the current file name. For example `folder/image.png`.
+	* @param expiresIn The number of seconds until the signed URL expires. For example, `60` for a URL which is valid for one minute.
+	* @param options.download triggers the file as a download if set to true. Set this parameter as the name of the file if you want to trigger the download with a different filename.
+	* @param options.transform Transform the asset before serving it to the client.
+	* @returns Promise with response containing signed URL or error
+	*
+	* @example Create Signed URL
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .createSignedUrl('folder/avatar1.png', 60)
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "signedUrl": "https://example.supabase.co/storage/v1/object/sign/avatars/folder/avatar1.png?token=<TOKEN>"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*
+	* @example Create a signed URL for an asset with transformations
+	* ```js
+	* const { data } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .createSignedUrl('folder/avatar1.png', 60, {
+	*     transform: {
+	*       width: 100,
+	*       height: 100,
+	*     }
+	*   })
+	* ```
+	*
+	* @example Create a signed URL which triggers the download of the asset
+	* ```js
+	* const { data } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .createSignedUrl('folder/avatar1.png', 60, {
+	*     download: true,
+	*   })
+	* ```
+	*/ async createSignedUrl(path, expiresIn, options) {
+        var _this8 = this;
+        return _this8.handleOperation(async ()=>{
+            let _path = _this8._getFinalPath(path);
+            let data = await post(_this8.fetch, `${_this8.url}/object/sign/${_path}`, _objectSpread2({
+                expiresIn
+            }, (options === null || options === void 0 ? void 0 : options.transform) ? {
+                transform: options.transform
+            } : {}), {
+                headers: _this8.headers
+            });
+            const downloadQueryParam = (options === null || options === void 0 ? void 0 : options.download) ? `&download=${options.download === true ? "" : options.download}` : "";
+            return {
+                signedUrl: encodeURI(`${_this8.url}${data.signedURL}${downloadQueryParam}`)
+            };
+        });
+    }
+    /**
+	* Creates multiple signed URLs. Use a signed URL to share a file for a fixed amount of time.
+	*
+	* @category File Buckets
+	* @param paths The file paths to be downloaded, including the current file names. For example `['folder/image.png', 'folder2/image2.png']`.
+	* @param expiresIn The number of seconds until the signed URLs expire. For example, `60` for URLs which are valid for one minute.
+	* @param options.download triggers the file as a download if set to true. Set this parameter as the name of the file if you want to trigger the download with a different filename.
+	* @returns Promise with response containing array of objects with signedUrl, path, and error or error
+	*
+	* @example Create Signed URLs
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .createSignedUrls(['folder/avatar1.png', 'folder/avatar2.png'], 60)
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": [
+	*     {
+	*       "error": null,
+	*       "path": "folder/avatar1.png",
+	*       "signedURL": "/object/sign/avatars/folder/avatar1.png?token=<TOKEN>",
+	*       "signedUrl": "https://example.supabase.co/storage/v1/object/sign/avatars/folder/avatar1.png?token=<TOKEN>"
+	*     },
+	*     {
+	*       "error": null,
+	*       "path": "folder/avatar2.png",
+	*       "signedURL": "/object/sign/avatars/folder/avatar2.png?token=<TOKEN>",
+	*       "signedUrl": "https://example.supabase.co/storage/v1/object/sign/avatars/folder/avatar2.png?token=<TOKEN>"
+	*     }
+	*   ],
+	*   "error": null
+	* }
+	* ```
+	*/ async createSignedUrls(paths, expiresIn, options) {
+        var _this9 = this;
+        return _this9.handleOperation(async ()=>{
+            const data = await post(_this9.fetch, `${_this9.url}/object/sign/${_this9.bucketId}`, {
+                expiresIn,
+                paths
+            }, {
+                headers: _this9.headers
+            });
+            const downloadQueryParam = (options === null || options === void 0 ? void 0 : options.download) ? `&download=${options.download === true ? "" : options.download}` : "";
+            return data.map((datum)=>_objectSpread2(_objectSpread2({}, datum), {}, {
+                    signedUrl: datum.signedURL ? encodeURI(`${_this9.url}${datum.signedURL}${downloadQueryParam}`) : null
+                }));
+        });
+    }
+    /**
+	* Downloads a file from a private bucket. For public buckets, make a request to the URL returned from `getPublicUrl` instead.
+	*
+	* @category File Buckets
+	* @param path The full path and file name of the file to be downloaded. For example `folder/image.png`.
+	* @param options.transform Transform the asset before serving it to the client.
+	* @param parameters Additional fetch parameters like signal for cancellation. Supports standard fetch options including cache control.
+	* @returns BlobDownloadBuilder instance for downloading the file
+	*
+	* @example Download file
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .download('folder/avatar1.png')
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": <BLOB>,
+	*   "error": null
+	* }
+	* ```
+	*
+	* @example Download file with transformations
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .download('folder/avatar1.png', {
+	*     transform: {
+	*       width: 100,
+	*       height: 100,
+	*       quality: 80
+	*     }
+	*   })
+	* ```
+	*
+	* @example Download with cache control (useful in Edge Functions)
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .download('folder/avatar1.png', {}, { cache: 'no-store' })
+	* ```
+	*
+	* @example Download with abort signal
+	* ```js
+	* const controller = new AbortController()
+	* setTimeout(() => controller.abort(), 5000)
+	*
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .download('folder/avatar1.png', {}, { signal: controller.signal })
+	* ```
+	*/ download(path, options, parameters) {
+        const renderPath = typeof (options === null || options === void 0 ? void 0 : options.transform) !== "undefined" ? "render/image/authenticated" : "object";
+        const transformationQuery = this.transformOptsToQueryString((options === null || options === void 0 ? void 0 : options.transform) || {});
+        const queryString = transformationQuery ? `?${transformationQuery}` : "";
+        const _path = this._getFinalPath(path);
+        const downloadFn = ()=>get(this.fetch, `${this.url}/${renderPath}/${_path}${queryString}`, {
+                headers: this.headers,
+                noResolveJson: true
+            }, parameters);
+        return new BlobDownloadBuilder(downloadFn, this.shouldThrowOnError);
+    }
+    /**
+	* Retrieves the details of an existing file.
+	*
+	* @category File Buckets
+	* @param path The file path, including the file name. For example `folder/image.png`.
+	* @returns Promise with response containing file metadata or error
+	*
+	* @example Get file info
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .info('folder/avatar1.png')
+	* ```
+	*/ async info(path) {
+        var _this10 = this;
+        const _path = _this10._getFinalPath(path);
+        return _this10.handleOperation(async ()=>{
+            return recursiveToCamel(await get(_this10.fetch, `${_this10.url}/object/info/${_path}`, {
+                headers: _this10.headers
+            }));
+        });
+    }
+    /**
+	* Checks the existence of a file.
+	*
+	* @category File Buckets
+	* @param path The file path, including the file name. For example `folder/image.png`.
+	* @returns Promise with response containing boolean indicating file existence or error
+	*
+	* @example Check file existence
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .exists('folder/avatar1.png')
+	* ```
+	*/ async exists(path) {
+        var _this11 = this;
+        const _path = _this11._getFinalPath(path);
+        try {
+            await head(_this11.fetch, `${_this11.url}/object/${_path}`, {
+                headers: _this11.headers
+            });
+            return {
+                data: true,
+                error: null
+            };
+        } catch (error) {
+            if (_this11.shouldThrowOnError) throw error;
+            if (isStorageError(error) && error instanceof StorageUnknownError) {
+                const originalError = error.originalError;
+                if ([
+                    400,
+                    404
+                ].includes(originalError === null || originalError === void 0 ? void 0 : originalError.status)) return {
+                    data: false,
+                    error
+                };
+            }
+            throw error;
+        }
+    }
+    /**
+	* A simple convenience function to get the URL for an asset in a public bucket. If you do not want to use this function, you can construct the public URL by concatenating the bucket URL with the path to the asset.
+	* This function does not verify if the bucket is public. If a public URL is created for a bucket which is not public, you will not be able to download the asset.
+	*
+	* @category File Buckets
+	* @param path The path and name of the file to generate the public URL for. For example `folder/image.png`.
+	* @param options.download Triggers the file as a download if set to true. Set this parameter as the name of the file if you want to trigger the download with a different filename.
+	* @param options.transform Transform the asset before serving it to the client.
+	* @returns Object with public URL
+	*
+	* @example Returns the URL for an asset in a public bucket
+	* ```js
+	* const { data } = supabase
+	*   .storage
+	*   .from('public-bucket')
+	*   .getPublicUrl('folder/avatar1.png')
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "publicUrl": "https://example.supabase.co/storage/v1/object/public/public-bucket/folder/avatar1.png"
+	*   }
+	* }
+	* ```
+	*
+	* @example Returns the URL for an asset in a public bucket with transformations
+	* ```js
+	* const { data } = supabase
+	*   .storage
+	*   .from('public-bucket')
+	*   .getPublicUrl('folder/avatar1.png', {
+	*     transform: {
+	*       width: 100,
+	*       height: 100,
+	*     }
+	*   })
+	* ```
+	*
+	* @example Returns the URL which triggers the download of an asset in a public bucket
+	* ```js
+	* const { data } = supabase
+	*   .storage
+	*   .from('public-bucket')
+	*   .getPublicUrl('folder/avatar1.png', {
+	*     download: true,
+	*   })
+	* ```
+	*/ getPublicUrl(path, options) {
+        const _path = this._getFinalPath(path);
+        const _queryString = [];
+        const downloadQueryParam = (options === null || options === void 0 ? void 0 : options.download) ? `download=${options.download === true ? "" : options.download}` : "";
+        if (downloadQueryParam !== "") _queryString.push(downloadQueryParam);
+        const renderPath = typeof (options === null || options === void 0 ? void 0 : options.transform) !== "undefined" ? "render/image" : "object";
+        const transformationQuery = this.transformOptsToQueryString((options === null || options === void 0 ? void 0 : options.transform) || {});
+        if (transformationQuery !== "") _queryString.push(transformationQuery);
+        let queryString = _queryString.join("&");
+        if (queryString !== "") queryString = `?${queryString}`;
+        return {
+            data: {
+                publicUrl: encodeURI(`${this.url}/${renderPath}/public/${_path}${queryString}`)
+            }
+        };
+    }
+    /**
+	* Deletes files within the same bucket
+	*
+	* @category File Buckets
+	* @param paths An array of files to delete, including the path and file name. For example [`'folder/image.png'`].
+	* @returns Promise with response containing array of deleted file objects or error
+	*
+	* @example Delete file
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .remove(['folder/avatar1.png'])
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": [],
+	*   "error": null
+	* }
+	* ```
+	*/ async remove(paths) {
+        var _this12 = this;
+        return _this12.handleOperation(async ()=>{
+            return await remove(_this12.fetch, `${_this12.url}/object/${_this12.bucketId}`, {
+                prefixes: paths
+            }, {
+                headers: _this12.headers
+            });
+        });
+    }
+    /**
+	* Get file metadata
+	* @param id the file id to retrieve metadata
+	*/ /**
+	* Update file metadata
+	* @param id the file id to update metadata
+	* @param meta the new file metadata
+	*/ /**
+	* Lists all the files and folders within a path of the bucket.
+	*
+	* @category File Buckets
+	* @param path The folder path.
+	* @param options Search options including limit (defaults to 100), offset, sortBy, and search
+	* @param parameters Optional fetch parameters including signal for cancellation
+	* @returns Promise with response containing array of files or error
+	*
+	* @example List files in a bucket
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .list('folder', {
+	*     limit: 100,
+	*     offset: 0,
+	*     sortBy: { column: 'name', order: 'asc' },
+	*   })
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": [
+	*     {
+	*       "name": "avatar1.png",
+	*       "id": "e668cf7f-821b-4a2f-9dce-7dfa5dd1cfd2",
+	*       "updated_at": "2024-05-22T23:06:05.580Z",
+	*       "created_at": "2024-05-22T23:04:34.443Z",
+	*       "last_accessed_at": "2024-05-22T23:04:34.443Z",
+	*       "metadata": {
+	*         "eTag": "\"c5e8c553235d9af30ef4f6e280790b92\"",
+	*         "size": 32175,
+	*         "mimetype": "image/png",
+	*         "cacheControl": "max-age=3600",
+	*         "lastModified": "2024-05-22T23:06:05.574Z",
+	*         "contentLength": 32175,
+	*         "httpStatusCode": 200
+	*       }
+	*     }
+	*   ],
+	*   "error": null
+	* }
+	* ```
+	*
+	* @example Search files in a bucket
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .from('avatars')
+	*   .list('folder', {
+	*     limit: 100,
+	*     offset: 0,
+	*     sortBy: { column: 'name', order: 'asc' },
+	*     search: 'jon'
+	*   })
+	* ```
+	*/ async list(path, options, parameters) {
+        var _this13 = this;
+        return _this13.handleOperation(async ()=>{
+            const body = _objectSpread2(_objectSpread2(_objectSpread2({}, DEFAULT_SEARCH_OPTIONS), options), {}, {
+                prefix: path || ""
+            });
+            return await post(_this13.fetch, `${_this13.url}/object/list/${_this13.bucketId}`, body, {
+                headers: _this13.headers
+            }, parameters);
+        });
+    }
+    /**
+	* @experimental this method signature might change in the future
+	*
+	* @category File Buckets
+	* @param options search options
+	* @param parameters
+	*/ async listV2(options, parameters) {
+        var _this14 = this;
+        return _this14.handleOperation(async ()=>{
+            const body = _objectSpread2({}, options);
+            return await post(_this14.fetch, `${_this14.url}/object/list-v2/${_this14.bucketId}`, body, {
+                headers: _this14.headers
+            }, parameters);
+        });
+    }
+    encodeMetadata(metadata) {
+        return JSON.stringify(metadata);
+    }
+    toBase64(data) {
+        if (typeof Buffer !== "undefined") return Buffer.from(data).toString("base64");
+        return btoa(data);
+    }
+    _getFinalPath(path) {
+        return `${this.bucketId}/${path.replace(/^\/+/, "")}`;
+    }
+    _removeEmptyFolders(path) {
+        return path.replace(/^\/|\/$/g, "").replace(/\/+/g, "/");
+    }
+    transformOptsToQueryString(transform) {
+        const params = [];
+        if (transform.width) params.push(`width=${transform.width}`);
+        if (transform.height) params.push(`height=${transform.height}`);
+        if (transform.resize) params.push(`resize=${transform.resize}`);
+        if (transform.format) params.push(`format=${transform.format}`);
+        if (transform.quality) params.push(`quality=${transform.quality}`);
+        return params.join("&");
+    }
+};
+//#endregion
+//#region src/lib/version.ts
+const version = "2.95.3";
+//#endregion
+//#region src/lib/constants.ts
+const DEFAULT_HEADERS = {
+    "X-Client-Info": `storage-js/${version}`
+};
+//#endregion
+//#region src/packages/StorageBucketApi.ts
+var StorageBucketApi = class extends BaseApiClient {
+    constructor(url, headers = {}, fetch$1, opts){
+        const baseUrl = new URL(url);
+        if (opts === null || opts === void 0 ? void 0 : opts.useNewHostname) {
+            if (/supabase\.(co|in|red)$/.test(baseUrl.hostname) && !baseUrl.hostname.includes("storage.supabase.")) baseUrl.hostname = baseUrl.hostname.replace("supabase.", "storage.supabase.");
+        }
+        const finalUrl = baseUrl.href.replace(/\/$/, "");
+        const finalHeaders = _objectSpread2(_objectSpread2({}, DEFAULT_HEADERS), headers);
+        super(finalUrl, finalHeaders, fetch$1, "storage");
+    }
+    /**
+	* Retrieves the details of all Storage buckets within an existing project.
+	*
+	* @category File Buckets
+	* @param options Query parameters for listing buckets
+	* @param options.limit Maximum number of buckets to return
+	* @param options.offset Number of buckets to skip
+	* @param options.sortColumn Column to sort by ('id', 'name', 'created_at', 'updated_at')
+	* @param options.sortOrder Sort order ('asc' or 'desc')
+	* @param options.search Search term to filter bucket names
+	* @returns Promise with response containing array of buckets or error
+	*
+	* @example List buckets
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .listBuckets()
+	* ```
+	*
+	* @example List buckets with options
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .listBuckets({
+	*     limit: 10,
+	*     offset: 0,
+	*     sortColumn: 'created_at',
+	*     sortOrder: 'desc',
+	*     search: 'prod'
+	*   })
+	* ```
+	*/ async listBuckets(options) {
+        var _this = this;
+        return _this.handleOperation(async ()=>{
+            const queryString = _this.listBucketOptionsToQueryString(options);
+            return await get(_this.fetch, `${_this.url}/bucket${queryString}`, {
+                headers: _this.headers
+            });
+        });
+    }
+    /**
+	* Retrieves the details of an existing Storage bucket.
+	*
+	* @category File Buckets
+	* @param id The unique identifier of the bucket you would like to retrieve.
+	* @returns Promise with response containing bucket details or error
+	*
+	* @example Get bucket
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .getBucket('avatars')
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "id": "avatars",
+	*     "name": "avatars",
+	*     "owner": "",
+	*     "public": false,
+	*     "file_size_limit": 1024,
+	*     "allowed_mime_types": [
+	*       "image/png"
+	*     ],
+	*     "created_at": "2024-05-22T22:26:05.100Z",
+	*     "updated_at": "2024-05-22T22:26:05.100Z"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*/ async getBucket(id) {
+        var _this2 = this;
+        return _this2.handleOperation(async ()=>{
+            return await get(_this2.fetch, `${_this2.url}/bucket/${id}`, {
+                headers: _this2.headers
+            });
+        });
+    }
+    /**
+	* Creates a new Storage bucket
+	*
+	* @category File Buckets
+	* @param id A unique identifier for the bucket you are creating.
+	* @param options.public The visibility of the bucket. Public buckets don't require an authorization token to download objects, but still require a valid token for all other operations. By default, buckets are private.
+	* @param options.fileSizeLimit specifies the max file size in bytes that can be uploaded to this bucket.
+	* The global file size limit takes precedence over this value.
+	* The default value is null, which doesn't set a per bucket file size limit.
+	* @param options.allowedMimeTypes specifies the allowed mime types that this bucket can accept during upload.
+	* The default value is null, which allows files with all mime types to be uploaded.
+	* Each mime type specified can be a wildcard, e.g. image/*, or a specific mime type, e.g. image/png.
+	* @param options.type (private-beta) specifies the bucket type. see `BucketType` for more details.
+	*   - default bucket type is `STANDARD`
+	* @returns Promise with response containing newly created bucket name or error
+	*
+	* @example Create bucket
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .createBucket('avatars', {
+	*     public: false,
+	*     allowedMimeTypes: ['image/png'],
+	*     fileSizeLimit: 1024
+	*   })
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "name": "avatars"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*/ async createBucket(id, options = {
+        public: false
+    }) {
+        var _this3 = this;
+        return _this3.handleOperation(async ()=>{
+            return await post(_this3.fetch, `${_this3.url}/bucket`, {
+                id,
+                name: id,
+                type: options.type,
+                public: options.public,
+                file_size_limit: options.fileSizeLimit,
+                allowed_mime_types: options.allowedMimeTypes
+            }, {
+                headers: _this3.headers
+            });
+        });
+    }
+    /**
+	* Updates a Storage bucket
+	*
+	* @category File Buckets
+	* @param id A unique identifier for the bucket you are updating.
+	* @param options.public The visibility of the bucket. Public buckets don't require an authorization token to download objects, but still require a valid token for all other operations.
+	* @param options.fileSizeLimit specifies the max file size in bytes that can be uploaded to this bucket.
+	* The global file size limit takes precedence over this value.
+	* The default value is null, which doesn't set a per bucket file size limit.
+	* @param options.allowedMimeTypes specifies the allowed mime types that this bucket can accept during upload.
+	* The default value is null, which allows files with all mime types to be uploaded.
+	* Each mime type specified can be a wildcard, e.g. image/*, or a specific mime type, e.g. image/png.
+	* @returns Promise with response containing success message or error
+	*
+	* @example Update bucket
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .updateBucket('avatars', {
+	*     public: false,
+	*     allowedMimeTypes: ['image/png'],
+	*     fileSizeLimit: 1024
+	*   })
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "message": "Successfully updated"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*/ async updateBucket(id, options) {
+        var _this4 = this;
+        return _this4.handleOperation(async ()=>{
+            return await put(_this4.fetch, `${_this4.url}/bucket/${id}`, {
+                id,
+                name: id,
+                public: options.public,
+                file_size_limit: options.fileSizeLimit,
+                allowed_mime_types: options.allowedMimeTypes
+            }, {
+                headers: _this4.headers
+            });
+        });
+    }
+    /**
+	* Removes all objects inside a single bucket.
+	*
+	* @category File Buckets
+	* @param id The unique identifier of the bucket you would like to empty.
+	* @returns Promise with success message or error
+	*
+	* @example Empty bucket
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .emptyBucket('avatars')
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "message": "Successfully emptied"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*/ async emptyBucket(id) {
+        var _this5 = this;
+        return _this5.handleOperation(async ()=>{
+            return await post(_this5.fetch, `${_this5.url}/bucket/${id}/empty`, {}, {
+                headers: _this5.headers
+            });
+        });
+    }
+    /**
+	* Deletes an existing bucket. A bucket can't be deleted with existing objects inside it.
+	* You must first `empty()` the bucket.
+	*
+	* @category File Buckets
+	* @param id The unique identifier of the bucket you would like to delete.
+	* @returns Promise with success message or error
+	*
+	* @example Delete bucket
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .deleteBucket('avatars')
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "message": "Successfully deleted"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*/ async deleteBucket(id) {
+        var _this6 = this;
+        return _this6.handleOperation(async ()=>{
+            return await remove(_this6.fetch, `${_this6.url}/bucket/${id}`, {}, {
+                headers: _this6.headers
+            });
+        });
+    }
+    listBucketOptionsToQueryString(options) {
+        const params = {};
+        if (options) {
+            if ("limit" in options) params.limit = String(options.limit);
+            if ("offset" in options) params.offset = String(options.offset);
+            if (options.search) params.search = options.search;
+            if (options.sortColumn) params.sortColumn = options.sortColumn;
+            if (options.sortOrder) params.sortOrder = options.sortOrder;
+        }
+        return Object.keys(params).length > 0 ? "?" + new URLSearchParams(params).toString() : "";
+    }
+};
+//#endregion
+//#region src/packages/StorageAnalyticsClient.ts
+/**
+* Client class for managing Analytics Buckets using Iceberg tables
+* Provides methods for creating, listing, and deleting analytics buckets
+*/ var StorageAnalyticsClient = class extends BaseApiClient {
+    /**
+	* @alpha
+	*
+	* Creates a new StorageAnalyticsClient instance
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Analytics Buckets
+	* @param url - The base URL for the storage API
+	* @param headers - HTTP headers to include in requests
+	* @param fetch - Optional custom fetch implementation
+	*
+	* @example
+	* ```typescript
+	* const client = new StorageAnalyticsClient(url, headers)
+	* ```
+	*/ constructor(url, headers = {}, fetch$1){
+        const finalUrl = url.replace(/\/$/, "");
+        const finalHeaders = _objectSpread2(_objectSpread2({}, DEFAULT_HEADERS), headers);
+        super(finalUrl, finalHeaders, fetch$1, "storage");
+    }
+    /**
+	* @alpha
+	*
+	* Creates a new analytics bucket using Iceberg tables
+	* Analytics buckets are optimized for analytical queries and data processing
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Analytics Buckets
+	* @param name A unique name for the bucket you are creating
+	* @returns Promise with response containing newly created analytics bucket or error
+	*
+	* @example Create analytics bucket
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .analytics
+	*   .createBucket('analytics-data')
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "name": "analytics-data",
+	*     "type": "ANALYTICS",
+	*     "format": "iceberg",
+	*     "created_at": "2024-05-22T22:26:05.100Z",
+	*     "updated_at": "2024-05-22T22:26:05.100Z"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*/ async createBucket(name) {
+        var _this = this;
+        return _this.handleOperation(async ()=>{
+            return await post(_this.fetch, `${_this.url}/bucket`, {
+                name
+            }, {
+                headers: _this.headers
+            });
+        });
+    }
+    /**
+	* @alpha
+	*
+	* Retrieves the details of all Analytics Storage buckets within an existing project
+	* Only returns buckets of type 'ANALYTICS'
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Analytics Buckets
+	* @param options Query parameters for listing buckets
+	* @param options.limit Maximum number of buckets to return
+	* @param options.offset Number of buckets to skip
+	* @param options.sortColumn Column to sort by ('name', 'created_at', 'updated_at')
+	* @param options.sortOrder Sort order ('asc' or 'desc')
+	* @param options.search Search term to filter bucket names
+	* @returns Promise with response containing array of analytics buckets or error
+	*
+	* @example List analytics buckets
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .analytics
+	*   .listBuckets({
+	*     limit: 10,
+	*     offset: 0,
+	*     sortColumn: 'created_at',
+	*     sortOrder: 'desc'
+	*   })
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": [
+	*     {
+	*       "name": "analytics-data",
+	*       "type": "ANALYTICS",
+	*       "format": "iceberg",
+	*       "created_at": "2024-05-22T22:26:05.100Z",
+	*       "updated_at": "2024-05-22T22:26:05.100Z"
+	*     }
+	*   ],
+	*   "error": null
+	* }
+	* ```
+	*/ async listBuckets(options) {
+        var _this2 = this;
+        return _this2.handleOperation(async ()=>{
+            const queryParams = new URLSearchParams();
+            if ((options === null || options === void 0 ? void 0 : options.limit) !== void 0) queryParams.set("limit", options.limit.toString());
+            if ((options === null || options === void 0 ? void 0 : options.offset) !== void 0) queryParams.set("offset", options.offset.toString());
+            if (options === null || options === void 0 ? void 0 : options.sortColumn) queryParams.set("sortColumn", options.sortColumn);
+            if (options === null || options === void 0 ? void 0 : options.sortOrder) queryParams.set("sortOrder", options.sortOrder);
+            if (options === null || options === void 0 ? void 0 : options.search) queryParams.set("search", options.search);
+            const queryString = queryParams.toString();
+            const url = queryString ? `${_this2.url}/bucket?${queryString}` : `${_this2.url}/bucket`;
+            return await get(_this2.fetch, url, {
+                headers: _this2.headers
+            });
+        });
+    }
+    /**
+	* @alpha
+	*
+	* Deletes an existing analytics bucket
+	* A bucket can't be deleted with existing objects inside it
+	* You must first empty the bucket before deletion
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Analytics Buckets
+	* @param bucketName The unique identifier of the bucket you would like to delete
+	* @returns Promise with response containing success message or error
+	*
+	* @example Delete analytics bucket
+	* ```js
+	* const { data, error } = await supabase
+	*   .storage
+	*   .analytics
+	*   .deleteBucket('analytics-data')
+	* ```
+	*
+	* Response:
+	* ```json
+	* {
+	*   "data": {
+	*     "message": "Successfully deleted"
+	*   },
+	*   "error": null
+	* }
+	* ```
+	*/ async deleteBucket(bucketName) {
+        var _this3 = this;
+        return _this3.handleOperation(async ()=>{
+            return await remove(_this3.fetch, `${_this3.url}/bucket/${bucketName}`, {}, {
+                headers: _this3.headers
+            });
+        });
+    }
+    /**
+	* @alpha
+	*
+	* Get an Iceberg REST Catalog client configured for a specific analytics bucket
+	* Use this to perform advanced table and namespace operations within the bucket
+	* The returned client provides full access to the Apache Iceberg REST Catalog API
+	* with the Supabase `{ data, error }` pattern for consistent error handling on all operations.
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Analytics Buckets
+	* @param bucketName - The name of the analytics bucket (warehouse) to connect to
+	* @returns The wrapped Iceberg catalog client
+	* @throws {StorageError} If the bucket name is invalid
+	*
+	* @example Get catalog and create table
+	* ```js
+	* // First, create an analytics bucket
+	* const { data: bucket, error: bucketError } = await supabase
+	*   .storage
+	*   .analytics
+	*   .createBucket('analytics-data')
+	*
+	* // Get the Iceberg catalog for that bucket
+	* const catalog = supabase.storage.analytics.from('analytics-data')
+	*
+	* // Create a namespace
+	* const { error: nsError } = await catalog.createNamespace({ namespace: ['default'] })
+	*
+	* // Create a table with schema
+	* const { data: tableMetadata, error: tableError } = await catalog.createTable(
+	*   { namespace: ['default'] },
+	*   {
+	*     name: 'events',
+	*     schema: {
+	*       type: 'struct',
+	*       fields: [
+	*         { id: 1, name: 'id', type: 'long', required: true },
+	*         { id: 2, name: 'timestamp', type: 'timestamp', required: true },
+	*         { id: 3, name: 'user_id', type: 'string', required: false }
+	*       ],
+	*       'schema-id': 0,
+	*       'identifier-field-ids': [1]
+	*     },
+	*     'partition-spec': {
+	*       'spec-id': 0,
+	*       fields: []
+	*     },
+	*     'write-order': {
+	*       'order-id': 0,
+	*       fields: []
+	*     },
+	*     properties: {
+	*       'write.format.default': 'parquet'
+	*     }
+	*   }
+	* )
+	* ```
+	*
+	* @example List tables in namespace
+	* ```js
+	* const catalog = supabase.storage.analytics.from('analytics-data')
+	*
+	* // List all tables in the default namespace
+	* const { data: tables, error: listError } = await catalog.listTables({ namespace: ['default'] })
+	* if (listError) {
+	*   if (listError.isNotFound()) {
+	*     console.log('Namespace not found')
+	*   }
+	*   return
+	* }
+	* console.log(tables) // [{ namespace: ['default'], name: 'events' }]
+	* ```
+	*
+	* @example Working with namespaces
+	* ```js
+	* const catalog = supabase.storage.analytics.from('analytics-data')
+	*
+	* // List all namespaces
+	* const { data: namespaces } = await catalog.listNamespaces()
+	*
+	* // Create namespace with properties
+	* await catalog.createNamespace(
+	*   { namespace: ['production'] },
+	*   { properties: { owner: 'data-team', env: 'prod' } }
+	* )
+	* ```
+	*
+	* @example Cleanup operations
+	* ```js
+	* const catalog = supabase.storage.analytics.from('analytics-data')
+	*
+	* // Drop table with purge option (removes all data)
+	* const { error: dropError } = await catalog.dropTable(
+	*   { namespace: ['default'], name: 'events' },
+	*   { purge: true }
+	* )
+	*
+	* if (dropError?.isNotFound()) {
+	*   console.log('Table does not exist')
+	* }
+	*
+	* // Drop namespace (must be empty)
+	* await catalog.dropNamespace({ namespace: ['default'] })
+	* ```
+	*
+	* @remarks
+	* This method provides a bridge between Supabase's bucket management and the standard
+	* Apache Iceberg REST Catalog API. The bucket name maps to the Iceberg warehouse parameter.
+	* All authentication and configuration is handled automatically using your Supabase credentials.
+	*
+	* **Error Handling**: Invalid bucket names throw immediately. All catalog
+	* operations return `{ data, error }` where errors are `IcebergError` instances from iceberg-js.
+	* Use helper methods like `error.isNotFound()` or check `error.status` for specific error handling.
+	* Use `.throwOnError()` on the analytics client if you prefer exceptions for catalog operations.
+	*
+	* **Cleanup Operations**: When using `dropTable`, the `purge: true` option permanently
+	* deletes all table data. Without it, the table is marked as deleted but data remains.
+	*
+	* **Library Dependency**: The returned catalog wraps `IcebergRestCatalog` from iceberg-js.
+	* For complete API documentation and advanced usage, refer to the
+	* [iceberg-js documentation](https://supabase.github.io/iceberg-js/).
+	*/ from(bucketName) {
+        var _this4 = this;
+        if (!isValidBucketName(bucketName)) throw new StorageError("Invalid bucket name: File, folder, and bucket names must follow AWS object key naming guidelines and should avoid the use of any other characters.");
+        const catalog = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$iceberg$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["IcebergRestCatalog"]({
+            baseUrl: this.url,
+            catalogName: bucketName,
+            auth: {
+                type: "custom",
+                getHeaders: async ()=>_this4.headers
+            },
+            fetch: this.fetch
+        });
+        const shouldThrowOnError = this.shouldThrowOnError;
+        return new Proxy(catalog, {
+            get (target, prop) {
+                const value = target[prop];
+                if (typeof value !== "function") return value;
+                return async (...args)=>{
+                    try {
+                        return {
+                            data: await value.apply(target, args),
+                            error: null
+                        };
+                    } catch (error) {
+                        if (shouldThrowOnError) throw error;
+                        return {
+                            data: null,
+                            error
+                        };
+                    }
+                };
+            }
+        });
+    }
+};
+//#endregion
+//#region src/packages/VectorIndexApi.ts
+/**
+* @hidden
+* Base implementation for vector index operations.
+* Use {@link VectorBucketScope} via `supabase.storage.vectors.from('bucket')` instead.
+*/ var VectorIndexApi = class extends BaseApiClient {
+    /** Creates a new VectorIndexApi instance */ constructor(url, headers = {}, fetch$1){
+        const finalUrl = url.replace(/\/$/, "");
+        const finalHeaders = _objectSpread2(_objectSpread2({}, DEFAULT_HEADERS), {}, {
+            "Content-Type": "application/json"
+        }, headers);
+        super(finalUrl, finalHeaders, fetch$1, "vectors");
+    }
+    /** Creates a new vector index within a bucket */ async createIndex(options) {
+        var _this = this;
+        return _this.handleOperation(async ()=>{
+            return await vectorsApi.post(_this.fetch, `${_this.url}/CreateIndex`, options, {
+                headers: _this.headers
+            }) || {};
+        });
+    }
+    /** Retrieves metadata for a specific vector index */ async getIndex(vectorBucketName, indexName) {
+        var _this2 = this;
+        return _this2.handleOperation(async ()=>{
+            return await vectorsApi.post(_this2.fetch, `${_this2.url}/GetIndex`, {
+                vectorBucketName,
+                indexName
+            }, {
+                headers: _this2.headers
+            });
+        });
+    }
+    /** Lists vector indexes within a bucket with optional filtering and pagination */ async listIndexes(options) {
+        var _this3 = this;
+        return _this3.handleOperation(async ()=>{
+            return await vectorsApi.post(_this3.fetch, `${_this3.url}/ListIndexes`, options, {
+                headers: _this3.headers
+            });
+        });
+    }
+    /** Deletes a vector index and all its data */ async deleteIndex(vectorBucketName, indexName) {
+        var _this4 = this;
+        return _this4.handleOperation(async ()=>{
+            return await vectorsApi.post(_this4.fetch, `${_this4.url}/DeleteIndex`, {
+                vectorBucketName,
+                indexName
+            }, {
+                headers: _this4.headers
+            }) || {};
+        });
+    }
+};
+//#endregion
+//#region src/packages/VectorDataApi.ts
+/**
+* @hidden
+* Base implementation for vector data operations.
+* Use {@link VectorIndexScope} via `supabase.storage.vectors.from('bucket').index('idx')` instead.
+*/ var VectorDataApi = class extends BaseApiClient {
+    /** Creates a new VectorDataApi instance */ constructor(url, headers = {}, fetch$1){
+        const finalUrl = url.replace(/\/$/, "");
+        const finalHeaders = _objectSpread2(_objectSpread2({}, DEFAULT_HEADERS), {}, {
+            "Content-Type": "application/json"
+        }, headers);
+        super(finalUrl, finalHeaders, fetch$1, "vectors");
+    }
+    /** Inserts or updates vectors in batch (1-500 per request) */ async putVectors(options) {
+        var _this = this;
+        if (options.vectors.length < 1 || options.vectors.length > 500) throw new Error("Vector batch size must be between 1 and 500 items");
+        return _this.handleOperation(async ()=>{
+            return await vectorsApi.post(_this.fetch, `${_this.url}/PutVectors`, options, {
+                headers: _this.headers
+            }) || {};
+        });
+    }
+    /** Retrieves vectors by their keys in batch */ async getVectors(options) {
+        var _this2 = this;
+        return _this2.handleOperation(async ()=>{
+            return await vectorsApi.post(_this2.fetch, `${_this2.url}/GetVectors`, options, {
+                headers: _this2.headers
+            });
+        });
+    }
+    /** Lists vectors in an index with pagination */ async listVectors(options) {
+        var _this3 = this;
+        if (options.segmentCount !== void 0) {
+            if (options.segmentCount < 1 || options.segmentCount > 16) throw new Error("segmentCount must be between 1 and 16");
+            if (options.segmentIndex !== void 0) {
+                if (options.segmentIndex < 0 || options.segmentIndex >= options.segmentCount) throw new Error(`segmentIndex must be between 0 and ${options.segmentCount - 1}`);
+            }
+        }
+        return _this3.handleOperation(async ()=>{
+            return await vectorsApi.post(_this3.fetch, `${_this3.url}/ListVectors`, options, {
+                headers: _this3.headers
+            });
+        });
+    }
+    /** Queries for similar vectors using approximate nearest neighbor search */ async queryVectors(options) {
+        var _this4 = this;
+        return _this4.handleOperation(async ()=>{
+            return await vectorsApi.post(_this4.fetch, `${_this4.url}/QueryVectors`, options, {
+                headers: _this4.headers
+            });
+        });
+    }
+    /** Deletes vectors by their keys in batch (1-500 per request) */ async deleteVectors(options) {
+        var _this5 = this;
+        if (options.keys.length < 1 || options.keys.length > 500) throw new Error("Keys batch size must be between 1 and 500 items");
+        return _this5.handleOperation(async ()=>{
+            return await vectorsApi.post(_this5.fetch, `${_this5.url}/DeleteVectors`, options, {
+                headers: _this5.headers
+            }) || {};
+        });
+    }
+};
+//#endregion
+//#region src/packages/VectorBucketApi.ts
+/**
+* @hidden
+* Base implementation for vector bucket operations.
+* Use {@link StorageVectorsClient} via `supabase.storage.vectors` instead.
+*/ var VectorBucketApi = class extends BaseApiClient {
+    /** Creates a new VectorBucketApi instance */ constructor(url, headers = {}, fetch$1){
+        const finalUrl = url.replace(/\/$/, "");
+        const finalHeaders = _objectSpread2(_objectSpread2({}, DEFAULT_HEADERS), {}, {
+            "Content-Type": "application/json"
+        }, headers);
+        super(finalUrl, finalHeaders, fetch$1, "vectors");
+    }
+    /** Creates a new vector bucket */ async createBucket(vectorBucketName) {
+        var _this = this;
+        return _this.handleOperation(async ()=>{
+            return await vectorsApi.post(_this.fetch, `${_this.url}/CreateVectorBucket`, {
+                vectorBucketName
+            }, {
+                headers: _this.headers
+            }) || {};
+        });
+    }
+    /** Retrieves metadata for a specific vector bucket */ async getBucket(vectorBucketName) {
+        var _this2 = this;
+        return _this2.handleOperation(async ()=>{
+            return await vectorsApi.post(_this2.fetch, `${_this2.url}/GetVectorBucket`, {
+                vectorBucketName
+            }, {
+                headers: _this2.headers
+            });
+        });
+    }
+    /** Lists vector buckets with optional filtering and pagination */ async listBuckets(options = {}) {
+        var _this3 = this;
+        return _this3.handleOperation(async ()=>{
+            return await vectorsApi.post(_this3.fetch, `${_this3.url}/ListVectorBuckets`, options, {
+                headers: _this3.headers
+            });
+        });
+    }
+    /** Deletes a vector bucket (must be empty first) */ async deleteBucket(vectorBucketName) {
+        var _this4 = this;
+        return _this4.handleOperation(async ()=>{
+            return await vectorsApi.post(_this4.fetch, `${_this4.url}/DeleteVectorBucket`, {
+                vectorBucketName
+            }, {
+                headers: _this4.headers
+            }) || {};
+        });
+    }
+};
+//#endregion
+//#region src/packages/StorageVectorsClient.ts
+/**
+*
+* @alpha
+*
+* Main client for interacting with S3 Vectors API
+* Provides access to bucket, index, and vector data operations
+*
+* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+*
+* **Usage Patterns:**
+*
+* ```typescript
+* const { data, error } = await supabase
+*  .storage
+*  .vectors
+*  .createBucket('embeddings-prod')
+*
+* // Access index operations via buckets
+* const bucket = supabase.storage.vectors.from('embeddings-prod')
+* await bucket.createIndex({
+*   indexName: 'documents',
+*   dataType: 'float32',
+*   dimension: 1536,
+*   distanceMetric: 'cosine'
+* })
+*
+* // Access vector operations via index
+* const index = bucket.index('documents')
+* await index.putVectors({
+*   vectors: [
+*     { key: 'doc-1', data: { float32: [...] }, metadata: { title: 'Intro' } }
+*   ]
+* })
+*
+* // Query similar vectors
+* const { data } = await index.queryVectors({
+*   queryVector: { float32: [...] },
+*   topK: 5,
+*   returnDistance: true
+* })
+* ```
+*/ var StorageVectorsClient = class extends VectorBucketApi {
+    /**
+	* @alpha
+	*
+	* Creates a StorageVectorsClient that can manage buckets, indexes, and vectors.
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param url - Base URL of the Storage Vectors REST API.
+	* @param options.headers - Optional headers (for example `Authorization`) applied to every request.
+	* @param options.fetch - Optional custom `fetch` implementation for non-browser runtimes.
+	*
+	* @example
+	* ```typescript
+	* const client = new StorageVectorsClient(url, options)
+	* ```
+	*/ constructor(url, options = {}){
+        super(url, options.headers || {}, options.fetch);
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Access operations for a specific vector bucket
+	* Returns a scoped client for index and vector operations within the bucket
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param vectorBucketName - Name of the vector bucket
+	* @returns Bucket-scoped client with index and vector operations
+	*
+	* @example
+	* ```typescript
+	* const bucket = supabase.storage.vectors.from('embeddings-prod')
+	* ```
+	*/ from(vectorBucketName) {
+        return new VectorBucketScope(this.url, this.headers, vectorBucketName, this.fetch);
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Creates a new vector bucket
+	* Vector buckets are containers for vector indexes and their data
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param vectorBucketName - Unique name for the vector bucket
+	* @returns Promise with empty response on success or error
+	*
+	* @example
+	* ```typescript
+	* const { data, error } = await supabase
+	*   .storage
+	*   .vectors
+	*   .createBucket('embeddings-prod')
+	* ```
+	*/ async createBucket(vectorBucketName) {
+        var _superprop_getCreateBucket = ()=>super.createBucket, _this = this;
+        return _superprop_getCreateBucket().call(_this, vectorBucketName);
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Retrieves metadata for a specific vector bucket
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param vectorBucketName - Name of the vector bucket
+	* @returns Promise with bucket metadata or error
+	*
+	* @example
+	* ```typescript
+	* const { data, error } = await supabase
+	*   .storage
+	*   .vectors
+	*   .getBucket('embeddings-prod')
+	*
+	* console.log('Bucket created:', data?.vectorBucket.creationTime)
+	* ```
+	*/ async getBucket(vectorBucketName) {
+        var _superprop_getGetBucket = ()=>super.getBucket, _this2 = this;
+        return _superprop_getGetBucket().call(_this2, vectorBucketName);
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Lists all vector buckets with optional filtering and pagination
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param options - Optional filters (prefix, maxResults, nextToken)
+	* @returns Promise with list of buckets or error
+	*
+	* @example
+	* ```typescript
+	* const { data, error } = await supabase
+	*   .storage
+	*   .vectors
+	*   .listBuckets({ prefix: 'embeddings-' })
+	*
+	* data?.vectorBuckets.forEach(bucket => {
+	*   console.log(bucket.vectorBucketName)
+	* })
+	* ```
+	*/ async listBuckets(options = {}) {
+        var _superprop_getListBuckets = ()=>super.listBuckets, _this3 = this;
+        return _superprop_getListBuckets().call(_this3, options);
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Deletes a vector bucket (bucket must be empty)
+	* All indexes must be deleted before deleting the bucket
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param vectorBucketName - Name of the vector bucket to delete
+	* @returns Promise with empty response on success or error
+	*
+	* @example
+	* ```typescript
+	* const { data, error } = await supabase
+	*   .storage
+	*   .vectors
+	*   .deleteBucket('embeddings-old')
+	* ```
+	*/ async deleteBucket(vectorBucketName) {
+        var _superprop_getDeleteBucket = ()=>super.deleteBucket, _this4 = this;
+        return _superprop_getDeleteBucket().call(_this4, vectorBucketName);
+    }
+};
+/**
+*
+* @alpha
+*
+* Scoped client for operations within a specific vector bucket
+* Provides index management and access to vector operations
+*
+* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+*/ var VectorBucketScope = class extends VectorIndexApi {
+    /**
+	* @alpha
+	*
+	* Creates a helper that automatically scopes all index operations to the provided bucket.
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @example
+	* ```typescript
+	* const bucket = supabase.storage.vectors.from('embeddings-prod')
+	* ```
+	*/ constructor(url, headers, vectorBucketName, fetch$1){
+        super(url, headers, fetch$1);
+        this.vectorBucketName = vectorBucketName;
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Creates a new vector index in this bucket
+	* Convenience method that automatically includes the bucket name
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param options - Index configuration (vectorBucketName is automatically set)
+	* @returns Promise with empty response on success or error
+	*
+	* @example
+	* ```typescript
+	* const bucket = supabase.storage.vectors.from('embeddings-prod')
+	* await bucket.createIndex({
+	*   indexName: 'documents-openai',
+	*   dataType: 'float32',
+	*   dimension: 1536,
+	*   distanceMetric: 'cosine',
+	*   metadataConfiguration: {
+	*     nonFilterableMetadataKeys: ['raw_text']
+	*   }
+	* })
+	* ```
+	*/ async createIndex(options) {
+        var _superprop_getCreateIndex = ()=>super.createIndex, _this5 = this;
+        return _superprop_getCreateIndex().call(_this5, _objectSpread2(_objectSpread2({}, options), {}, {
+            vectorBucketName: _this5.vectorBucketName
+        }));
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Lists indexes in this bucket
+	* Convenience method that automatically includes the bucket name
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param options - Listing options (vectorBucketName is automatically set)
+	* @returns Promise with response containing indexes array and pagination token or error
+	*
+	* @example
+	* ```typescript
+	* const bucket = supabase.storage.vectors.from('embeddings-prod')
+	* const { data } = await bucket.listIndexes({ prefix: 'documents-' })
+	* ```
+	*/ async listIndexes(options = {}) {
+        var _superprop_getListIndexes = ()=>super.listIndexes, _this6 = this;
+        return _superprop_getListIndexes().call(_this6, _objectSpread2(_objectSpread2({}, options), {}, {
+            vectorBucketName: _this6.vectorBucketName
+        }));
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Retrieves metadata for a specific index in this bucket
+	* Convenience method that automatically includes the bucket name
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param indexName - Name of the index to retrieve
+	* @returns Promise with index metadata or error
+	*
+	* @example
+	* ```typescript
+	* const bucket = supabase.storage.vectors.from('embeddings-prod')
+	* const { data } = await bucket.getIndex('documents-openai')
+	* console.log('Dimension:', data?.index.dimension)
+	* ```
+	*/ async getIndex(indexName) {
+        var _superprop_getGetIndex = ()=>super.getIndex, _this7 = this;
+        return _superprop_getGetIndex().call(_this7, _this7.vectorBucketName, indexName);
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Deletes an index from this bucket
+	* Convenience method that automatically includes the bucket name
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param indexName - Name of the index to delete
+	* @returns Promise with empty response on success or error
+	*
+	* @example
+	* ```typescript
+	* const bucket = supabase.storage.vectors.from('embeddings-prod')
+	* await bucket.deleteIndex('old-index')
+	* ```
+	*/ async deleteIndex(indexName) {
+        var _superprop_getDeleteIndex = ()=>super.deleteIndex, _this8 = this;
+        return _superprop_getDeleteIndex().call(_this8, _this8.vectorBucketName, indexName);
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Access operations for a specific index within this bucket
+	* Returns a scoped client for vector data operations
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param indexName - Name of the index
+	* @returns Index-scoped client with vector data operations
+	*
+	* @example
+	* ```typescript
+	* const index = supabase.storage.vectors.from('embeddings-prod').index('documents-openai')
+	*
+	* // Insert vectors
+	* await index.putVectors({
+	*   vectors: [
+	*     { key: 'doc-1', data: { float32: [...] }, metadata: { title: 'Intro' } }
+	*   ]
+	* })
+	*
+	* // Query similar vectors
+	* const { data } = await index.queryVectors({
+	*   queryVector: { float32: [...] },
+	*   topK: 5
+	* })
+	* ```
+	*/ index(indexName) {
+        return new VectorIndexScope(this.url, this.headers, this.vectorBucketName, indexName, this.fetch);
+    }
+};
+/**
+*
+* @alpha
+*
+* Scoped client for operations within a specific vector index
+* Provides vector data operations (put, get, list, query, delete)
+*
+* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+*/ var VectorIndexScope = class extends VectorDataApi {
+    /**
+	*
+	* @alpha
+	*
+	* Creates a helper that automatically scopes all vector operations to the provided bucket/index names.
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @example
+	* ```typescript
+	* const index = supabase.storage.vectors.from('embeddings-prod').index('documents-openai')
+	* ```
+	*/ constructor(url, headers, vectorBucketName, indexName, fetch$1){
+        super(url, headers, fetch$1);
+        this.vectorBucketName = vectorBucketName;
+        this.indexName = indexName;
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Inserts or updates vectors in this index
+	* Convenience method that automatically includes bucket and index names
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param options - Vector insertion options (bucket and index names automatically set)
+	* @returns Promise with empty response on success or error
+	*
+	* @example
+	* ```typescript
+	* const index = supabase.storage.vectors.from('embeddings-prod').index('documents-openai')
+	* await index.putVectors({
+	*   vectors: [
+	*     {
+	*       key: 'doc-1',
+	*       data: { float32: [0.1, 0.2, ...] },
+	*       metadata: { title: 'Introduction', page: 1 }
+	*     }
+	*   ]
+	* })
+	* ```
+	*/ async putVectors(options) {
+        var _superprop_getPutVectors = ()=>super.putVectors, _this9 = this;
+        return _superprop_getPutVectors().call(_this9, _objectSpread2(_objectSpread2({}, options), {}, {
+            vectorBucketName: _this9.vectorBucketName,
+            indexName: _this9.indexName
+        }));
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Retrieves vectors by keys from this index
+	* Convenience method that automatically includes bucket and index names
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param options - Vector retrieval options (bucket and index names automatically set)
+	* @returns Promise with response containing vectors array or error
+	*
+	* @example
+	* ```typescript
+	* const index = supabase.storage.vectors.from('embeddings-prod').index('documents-openai')
+	* const { data } = await index.getVectors({
+	*   keys: ['doc-1', 'doc-2'],
+	*   returnMetadata: true
+	* })
+	* ```
+	*/ async getVectors(options) {
+        var _superprop_getGetVectors = ()=>super.getVectors, _this10 = this;
+        return _superprop_getGetVectors().call(_this10, _objectSpread2(_objectSpread2({}, options), {}, {
+            vectorBucketName: _this10.vectorBucketName,
+            indexName: _this10.indexName
+        }));
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Lists vectors in this index with pagination
+	* Convenience method that automatically includes bucket and index names
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param options - Listing options (bucket and index names automatically set)
+	* @returns Promise with response containing vectors array and pagination token or error
+	*
+	* @example
+	* ```typescript
+	* const index = supabase.storage.vectors.from('embeddings-prod').index('documents-openai')
+	* const { data } = await index.listVectors({
+	*   maxResults: 500,
+	*   returnMetadata: true
+	* })
+	* ```
+	*/ async listVectors(options = {}) {
+        var _superprop_getListVectors = ()=>super.listVectors, _this11 = this;
+        return _superprop_getListVectors().call(_this11, _objectSpread2(_objectSpread2({}, options), {}, {
+            vectorBucketName: _this11.vectorBucketName,
+            indexName: _this11.indexName
+        }));
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Queries for similar vectors in this index
+	* Convenience method that automatically includes bucket and index names
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param options - Query options (bucket and index names automatically set)
+	* @returns Promise with response containing matches array of similar vectors ordered by distance or error
+	*
+	* @example
+	* ```typescript
+	* const index = supabase.storage.vectors.from('embeddings-prod').index('documents-openai')
+	* const { data } = await index.queryVectors({
+	*   queryVector: { float32: [0.1, 0.2, ...] },
+	*   topK: 5,
+	*   filter: { category: 'technical' },
+	*   returnDistance: true,
+	*   returnMetadata: true
+	* })
+	* ```
+	*/ async queryVectors(options) {
+        var _superprop_getQueryVectors = ()=>super.queryVectors, _this12 = this;
+        return _superprop_getQueryVectors().call(_this12, _objectSpread2(_objectSpread2({}, options), {}, {
+            vectorBucketName: _this12.vectorBucketName,
+            indexName: _this12.indexName
+        }));
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Deletes vectors by keys from this index
+	* Convenience method that automatically includes bucket and index names
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @param options - Deletion options (bucket and index names automatically set)
+	* @returns Promise with empty response on success or error
+	*
+	* @example
+	* ```typescript
+	* const index = supabase.storage.vectors.from('embeddings-prod').index('documents-openai')
+	* await index.deleteVectors({
+	*   keys: ['doc-1', 'doc-2', 'doc-3']
+	* })
+	* ```
+	*/ async deleteVectors(options) {
+        var _superprop_getDeleteVectors = ()=>super.deleteVectors, _this13 = this;
+        return _superprop_getDeleteVectors().call(_this13, _objectSpread2(_objectSpread2({}, options), {}, {
+            vectorBucketName: _this13.vectorBucketName,
+            indexName: _this13.indexName
+        }));
+    }
+};
+//#endregion
+//#region src/StorageClient.ts
+var StorageClient = class extends StorageBucketApi {
+    /**
+	* Creates a client for Storage buckets, files, analytics, and vectors.
+	*
+	* @category File Buckets
+	* @example
+	* ```ts
+	* import { StorageClient } from '@supabase/storage-js'
+	*
+	* const storage = new StorageClient('https://xyzcompany.supabase.co/storage/v1', {
+	*   apikey: 'public-anon-key',
+	* })
+	* const avatars = storage.from('avatars')
+	* ```
+	*/ constructor(url, headers = {}, fetch$1, opts){
+        super(url, headers, fetch$1, opts);
+    }
+    /**
+	* Perform file operation in a bucket.
+	*
+	* @category File Buckets
+	* @param id The bucket id to operate on.
+	*
+	* @example
+	* ```typescript
+	* const avatars = supabase.storage.from('avatars')
+	* ```
+	*/ from(id) {
+        return new StorageFileApi(this.url, this.headers, id, this.fetch);
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Access vector storage operations.
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Vector Buckets
+	* @returns A StorageVectorsClient instance configured with the current storage settings.
+	*/ get vectors() {
+        return new StorageVectorsClient(this.url + "/vector", {
+            headers: this.headers,
+            fetch: this.fetch
+        });
+    }
+    /**
+	*
+	* @alpha
+	*
+	* Access analytics storage operations using Iceberg tables.
+	*
+	* **Public alpha:** This API is part of a public alpha release and may not be available to your account type.
+	*
+	* @category Analytics Buckets
+	* @returns A StorageAnalyticsClient instance configured with the current storage settings.
+	*/ get analytics() {
+        return new StorageAnalyticsClient(this.url + "/iceberg", this.headers, this.fetch);
+    }
+};
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/supabase-js/dist/index.mjs [app-ssr] (ecmascript) <locals>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "SupabaseClient",
+    ()=>SupabaseClient,
+    "createClient",
+    ()=>createClient
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/functions-js/dist/module/types.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$FunctionsClient$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/functions-js/dist/module/FunctionsClient.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$postgrest$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/postgrest-js/dist/index.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/index.js [app-ssr] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$RealtimeClient$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__RealtimeClient$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js [app-ssr] (ecmascript) <export default as RealtimeClient>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$storage$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/storage-js/dist/index.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$auth$2d$js$2f$dist$2f$module$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/auth-js/dist/module/index.js [app-ssr] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$auth$2d$js$2f$dist$2f$module$2f$AuthClient$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__AuthClient$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/auth-js/dist/module/AuthClient.js [app-ssr] (ecmascript) <export default as AuthClient>");
+;
+;
+;
+;
+;
+;
+;
+//#region src/lib/version.ts
+const version = "2.95.3";
+//#endregion
+//#region src/lib/constants.ts
+let JS_ENV = "";
+if (typeof Deno !== "undefined") JS_ENV = "deno";
+else if (typeof document !== "undefined") JS_ENV = "web";
+else if (typeof navigator !== "undefined" && navigator.product === "ReactNative") JS_ENV = "react-native";
+else JS_ENV = "node";
+const DEFAULT_HEADERS = {
+    "X-Client-Info": `supabase-js-${JS_ENV}/${version}`
+};
+const DEFAULT_GLOBAL_OPTIONS = {
+    headers: DEFAULT_HEADERS
+};
+const DEFAULT_DB_OPTIONS = {
+    schema: "public"
+};
+const DEFAULT_AUTH_OPTIONS = {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: "implicit"
+};
+const DEFAULT_REALTIME_OPTIONS = {};
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/typeof.js
+function _typeof(o) {
+    "@babel/helpers - typeof";
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o$1) {
+        return typeof o$1;
+    } : function(o$1) {
+        return o$1 && "function" == typeof Symbol && o$1.constructor === Symbol && o$1 !== Symbol.prototype ? "symbol" : typeof o$1;
+    }, _typeof(o);
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/toPrimitive.js
+function toPrimitive(t, r) {
+    if ("object" != _typeof(t) || !t) return t;
+    var e = t[Symbol.toPrimitive];
+    if (void 0 !== e) {
+        var i = e.call(t, r || "default");
+        if ("object" != _typeof(i)) return i;
+        throw new TypeError("@@toPrimitive must return a primitive value.");
+    }
+    return ("string" === r ? String : Number)(t);
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/toPropertyKey.js
+function toPropertyKey(t) {
+    var i = toPrimitive(t, "string");
+    return "symbol" == _typeof(i) ? i : i + "";
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/defineProperty.js
+function _defineProperty(e, r, t) {
+    return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+        value: t,
+        enumerable: !0,
+        configurable: !0,
+        writable: !0
+    }) : e[r] = t, e;
+}
+//#endregion
+//#region \0@oxc-project+runtime@0.101.0/helpers/objectSpread2.js
+function ownKeys(e, r) {
+    var t = Object.keys(e);
+    if (Object.getOwnPropertySymbols) {
+        var o = Object.getOwnPropertySymbols(e);
+        r && (o = o.filter(function(r$1) {
+            return Object.getOwnPropertyDescriptor(e, r$1).enumerable;
+        })), t.push.apply(t, o);
+    }
+    return t;
+}
+function _objectSpread2(e) {
+    for(var r = 1; r < arguments.length; r++){
+        var t = null != arguments[r] ? arguments[r] : {};
+        r % 2 ? ownKeys(Object(t), !0).forEach(function(r$1) {
+            _defineProperty(e, r$1, t[r$1]);
+        }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r$1) {
+            Object.defineProperty(e, r$1, Object.getOwnPropertyDescriptor(t, r$1));
+        });
+    }
+    return e;
+}
+//#endregion
+//#region src/lib/fetch.ts
+const resolveFetch = (customFetch)=>{
+    if (customFetch) return (...args)=>customFetch(...args);
+    return (...args)=>fetch(...args);
+};
+const resolveHeadersConstructor = ()=>{
+    return Headers;
+};
+const fetchWithAuth = (supabaseKey, getAccessToken, customFetch)=>{
+    const fetch$1 = resolveFetch(customFetch);
+    const HeadersConstructor = resolveHeadersConstructor();
+    return async (input, init)=>{
+        var _await$getAccessToken;
+        const accessToken = (_await$getAccessToken = await getAccessToken()) !== null && _await$getAccessToken !== void 0 ? _await$getAccessToken : supabaseKey;
+        let headers = new HeadersConstructor(init === null || init === void 0 ? void 0 : init.headers);
+        if (!headers.has("apikey")) headers.set("apikey", supabaseKey);
+        if (!headers.has("Authorization")) headers.set("Authorization", `Bearer ${accessToken}`);
+        return fetch$1(input, _objectSpread2(_objectSpread2({}, init), {}, {
+            headers
+        }));
+    };
+};
+//#endregion
+//#region src/lib/helpers.ts
+function ensureTrailingSlash(url) {
+    return url.endsWith("/") ? url : url + "/";
+}
+function applySettingDefaults(options, defaults) {
+    var _DEFAULT_GLOBAL_OPTIO, _globalOptions$header;
+    const { db: dbOptions, auth: authOptions, realtime: realtimeOptions, global: globalOptions } = options;
+    const { db: DEFAULT_DB_OPTIONS$1, auth: DEFAULT_AUTH_OPTIONS$1, realtime: DEFAULT_REALTIME_OPTIONS$1, global: DEFAULT_GLOBAL_OPTIONS$1 } = defaults;
+    const result = {
+        db: _objectSpread2(_objectSpread2({}, DEFAULT_DB_OPTIONS$1), dbOptions),
+        auth: _objectSpread2(_objectSpread2({}, DEFAULT_AUTH_OPTIONS$1), authOptions),
+        realtime: _objectSpread2(_objectSpread2({}, DEFAULT_REALTIME_OPTIONS$1), realtimeOptions),
+        storage: {},
+        global: _objectSpread2(_objectSpread2(_objectSpread2({}, DEFAULT_GLOBAL_OPTIONS$1), globalOptions), {}, {
+            headers: _objectSpread2(_objectSpread2({}, (_DEFAULT_GLOBAL_OPTIO = DEFAULT_GLOBAL_OPTIONS$1 === null || DEFAULT_GLOBAL_OPTIONS$1 === void 0 ? void 0 : DEFAULT_GLOBAL_OPTIONS$1.headers) !== null && _DEFAULT_GLOBAL_OPTIO !== void 0 ? _DEFAULT_GLOBAL_OPTIO : {}), (_globalOptions$header = globalOptions === null || globalOptions === void 0 ? void 0 : globalOptions.headers) !== null && _globalOptions$header !== void 0 ? _globalOptions$header : {})
+        }),
+        accessToken: async ()=>""
+    };
+    if (options.accessToken) result.accessToken = options.accessToken;
+    else delete result.accessToken;
+    return result;
+}
+/**
+* Validates a Supabase client URL
+*
+* @param {string} supabaseUrl - The Supabase client URL string.
+* @returns {URL} - The validated base URL.
+* @throws {Error}
+*/ function validateSupabaseUrl(supabaseUrl) {
+    const trimmedUrl = supabaseUrl === null || supabaseUrl === void 0 ? void 0 : supabaseUrl.trim();
+    if (!trimmedUrl) throw new Error("supabaseUrl is required.");
+    if (!trimmedUrl.match(/^https?:\/\//i)) throw new Error("Invalid supabaseUrl: Must be a valid HTTP or HTTPS URL.");
+    try {
+        return new URL(ensureTrailingSlash(trimmedUrl));
+    } catch (_unused) {
+        throw Error("Invalid supabaseUrl: Provided URL is malformed.");
+    }
+}
+//#endregion
+//#region src/lib/SupabaseAuthClient.ts
+var SupabaseAuthClient = class extends __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$auth$2d$js$2f$dist$2f$module$2f$AuthClient$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__AuthClient$3e$__["AuthClient"] {
+    constructor(options){
+        super(options);
+    }
+};
+//#endregion
+//#region src/SupabaseClient.ts
+/**
+* Supabase Client.
+*
+* An isomorphic Javascript client for interacting with Postgres.
+*/ var SupabaseClient = class {
+    /**
+	* Create a new client for use in the browser.
+	* @param supabaseUrl The unique Supabase URL which is supplied when you create a new project in your project dashboard.
+	* @param supabaseKey The unique Supabase Key which is supplied when you create a new project in your project dashboard.
+	* @param options.db.schema You can switch in between schemas. The schema needs to be on the list of exposed schemas inside Supabase.
+	* @param options.auth.autoRefreshToken Set to "true" if you want to automatically refresh the token before expiring.
+	* @param options.auth.persistSession Set to "true" if you want to automatically save the user session into local storage.
+	* @param options.auth.detectSessionInUrl Set to "true" if you want to automatically detects OAuth grants in the URL and signs in the user.
+	* @param options.realtime Options passed along to realtime-js constructor.
+	* @param options.storage Options passed along to the storage-js constructor.
+	* @param options.global.fetch A custom fetch implementation.
+	* @param options.global.headers Any additional headers to send with each network request.
+	* @example
+	* ```ts
+	* import { createClient } from '@supabase/supabase-js'
+	*
+	* const supabase = createClient('https://xyzcompany.supabase.co', 'public-anon-key')
+	* const { data } = await supabase.from('profiles').select('*')
+	* ```
+	*/ constructor(supabaseUrl, supabaseKey, options){
+        var _settings$auth$storag, _settings$global$head;
+        this.supabaseUrl = supabaseUrl;
+        this.supabaseKey = supabaseKey;
+        const baseUrl = validateSupabaseUrl(supabaseUrl);
+        if (!supabaseKey) throw new Error("supabaseKey is required.");
+        this.realtimeUrl = new URL("realtime/v1", baseUrl);
+        this.realtimeUrl.protocol = this.realtimeUrl.protocol.replace("http", "ws");
+        this.authUrl = new URL("auth/v1", baseUrl);
+        this.storageUrl = new URL("storage/v1", baseUrl);
+        this.functionsUrl = new URL("functions/v1", baseUrl);
+        const defaultStorageKey = `sb-${baseUrl.hostname.split(".")[0]}-auth-token`;
+        const DEFAULTS = {
+            db: DEFAULT_DB_OPTIONS,
+            realtime: DEFAULT_REALTIME_OPTIONS,
+            auth: _objectSpread2(_objectSpread2({}, DEFAULT_AUTH_OPTIONS), {}, {
+                storageKey: defaultStorageKey
+            }),
+            global: DEFAULT_GLOBAL_OPTIONS
+        };
+        const settings = applySettingDefaults(options !== null && options !== void 0 ? options : {}, DEFAULTS);
+        this.storageKey = (_settings$auth$storag = settings.auth.storageKey) !== null && _settings$auth$storag !== void 0 ? _settings$auth$storag : "";
+        this.headers = (_settings$global$head = settings.global.headers) !== null && _settings$global$head !== void 0 ? _settings$global$head : {};
+        if (!settings.accessToken) {
+            var _settings$auth;
+            this.auth = this._initSupabaseAuthClient((_settings$auth = settings.auth) !== null && _settings$auth !== void 0 ? _settings$auth : {}, this.headers, settings.global.fetch);
+        } else {
+            this.accessToken = settings.accessToken;
+            this.auth = new Proxy({}, {
+                get: (_, prop)=>{
+                    throw new Error(`@supabase/supabase-js: Supabase Client is configured with the accessToken option, accessing supabase.auth.${String(prop)} is not possible`);
+                }
+            });
+        }
+        this.fetch = fetchWithAuth(supabaseKey, this._getAccessToken.bind(this), settings.global.fetch);
+        this.realtime = this._initRealtimeClient(_objectSpread2({
+            headers: this.headers,
+            accessToken: this._getAccessToken.bind(this)
+        }, settings.realtime));
+        if (this.accessToken) Promise.resolve(this.accessToken()).then((token)=>this.realtime.setAuth(token)).catch((e)=>console.warn("Failed to set initial Realtime auth token:", e));
+        this.rest = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$postgrest$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PostgrestClient"](new URL("rest/v1", baseUrl).href, {
+            headers: this.headers,
+            schema: settings.db.schema,
+            fetch: this.fetch,
+            timeout: settings.db.timeout,
+            urlLengthLimit: settings.db.urlLengthLimit
+        });
+        this.storage = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$storage$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["StorageClient"](this.storageUrl.href, this.headers, this.fetch, options === null || options === void 0 ? void 0 : options.storage);
+        if (!settings.accessToken) this._listenForAuthEvents();
+    }
+    /**
+	* Supabase Functions allows you to deploy and invoke edge functions.
+	*/ get functions() {
+        return new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$functions$2d$js$2f$dist$2f$module$2f$FunctionsClient$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FunctionsClient"](this.functionsUrl.href, {
+            headers: this.headers,
+            customFetch: this.fetch
+        });
+    }
+    /**
+	* Perform a query on a table or a view.
+	*
+	* @param relation - The table or view name to query
+	*/ from(relation) {
+        return this.rest.from(relation);
+    }
+    /**
+	* Select a schema to query or perform an function (rpc) call.
+	*
+	* The schema needs to be on the list of exposed schemas inside Supabase.
+	*
+	* @param schema - The schema to query
+	*/ schema(schema) {
+        return this.rest.schema(schema);
+    }
+    /**
+	* Perform a function call.
+	*
+	* @param fn - The function name to call
+	* @param args - The arguments to pass to the function call
+	* @param options - Named parameters
+	* @param options.head - When set to `true`, `data` will not be returned.
+	* Useful if you only need the count.
+	* @param options.get - When set to `true`, the function will be called with
+	* read-only access mode.
+	* @param options.count - Count algorithm to use to count rows returned by the
+	* function. Only applicable for [set-returning
+	* functions](https://www.postgresql.org/docs/current/functions-srf.html).
+	*
+	* `"exact"`: Exact but slow count algorithm. Performs a `COUNT(*)` under the
+	* hood.
+	*
+	* `"planned"`: Approximated but fast count algorithm. Uses the Postgres
+	* statistics under the hood.
+	*
+	* `"estimated"`: Uses exact count for low numbers and planned count for high
+	* numbers.
+	*/ rpc(fn, args = {}, options = {
+        head: false,
+        get: false,
+        count: void 0
+    }) {
+        return this.rest.rpc(fn, args, options);
+    }
+    /**
+	* Creates a Realtime channel with Broadcast, Presence, and Postgres Changes.
+	*
+	* @param {string} name - The name of the Realtime channel.
+	* @param {Object} opts - The options to pass to the Realtime channel.
+	*
+	*/ channel(name, opts = {
+        config: {}
+    }) {
+        return this.realtime.channel(name, opts);
+    }
+    /**
+	* Returns all Realtime channels.
+	*/ getChannels() {
+        return this.realtime.getChannels();
+    }
+    /**
+	* Unsubscribes and removes Realtime channel from Realtime client.
+	*
+	* @param {RealtimeChannel} channel - The name of the Realtime channel.
+	*
+	*/ removeChannel(channel) {
+        return this.realtime.removeChannel(channel);
+    }
+    /**
+	* Unsubscribes and removes all Realtime channels from Realtime client.
+	*/ removeAllChannels() {
+        return this.realtime.removeAllChannels();
+    }
+    async _getAccessToken() {
+        var _this = this;
+        var _data$session$access_, _data$session;
+        if (_this.accessToken) return await _this.accessToken();
+        const { data } = await _this.auth.getSession();
+        return (_data$session$access_ = (_data$session = data.session) === null || _data$session === void 0 ? void 0 : _data$session.access_token) !== null && _data$session$access_ !== void 0 ? _data$session$access_ : _this.supabaseKey;
+    }
+    _initSupabaseAuthClient({ autoRefreshToken, persistSession, detectSessionInUrl, storage, userStorage, storageKey, flowType, lock, debug, throwOnError }, headers, fetch$1) {
+        const authHeaders = {
+            Authorization: `Bearer ${this.supabaseKey}`,
+            apikey: `${this.supabaseKey}`
+        };
+        return new SupabaseAuthClient({
+            url: this.authUrl.href,
+            headers: _objectSpread2(_objectSpread2({}, authHeaders), headers),
+            storageKey,
+            autoRefreshToken,
+            persistSession,
+            detectSessionInUrl,
+            storage,
+            userStorage,
+            flowType,
+            lock,
+            debug,
+            throwOnError,
+            fetch: fetch$1,
+            hasCustomAuthorizationHeader: Object.keys(this.headers).some((key)=>key.toLowerCase() === "authorization")
+        });
+    }
+    _initRealtimeClient(options) {
+        return new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$realtime$2d$js$2f$dist$2f$module$2f$RealtimeClient$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__RealtimeClient$3e$__["RealtimeClient"](this.realtimeUrl.href, _objectSpread2(_objectSpread2({}, options), {}, {
+            params: _objectSpread2(_objectSpread2({}, {
+                apikey: this.supabaseKey
+            }), options === null || options === void 0 ? void 0 : options.params)
+        }));
+    }
+    _listenForAuthEvents() {
+        return this.auth.onAuthStateChange((event, session)=>{
+            this._handleTokenChanged(event, "CLIENT", session === null || session === void 0 ? void 0 : session.access_token);
+        });
+    }
+    _handleTokenChanged(event, source, token) {
+        if ((event === "TOKEN_REFRESHED" || event === "SIGNED_IN") && this.changedAccessToken !== token) {
+            this.changedAccessToken = token;
+            this.realtime.setAuth(token);
+        } else if (event === "SIGNED_OUT") {
+            this.realtime.setAuth();
+            if (source == "STORAGE") this.auth.signOut();
+            this.changedAccessToken = void 0;
+        }
+    }
+};
+//#endregion
+//#region src/index.ts
+/**
+* Creates a new Supabase Client.
+*
+* @example
+* ```ts
+* import { createClient } from '@supabase/supabase-js'
+*
+* const supabase = createClient('https://xyzcompany.supabase.co', 'public-anon-key')
+* const { data, error } = await supabase.from('profiles').select('*')
+* ```
+*/ const createClient = (supabaseUrl, supabaseKey, options)=>{
+    return new SupabaseClient(supabaseUrl, supabaseKey, options);
+};
+function shouldShowDeprecationWarning() {
+    if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+    ;
+    const _process = globalThis["process"];
+    if (!_process) return false;
+    const processVersion = _process["version"];
+    if (processVersion === void 0 || processVersion === null) return false;
+    const versionMatch = processVersion.match(/^v(\d+)\./);
+    if (!versionMatch) return false;
+    return parseInt(versionMatch[1], 10) <= 18;
+}
+if (shouldShowDeprecationWarning()) console.warn("⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217");
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/version.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "VERSION",
+    ()=>VERSION
+]);
+const VERSION = '0.8.0'; //# sourceMappingURL=version.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/helpers.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "isBrowser",
+    ()=>isBrowser,
+    "memoryLocalStorageAdapter",
+    ()=>memoryLocalStorageAdapter,
+    "parse",
+    ()=>parse,
+    "parseCookieHeader",
+    ()=>parseCookieHeader,
+    "serialize",
+    ()=>serialize,
+    "serializeCookieHeader",
+    ()=>serializeCookieHeader
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$cookie$2f$dist$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/cookie/dist/index.js [app-ssr] (ecmascript)");
+;
+const parse = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$cookie$2f$dist$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["parse"];
+const serialize = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$cookie$2f$dist$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["serialize"];
+function parseCookieHeader(header) {
+    const parsed = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$cookie$2f$dist$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["parse"](header);
+    return Object.keys(parsed ?? {}).map((name)=>({
+            name,
+            value: parsed[name]
+        }));
+}
+function serializeCookieHeader(name, value, options) {
+    return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$cookie$2f$dist$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["serialize"](name, value, options);
+}
+function isBrowser() {
+    return ("TURBOPACK compile-time value", "undefined") !== "undefined" && typeof window.document !== "undefined";
+}
+function memoryLocalStorageAdapter(store = {}) {
+    return {
+        getItem: (key)=>{
+            return store[key] || null;
+        },
+        setItem: (key, value)=>{
+            store[key] = value;
+        },
+        removeItem: (key)=>{
+            delete store[key];
+        }
+    };
+} //# sourceMappingURL=helpers.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/constants.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "DEFAULT_COOKIE_OPTIONS",
+    ()=>DEFAULT_COOKIE_OPTIONS
+]);
+const DEFAULT_COOKIE_OPTIONS = {
+    path: "/",
+    sameSite: "lax",
+    httpOnly: false,
+    // https://developer.chrome.com/blog/cookie-max-age-expires
+    // https://httpwg.org/http-extensions/draft-ietf-httpbis-rfc6265bis.html#name-cookie-lifetime-limits
+    maxAge: 400 * 24 * 60 * 60
+}; //# sourceMappingURL=constants.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/chunker.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "MAX_CHUNK_SIZE",
+    ()=>MAX_CHUNK_SIZE,
+    "combineChunks",
+    ()=>combineChunks,
+    "createChunks",
+    ()=>createChunks,
+    "deleteChunks",
+    ()=>deleteChunks,
+    "isChunkLike",
+    ()=>isChunkLike
+]);
+const MAX_CHUNK_SIZE = 3180;
+const CHUNK_LIKE_REGEX = /^(.*)[.](0|[1-9][0-9]*)$/;
+function isChunkLike(cookieName, key) {
+    if (cookieName === key) {
+        return true;
+    }
+    const chunkLike = cookieName.match(CHUNK_LIKE_REGEX);
+    if (chunkLike && chunkLike[1] === key) {
+        return true;
+    }
+    return false;
+}
+function createChunks(key, value, chunkSize) {
+    const resolvedChunkSize = chunkSize ?? MAX_CHUNK_SIZE;
+    let encodedValue = encodeURIComponent(value);
+    if (encodedValue.length <= resolvedChunkSize) {
+        return [
+            {
+                name: key,
+                value
+            }
+        ];
+    }
+    const chunks = [];
+    while(encodedValue.length > 0){
+        let encodedChunkHead = encodedValue.slice(0, resolvedChunkSize);
+        const lastEscapePos = encodedChunkHead.lastIndexOf("%");
+        // Check if the last escaped character is truncated.
+        if (lastEscapePos > resolvedChunkSize - 3) {
+            // If so, reslice the string to exclude the whole escape sequence.
+            // We only reduce the size of the string as the chunk must
+            // be smaller than the chunk size.
+            encodedChunkHead = encodedChunkHead.slice(0, lastEscapePos);
+        }
+        let valueHead = "";
+        // Check if the chunk was split along a valid unicode boundary.
+        while(encodedChunkHead.length > 0){
+            try {
+                // Try to decode the chunk back and see if it is valid.
+                // Stop when the chunk is valid.
+                valueHead = decodeURIComponent(encodedChunkHead);
+                break;
+            } catch (error) {
+                if (error instanceof URIError && encodedChunkHead.at(-3) === "%" && encodedChunkHead.length > 3) {
+                    encodedChunkHead = encodedChunkHead.slice(0, encodedChunkHead.length - 3);
+                } else {
+                    throw error;
+                }
+            }
+        }
+        chunks.push(valueHead);
+        encodedValue = encodedValue.slice(encodedChunkHead.length);
+    }
+    return chunks.map((value, i)=>({
+            name: `${key}.${i}`,
+            value
+        }));
+}
+async function combineChunks(key, retrieveChunk) {
+    const value = await retrieveChunk(key);
+    if (value) {
+        return value;
+    }
+    let values = [];
+    for(let i = 0;; i++){
+        const chunkName = `${key}.${i}`;
+        const chunk = await retrieveChunk(chunkName);
+        if (!chunk) {
+            break;
+        }
+        values.push(chunk);
+    }
+    if (values.length > 0) {
+        return values.join("");
+    }
+    return null;
+}
+async function deleteChunks(key, retrieveChunk, removeChunk) {
+    const value = await retrieveChunk(key);
+    if (value) {
+        await removeChunk(key);
+    }
+    for(let i = 0;; i++){
+        const chunkName = `${key}.${i}`;
+        const chunk = await retrieveChunk(chunkName);
+        if (!chunk) {
+            break;
+        }
+        await removeChunk(chunkName);
+    }
+} //# sourceMappingURL=chunker.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/base64url.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "codepointToUTF8",
+    ()=>codepointToUTF8,
+    "stringFromBase64URL",
+    ()=>stringFromBase64URL,
+    "stringFromUTF8",
+    ()=>stringFromUTF8,
+    "stringToBase64URL",
+    ()=>stringToBase64URL,
+    "stringToUTF8",
+    ()=>stringToUTF8
+]);
+/**
+ * Avoid modifying this file. It's part of
+ * https://github.com/supabase-community/base64url-js.  Submit all fixes on
+ * that repo!
+ */ /**
+ * An array of characters that encode 6 bits into a Base64-URL alphabet
+ * character.
+ */ const TO_BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".split("");
+/**
+ * An array of characters that can appear in a Base64-URL encoded string but
+ * should be ignored.
+ */ const IGNORE_BASE64URL = " \t\n\r=".split("");
+/**
+ * An array of 128 numbers that map a Base64-URL character to 6 bits, or if -2
+ * used to skip the character, or if -1 used to error out.
+ */ const FROM_BASE64URL = (()=>{
+    const charMap = new Array(128);
+    for(let i = 0; i < charMap.length; i += 1){
+        charMap[i] = -1;
+    }
+    for(let i = 0; i < IGNORE_BASE64URL.length; i += 1){
+        charMap[IGNORE_BASE64URL[i].charCodeAt(0)] = -2;
+    }
+    for(let i = 0; i < TO_BASE64URL.length; i += 1){
+        charMap[TO_BASE64URL[i].charCodeAt(0)] = i;
+    }
+    return charMap;
+})();
+function stringToBase64URL(str) {
+    const base64 = [];
+    let queue = 0;
+    let queuedBits = 0;
+    const emitter = (byte)=>{
+        queue = queue << 8 | byte;
+        queuedBits += 8;
+        while(queuedBits >= 6){
+            const pos = queue >> queuedBits - 6 & 63;
+            base64.push(TO_BASE64URL[pos]);
+            queuedBits -= 6;
+        }
+    };
+    stringToUTF8(str, emitter);
+    if (queuedBits > 0) {
+        queue = queue << 6 - queuedBits;
+        queuedBits = 6;
+        while(queuedBits >= 6){
+            const pos = queue >> queuedBits - 6 & 63;
+            base64.push(TO_BASE64URL[pos]);
+            queuedBits -= 6;
+        }
+    }
+    return base64.join("");
+}
+function stringFromBase64URL(str) {
+    const conv = [];
+    const emit = (codepoint)=>{
+        conv.push(String.fromCodePoint(codepoint));
+    };
+    const state = {
+        utf8seq: 0,
+        codepoint: 0
+    };
+    let queue = 0;
+    let queuedBits = 0;
+    for(let i = 0; i < str.length; i += 1){
+        const codepoint = str.charCodeAt(i);
+        const bits = FROM_BASE64URL[codepoint];
+        if (bits > -1) {
+            // valid Base64-URL character
+            queue = queue << 6 | bits;
+            queuedBits += 6;
+            while(queuedBits >= 8){
+                stringFromUTF8(queue >> queuedBits - 8 & 0xff, state, emit);
+                queuedBits -= 8;
+            }
+        } else if (bits === -2) {
+            continue;
+        } else {
+            throw new Error(`Invalid Base64-URL character "${str.at(i)}" at position ${i}`);
+        }
+    }
+    return conv.join("");
+}
+function codepointToUTF8(codepoint, emit) {
+    if (codepoint <= 0x7f) {
+        emit(codepoint);
+        return;
+    } else if (codepoint <= 0x7ff) {
+        emit(0xc0 | codepoint >> 6);
+        emit(0x80 | codepoint & 0x3f);
+        return;
+    } else if (codepoint <= 0xffff) {
+        emit(0xe0 | codepoint >> 12);
+        emit(0x80 | codepoint >> 6 & 0x3f);
+        emit(0x80 | codepoint & 0x3f);
+        return;
+    } else if (codepoint <= 0x10ffff) {
+        emit(0xf0 | codepoint >> 18);
+        emit(0x80 | codepoint >> 12 & 0x3f);
+        emit(0x80 | codepoint >> 6 & 0x3f);
+        emit(0x80 | codepoint & 0x3f);
+        return;
+    }
+    throw new Error(`Unrecognized Unicode codepoint: ${codepoint.toString(16)}`);
+}
+function stringToUTF8(str, emit) {
+    for(let i = 0; i < str.length; i += 1){
+        let codepoint = str.charCodeAt(i);
+        if (codepoint > 0xd7ff && codepoint <= 0xdbff) {
+            // most UTF-16 codepoints are Unicode codepoints, except values in this
+            // range where the next UTF-16 codepoint needs to be combined with the
+            // current one to get the Unicode codepoint
+            const highSurrogate = (codepoint - 0xd800) * 0x400 & 0xffff;
+            const lowSurrogate = str.charCodeAt(i + 1) - 0xdc00 & 0xffff;
+            codepoint = (lowSurrogate | highSurrogate) + 0x10000;
+            i += 1;
+        }
+        codepointToUTF8(codepoint, emit);
+    }
+}
+function stringFromUTF8(byte, state, emit) {
+    if (state.utf8seq === 0) {
+        if (byte <= 0x7f) {
+            emit(byte);
+            return;
+        }
+        // count the number of 1 leading bits until you reach 0
+        for(let leadingBit = 1; leadingBit < 6; leadingBit += 1){
+            if ((byte >> 7 - leadingBit & 1) === 0) {
+                state.utf8seq = leadingBit;
+                break;
+            }
+        }
+        if (state.utf8seq === 2) {
+            state.codepoint = byte & 31;
+        } else if (state.utf8seq === 3) {
+            state.codepoint = byte & 15;
+        } else if (state.utf8seq === 4) {
+            state.codepoint = byte & 7;
+        } else {
+            throw new Error("Invalid UTF-8 sequence");
+        }
+        state.utf8seq -= 1;
+    } else if (state.utf8seq > 0) {
+        if (byte <= 0x7f) {
+            throw new Error("Invalid UTF-8 sequence");
+        }
+        state.codepoint = state.codepoint << 6 | byte & 63;
+        state.utf8seq -= 1;
+        if (state.utf8seq === 0) {
+            emit(state.codepoint);
+        }
+    }
+} //# sourceMappingURL=base64url.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/index.js [app-ssr] (ecmascript) <locals>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$helpers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/helpers.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/constants.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$chunker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/chunker.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$base64url$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/base64url.js [app-ssr] (ecmascript)"); //# sourceMappingURL=index.js.map
+;
+;
+;
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/cookies.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "applyServerStorage",
+    ()=>applyServerStorage,
+    "createStorageFromOptions",
+    ()=>createStorageFromOptions
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$cookie$2f$dist$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/cookie/dist/index.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/index.js [app-ssr] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/constants.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$chunker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/chunker.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$helpers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/helpers.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$base64url$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/base64url.js [app-ssr] (ecmascript)");
+;
+;
+const BASE64_PREFIX = "base64-";
+function createStorageFromOptions(options, isServerClient) {
+    const cookies = options.cookies ?? null;
+    const cookieEncoding = options.cookieEncoding;
+    const setItems = {};
+    const removedItems = {};
+    let getAll;
+    let setAll;
+    if (cookies) {
+        if ("get" in cookies) {
+            // Just get is not enough, because the client needs to see what cookies
+            // are already set and unset them if necessary. To attempt to fix this
+            // behavior for most use cases, we pass "hints" which is the keys of the
+            // storage items. They are then converted to their corresponding cookie
+            // chunk names and are fetched with get. Only 5 chunks are fetched, which
+            // should be enough for the majority of use cases, but does not solve
+            // those with very large sessions.
+            const getWithHints = async (keyHints)=>{
+                // optimistically find the first 5 potential chunks for the specified key
+                const chunkNames = keyHints.flatMap((keyHint)=>[
+                        keyHint,
+                        ...Array.from({
+                            length: 5
+                        }).map((_, i)=>`${keyHint}.${i}`)
+                    ]);
+                const chunks = [];
+                for(let i = 0; i < chunkNames.length; i += 1){
+                    const value = await cookies.get(chunkNames[i]);
+                    if (!value && typeof value !== "string") {
+                        continue;
+                    }
+                    chunks.push({
+                        name: chunkNames[i],
+                        value
+                    });
+                }
+                // TODO: detect and log stale chunks error
+                return chunks;
+            };
+            getAll = async (keyHints)=>await getWithHints(keyHints);
+            if ("set" in cookies && "remove" in cookies) {
+                setAll = async (setCookies)=>{
+                    for(let i = 0; i < setCookies.length; i += 1){
+                        const { name, value, options } = setCookies[i];
+                        if (value) {
+                            await cookies.set(name, value, options);
+                        } else {
+                            await cookies.remove(name, options);
+                        }
+                    }
+                };
+            } else if (isServerClient) {
+                setAll = async ()=>{
+                    console.warn("@supabase/ssr: createServerClient was configured without set and remove cookie methods, but the client needs to set cookies. This can lead to issues such as random logouts, early session termination or increased token refresh requests. If in NextJS, check your middleware.ts file, route handlers and server actions for correctness. Consider switching to the getAll and setAll cookie methods instead of get, set and remove which are deprecated and can be difficult to use correctly.");
+                };
+            } else {
+                throw new Error("@supabase/ssr: createBrowserClient requires configuring a getAll and setAll cookie method (deprecated: alternatively both get, set and remove can be used)");
+            }
+        } else if ("getAll" in cookies) {
+            getAll = async ()=>await cookies.getAll();
+            if ("setAll" in cookies) {
+                setAll = cookies.setAll;
+            } else if (isServerClient) {
+                setAll = async ()=>{
+                    console.warn("@supabase/ssr: createServerClient was configured without the setAll cookie method, but the client needs to set cookies. This can lead to issues such as random logouts, early session termination or increased token refresh requests. If in NextJS, check your middleware.ts file, route handlers and server actions for correctness.");
+                };
+            } else {
+                throw new Error("@supabase/ssr: createBrowserClient requires configuring both getAll and setAll cookie methods (deprecated: alternatively both get, set and remove can be used)");
+            }
+        } else {
+            // neither get nor getAll is present on cookies, only will occur if pure JavaScript is used, but cookies is an object
+            throw new Error(`@supabase/ssr: ${isServerClient ? "createServerClient" : "createBrowserClient"} requires configuring getAll and setAll cookie methods (deprecated: alternatively use get, set and remove).${(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$helpers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isBrowser"])() ? " As this is called in a browser runtime, consider removing the cookies option object to use the document.cookie API automatically." : ""}`);
+        }
+    } else if (!isServerClient && (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$helpers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isBrowser"])()) {
+        // The environment is browser, so use the document.cookie API to implement getAll and setAll.
+        const noHintGetAll = ()=>{
+            const parsed = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$cookie$2f$dist$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["parse"])(document.cookie);
+            return Object.keys(parsed).map((name)=>({
+                    name,
+                    value: parsed[name] ?? ""
+                }));
+        };
+        getAll = ()=>noHintGetAll();
+        setAll = (setCookies)=>{
+            setCookies.forEach(({ name, value, options })=>{
+                document.cookie = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$cookie$2f$dist$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["serialize"])(name, value, options);
+            });
+        };
+    } else if (isServerClient) {
+        throw new Error("@supabase/ssr: createServerClient must be initialized with cookie options that specify getAll and setAll functions (deprecated, not recommended: alternatively use get, set and remove)");
+    } else {
+        // getting cookies when there's no window but we're in browser mode can be OK, because the developer probably is not using auth functions
+        getAll = ()=>{
+            return [];
+        };
+        // this is NOT OK because the developer is using auth functions that require setting some state, so that must error out
+        setAll = ()=>{
+            throw new Error("@supabase/ssr: createBrowserClient in non-browser runtimes (including Next.js pre-rendering mode) was not initialized cookie options that specify getAll and setAll functions (deprecated: alternatively use get, set and remove), but they were needed");
+        };
+    }
+    if (!isServerClient) {
+        // This is the storage client to be used in browsers. It only
+        // works on the cookies abstraction, unlike the server client
+        // which only uses cookies to read the initial state. When an
+        // item is set, cookies are both cleared and set to values so
+        // that stale chunks are not left remaining.
+        return {
+            getAll,
+            setAll,
+            setItems,
+            removedItems,
+            storage: {
+                isServer: false,
+                getItem: async (key)=>{
+                    const allCookies = await getAll([
+                        key
+                    ]);
+                    const chunkedCookie = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$chunker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["combineChunks"])(key, async (chunkName)=>{
+                        const cookie = allCookies?.find(({ name })=>name === chunkName) || null;
+                        if (!cookie) {
+                            return null;
+                        }
+                        return cookie.value;
+                    });
+                    if (!chunkedCookie) {
+                        return null;
+                    }
+                    let decoded = chunkedCookie;
+                    if (chunkedCookie.startsWith(BASE64_PREFIX)) {
+                        decoded = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$base64url$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["stringFromBase64URL"])(chunkedCookie.substring(BASE64_PREFIX.length));
+                    }
+                    return decoded;
+                },
+                setItem: async (key, value)=>{
+                    const allCookies = await getAll([
+                        key
+                    ]);
+                    const cookieNames = allCookies?.map(({ name })=>name) || [];
+                    const removeCookies = new Set(cookieNames.filter((name)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$chunker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isChunkLike"])(name, key)));
+                    let encoded = value;
+                    if (cookieEncoding === "base64url") {
+                        encoded = BASE64_PREFIX + (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$base64url$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["stringToBase64URL"])(value);
+                    }
+                    const setCookies = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$chunker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createChunks"])(key, encoded);
+                    setCookies.forEach(({ name })=>{
+                        removeCookies.delete(name);
+                    });
+                    const removeCookieOptions = {
+                        ...__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_COOKIE_OPTIONS"],
+                        ...options?.cookieOptions,
+                        maxAge: 0
+                    };
+                    const setCookieOptions = {
+                        ...__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_COOKIE_OPTIONS"],
+                        ...options?.cookieOptions,
+                        maxAge: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_COOKIE_OPTIONS"].maxAge
+                    };
+                    // the NextJS cookieStore API can get confused if the `name` from
+                    // options.cookieOptions leaks
+                    delete removeCookieOptions.name;
+                    delete setCookieOptions.name;
+                    const allToSet = [
+                        ...[
+                            ...removeCookies
+                        ].map((name)=>({
+                                name,
+                                value: "",
+                                options: removeCookieOptions
+                            })),
+                        ...setCookies.map(({ name, value })=>({
+                                name,
+                                value,
+                                options: setCookieOptions
+                            }))
+                    ];
+                    if (allToSet.length > 0) {
+                        await setAll(allToSet);
+                    }
+                },
+                removeItem: async (key)=>{
+                    const allCookies = await getAll([
+                        key
+                    ]);
+                    const cookieNames = allCookies?.map(({ name })=>name) || [];
+                    const removeCookies = cookieNames.filter((name)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$chunker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isChunkLike"])(name, key));
+                    const removeCookieOptions = {
+                        ...__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_COOKIE_OPTIONS"],
+                        ...options?.cookieOptions,
+                        maxAge: 0
+                    };
+                    // the NextJS cookieStore API can get confused if the `name` from
+                    // options.cookieOptions leaks
+                    delete removeCookieOptions.name;
+                    if (removeCookies.length > 0) {
+                        await setAll(removeCookies.map((name)=>({
+                                name,
+                                value: "",
+                                options: removeCookieOptions
+                            })));
+                    }
+                }
+            }
+        };
+    }
+    // This is the server client. It only uses getAll to read the initial
+    // state. Any subsequent changes to the items is persisted in the
+    // setItems and removedItems objects. createServerClient *must* use
+    // getAll, setAll and the values in setItems and removedItems to
+    // persist the changes *at once* when appropriate (usually only when
+    // the TOKEN_REFRESHED, USER_UPDATED or SIGNED_OUT events are fired by
+    // the Supabase Auth client).
+    return {
+        getAll,
+        setAll,
+        setItems,
+        removedItems,
+        storage: {
+            // to signal to the libraries that these cookies are
+            // coming from a server environment and their value
+            // should not be trusted
+            isServer: true,
+            getItem: async (key)=>{
+                if (typeof setItems[key] === "string") {
+                    return setItems[key];
+                }
+                if (removedItems[key]) {
+                    return null;
+                }
+                const allCookies = await getAll([
+                    key
+                ]);
+                const chunkedCookie = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$chunker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["combineChunks"])(key, async (chunkName)=>{
+                    const cookie = allCookies?.find(({ name })=>name === chunkName) || null;
+                    if (!cookie) {
+                        return null;
+                    }
+                    return cookie.value;
+                });
+                if (!chunkedCookie) {
+                    return null;
+                }
+                let decoded = chunkedCookie;
+                if (typeof chunkedCookie === "string" && chunkedCookie.startsWith(BASE64_PREFIX)) {
+                    decoded = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$base64url$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["stringFromBase64URL"])(chunkedCookie.substring(BASE64_PREFIX.length));
+                }
+                return decoded;
+            },
+            setItem: async (key, value)=>{
+                // We don't have an `onAuthStateChange` event that can let us know that
+                // the PKCE code verifier is being set. Therefore, if we see it being
+                // set, we need to apply the storage (call `setAll` so the cookie is
+                // set properly).
+                if (key.endsWith("-code-verifier")) {
+                    await applyServerStorage({
+                        getAll,
+                        setAll,
+                        // pretend only that the code verifier was set
+                        setItems: {
+                            [key]: value
+                        },
+                        // pretend that nothing was removed
+                        removedItems: {}
+                    }, {
+                        cookieOptions: options?.cookieOptions ?? null,
+                        cookieEncoding
+                    });
+                }
+                setItems[key] = value;
+                delete removedItems[key];
+            },
+            removeItem: async (key)=>{
+                // Intentionally not applying the storage when the key is the PKCE code
+                // verifier, as usually right after it's removed other items are set,
+                // so application of the storage will be handled by the
+                // `onAuthStateChange` callback that follows removal -- usually as part
+                // of the `exchangeCodeForSession` call.
+                delete setItems[key];
+                removedItems[key] = true;
+            }
+        }
+    };
+}
+async function applyServerStorage({ getAll, setAll, setItems, removedItems }, options) {
+    const cookieEncoding = options.cookieEncoding;
+    const cookieOptions = options.cookieOptions ?? null;
+    const allCookies = await getAll([
+        ...setItems ? Object.keys(setItems) : [],
+        ...removedItems ? Object.keys(removedItems) : []
+    ]);
+    const cookieNames = allCookies?.map(({ name })=>name) || [];
+    const removeCookies = Object.keys(removedItems).flatMap((itemName)=>{
+        return cookieNames.filter((name)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$chunker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isChunkLike"])(name, itemName));
+    });
+    const setCookies = Object.keys(setItems).flatMap((itemName)=>{
+        const removeExistingCookiesForItem = new Set(cookieNames.filter((name)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$chunker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isChunkLike"])(name, itemName)));
+        let encoded = setItems[itemName];
+        if (cookieEncoding === "base64url") {
+            encoded = BASE64_PREFIX + (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$base64url$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["stringToBase64URL"])(encoded);
+        }
+        const chunks = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$chunker$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createChunks"])(itemName, encoded);
+        chunks.forEach((chunk)=>{
+            removeExistingCookiesForItem.delete(chunk.name);
+        });
+        removeCookies.push(...removeExistingCookiesForItem);
+        return chunks;
+    });
+    const removeCookieOptions = {
+        ...__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_COOKIE_OPTIONS"],
+        ...cookieOptions,
+        maxAge: 0
+    };
+    const setCookieOptions = {
+        ...__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_COOKIE_OPTIONS"],
+        ...cookieOptions,
+        maxAge: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$constants$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DEFAULT_COOKIE_OPTIONS"].maxAge
+    };
+    // the NextJS cookieStore API can get confused if the `name` from
+    // options.cookieOptions leaks
+    delete removeCookieOptions.name;
+    delete setCookieOptions.name;
+    await setAll([
+        ...removeCookies.map((name)=>({
+                name,
+                value: "",
+                options: removeCookieOptions
+            })),
+        ...setCookies.map(({ name, value })=>({
+                name,
+                value,
+                options: setCookieOptions
+            }))
+    ]);
+} //# sourceMappingURL=cookies.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/createBrowserClient.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "createBrowserClient",
+    ()=>createBrowserClient
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/supabase-js/dist/index.mjs [app-ssr] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$version$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/version.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/index.js [app-ssr] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$helpers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/helpers.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$cookies$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/cookies.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+let cachedBrowserClient;
+function createBrowserClient(supabaseUrl, supabaseKey, options) {
+    // singleton client is created only if isSingleton is set to true, or if isSingleton is not defined and we detect a browser
+    const shouldUseSingleton = options?.isSingleton === true || (!options || !("isSingleton" in options)) && (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$helpers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isBrowser"])();
+    if (shouldUseSingleton && cachedBrowserClient) {
+        return cachedBrowserClient;
+    }
+    if (!supabaseUrl || !supabaseKey) {
+        throw new Error(`@supabase/ssr: Your project's URL and API key are required to create a Supabase client!\n\nCheck your Supabase project's API settings to find these values\n\nhttps://supabase.com/dashboard/project/_/settings/api`);
+    }
+    const { storage } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$cookies$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createStorageFromOptions"])({
+        ...options,
+        cookieEncoding: options?.cookieEncoding ?? "base64url"
+    }, false);
+    const client = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["createClient"])(supabaseUrl, supabaseKey, {
+        // TODO: resolve type error
+        ...options,
+        global: {
+            ...options?.global,
+            headers: {
+                ...options?.global?.headers,
+                "X-Client-Info": `supabase-ssr/${__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$version$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["VERSION"]} createBrowserClient`
+            }
+        },
+        auth: {
+            ...options?.auth,
+            ...options?.cookieOptions?.name ? {
+                storageKey: options.cookieOptions.name
+            } : null,
+            flowType: "pkce",
+            autoRefreshToken: (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$helpers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isBrowser"])(),
+            detectSessionInUrl: (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$helpers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isBrowser"])(),
+            persistSession: true,
+            storage,
+            ...options?.cookies && "encode" in options.cookies && options.cookies.encode === "tokens-only" ? {
+                userStorage: options?.auth?.userStorage ?? window.localStorage
+            } : null
+        }
+    });
+    if (shouldUseSingleton) {
+        cachedBrowserClient = client;
+    }
+    return client;
+} //# sourceMappingURL=createBrowserClient.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/createServerClient.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "createServerClient",
+    ()=>createServerClient
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/supabase-js/dist/index.mjs [app-ssr] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$version$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/version.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$cookies$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/cookies.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$helpers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/helpers.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+function createServerClient(supabaseUrl, supabaseKey, options) {
+    if (!supabaseUrl || !supabaseKey) {
+        throw new Error(`Your project's URL and Key are required to create a Supabase client!\n\nCheck your Supabase project's API settings to find these values\n\nhttps://supabase.com/dashboard/project/_/settings/api`);
+    }
+    const { storage, getAll, setAll, setItems, removedItems } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$cookies$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createStorageFromOptions"])({
+        ...options,
+        cookieEncoding: options?.cookieEncoding ?? "base64url"
+    }, true);
+    const client = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["createClient"])(supabaseUrl, supabaseKey, {
+        // TODO: resolve type error
+        ...options,
+        global: {
+            ...options?.global,
+            headers: {
+                ...options?.global?.headers,
+                "X-Client-Info": `supabase-ssr/${__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$version$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["VERSION"]} createServerClient`
+            }
+        },
+        auth: {
+            ...options?.cookieOptions?.name ? {
+                storageKey: options.cookieOptions.name
+            } : null,
+            ...options?.auth,
+            flowType: "pkce",
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+            persistSession: true,
+            storage,
+            ...options?.cookies && "encode" in options.cookies && options.cookies.encode === "tokens-only" ? {
+                userStorage: options?.auth?.userStorage ?? (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$helpers$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["memoryLocalStorageAdapter"])()
+            } : null
+        }
+    });
+    client.auth.onAuthStateChange(async (event)=>{
+        // The SIGNED_IN event is fired very often, but we don't need to
+        // apply the storage each time it fires, only if there are changes
+        // that need to be set -- which is if setItems / removeItems have
+        // data.
+        const hasStorageChanges = Object.keys(setItems).length > 0 || Object.keys(removedItems).length > 0;
+        if (hasStorageChanges && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED" || event === "PASSWORD_RECOVERY" || event === "SIGNED_OUT" || event === "MFA_CHALLENGE_VERIFIED")) {
+            await (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$cookies$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["applyServerStorage"])({
+                getAll,
+                setAll,
+                setItems,
+                removedItems
+            }, {
+                cookieOptions: options?.cookieOptions ?? null,
+                cookieEncoding: options?.cookieEncoding ?? "base64url"
+            });
+        }
+    });
+    return client;
+} //# sourceMappingURL=createServerClient.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/types.js [app-ssr] (ecmascript)", ((__turbopack_context__, module, exports) => {
+
+//# sourceMappingURL=types.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/index.js [app-ssr] (ecmascript) <locals>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$createBrowserClient$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/createBrowserClient.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$createServerClient$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/createServerClient.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/types.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$utils$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@supabase/ssr/dist/module/utils/index.js [app-ssr] (ecmascript) <locals>"); //# sourceMappingURL=index.js.map
+// Check if this package is being used as one of the deprecated auth-helpers packages
+if (typeof process !== "undefined" && process.env?.npm_package_name) {
+    const packageName = process.env.npm_package_name;
+    const deprecatedPackages = [
+        "@supabase/auth-helpers-nextjs",
+        "@supabase/auth-helpers-react",
+        "@supabase/auth-helpers-remix",
+        "@supabase/auth-helpers-sveltekit"
+    ];
+    if (deprecatedPackages.includes(packageName)) {
+        console.warn(`
+╔════════════════════════════════════════════════════════════════════════════╗
+║ ⚠️  IMPORTANT: Package Consolidation Notice                                ║
+║                                                                            ║
+║ The ${packageName.padEnd(35)} package name is deprecated.  ║
+║                                                                            ║
+║ You are now using @supabase/ssr - a unified solution for all frameworks.  ║
+║                                                                            ║
+║ The auth-helpers packages have been consolidated into @supabase/ssr       ║
+║ to provide better maintenance and consistent APIs across frameworks.      ║
+║                                                                            ║
+║ Please update your package.json to use @supabase/ssr directly:            ║
+║   npm uninstall ${packageName.padEnd(42)} ║
+║   npm install @supabase/ssr                                               ║
+║                                                                            ║
+║ For more information, visit:                                              ║
+║ https://supabase.com/docs/guides/auth/server-side                         ║
+╚════════════════════════════════════════════════════════════════════════════╝
+    `);
+    }
+}
+;
+;
+;
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/cookie/dist/index.js [app-ssr] (ecmascript)", ((__turbopack_context__, module, exports) => {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.parseCookie = parseCookie;
+exports.parse = parseCookie;
+exports.stringifyCookie = stringifyCookie;
+exports.stringifySetCookie = stringifySetCookie;
+exports.serialize = stringifySetCookie;
+exports.parseSetCookie = parseSetCookie;
+exports.stringifySetCookie = stringifySetCookie;
+exports.serialize = stringifySetCookie;
+/**
+ * RegExp to match cookie-name in RFC 6265 sec 4.1.1
+ * This refers out to the obsoleted definition of token in RFC 2616 sec 2.2
+ * which has been replaced by the token definition in RFC 7230 appendix B.
+ *
+ * cookie-name       = token
+ * token             = 1*tchar
+ * tchar             = "!" / "#" / "$" / "%" / "&" / "'" /
+ *                     "*" / "+" / "-" / "." / "^" / "_" /
+ *                     "`" / "|" / "~" / DIGIT / ALPHA
+ *
+ * Note: Allowing more characters - https://github.com/jshttp/cookie/issues/191
+ * Allow same range as cookie value, except `=`, which delimits end of name.
+ */ const cookieNameRegExp = /^[\u0021-\u003A\u003C\u003E-\u007E]+$/;
+/**
+ * RegExp to match cookie-value in RFC 6265 sec 4.1.1
+ *
+ * cookie-value      = *cookie-octet / ( DQUOTE *cookie-octet DQUOTE )
+ * cookie-octet      = %x21 / %x23-2B / %x2D-3A / %x3C-5B / %x5D-7E
+ *                     ; US-ASCII characters excluding CTLs,
+ *                     ; whitespace DQUOTE, comma, semicolon,
+ *                     ; and backslash
+ *
+ * Allowing more characters: https://github.com/jshttp/cookie/issues/191
+ * Comma, backslash, and DQUOTE are not part of the parsing algorithm.
+ */ const cookieValueRegExp = /^[\u0021-\u003A\u003C-\u007E]*$/;
+/**
+ * RegExp to match domain-value in RFC 6265 sec 4.1.1
+ *
+ * domain-value      = <subdomain>
+ *                     ; defined in [RFC1034], Section 3.5, as
+ *                     ; enhanced by [RFC1123], Section 2.1
+ * <subdomain>       = <label> | <subdomain> "." <label>
+ * <label>           = <let-dig> [ [ <ldh-str> ] <let-dig> ]
+ *                     Labels must be 63 characters or less.
+ *                     'let-dig' not 'letter' in the first char, per RFC1123
+ * <ldh-str>         = <let-dig-hyp> | <let-dig-hyp> <ldh-str>
+ * <let-dig-hyp>     = <let-dig> | "-"
+ * <let-dig>         = <letter> | <digit>
+ * <letter>          = any one of the 52 alphabetic characters A through Z in
+ *                     upper case and a through z in lower case
+ * <digit>           = any one of the ten digits 0 through 9
+ *
+ * Keep support for leading dot: https://github.com/jshttp/cookie/issues/173
+ *
+ * > (Note that a leading %x2E ("."), if present, is ignored even though that
+ * character is not permitted, but a trailing %x2E ("."), if present, will
+ * cause the user agent to ignore the attribute.)
+ */ const domainValueRegExp = /^([.]?[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)([.][a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i;
+/**
+ * RegExp to match path-value in RFC 6265 sec 4.1.1
+ *
+ * path-value        = <any CHAR except CTLs or ";">
+ * CHAR              = %x01-7F
+ *                     ; defined in RFC 5234 appendix B.1
+ */ const pathValueRegExp = /^[\u0020-\u003A\u003D-\u007E]*$/;
+/**
+ * RegExp to match max-age-value in RFC 6265 sec 5.6.2
+ */ const maxAgeRegExp = /^-?\d+$/;
+const __toString = Object.prototype.toString;
+const NullObject = /* @__PURE__ */ (()=>{
+    const C = function() {};
+    C.prototype = Object.create(null);
+    return C;
+})();
+/**
+ * Parse a `Cookie` header.
+ *
+ * Parse the given cookie header string into an object
+ * The object has the various cookies as keys(names) => values
+ */ function parseCookie(str, options) {
+    const obj = new NullObject();
+    const len = str.length;
+    // RFC 6265 sec 4.1.1, RFC 2616 2.2 defines a cookie name consists of one char minimum, plus '='.
+    if (len < 2) return obj;
+    const dec = options?.decode || decode;
+    let index = 0;
+    do {
+        const eqIdx = eqIndex(str, index, len);
+        if (eqIdx === -1) break; // No more cookie pairs.
+        const endIdx = endIndex(str, index, len);
+        if (eqIdx > endIdx) {
+            // backtrack on prior semicolon
+            index = str.lastIndexOf(";", eqIdx - 1) + 1;
+            continue;
+        }
+        const key = valueSlice(str, index, eqIdx);
+        // only assign once
+        if (obj[key] === undefined) {
+            obj[key] = dec(valueSlice(str, eqIdx + 1, endIdx));
+        }
+        index = endIdx + 1;
+    }while (index < len)
+    return obj;
+}
+/**
+ * Stringifies an object into an HTTP `Cookie` header.
+ */ function stringifyCookie(cookie, options) {
+    const enc = options?.encode || encodeURIComponent;
+    const cookieStrings = [];
+    for (const name of Object.keys(cookie)){
+        const val = cookie[name];
+        if (val === undefined) continue;
+        if (!cookieNameRegExp.test(name)) {
+            throw new TypeError(`cookie name is invalid: ${name}`);
+        }
+        const value = enc(val);
+        if (!cookieValueRegExp.test(value)) {
+            throw new TypeError(`cookie val is invalid: ${val}`);
+        }
+        cookieStrings.push(`${name}=${value}`);
+    }
+    return cookieStrings.join("; ");
+}
+function stringifySetCookie(_name, _val, _opts) {
+    const cookie = typeof _name === "object" ? _name : {
+        ..._opts,
+        name: _name,
+        value: String(_val)
+    };
+    const options = typeof _val === "object" ? _val : _opts;
+    const enc = options?.encode || encodeURIComponent;
+    if (!cookieNameRegExp.test(cookie.name)) {
+        throw new TypeError(`argument name is invalid: ${cookie.name}`);
+    }
+    const value = cookie.value ? enc(cookie.value) : "";
+    if (!cookieValueRegExp.test(value)) {
+        throw new TypeError(`argument val is invalid: ${cookie.value}`);
+    }
+    let str = cookie.name + "=" + value;
+    if (cookie.maxAge !== undefined) {
+        if (!Number.isInteger(cookie.maxAge)) {
+            throw new TypeError(`option maxAge is invalid: ${cookie.maxAge}`);
+        }
+        str += "; Max-Age=" + cookie.maxAge;
+    }
+    if (cookie.domain) {
+        if (!domainValueRegExp.test(cookie.domain)) {
+            throw new TypeError(`option domain is invalid: ${cookie.domain}`);
+        }
+        str += "; Domain=" + cookie.domain;
+    }
+    if (cookie.path) {
+        if (!pathValueRegExp.test(cookie.path)) {
+            throw new TypeError(`option path is invalid: ${cookie.path}`);
+        }
+        str += "; Path=" + cookie.path;
+    }
+    if (cookie.expires) {
+        if (!isDate(cookie.expires) || !Number.isFinite(cookie.expires.valueOf())) {
+            throw new TypeError(`option expires is invalid: ${cookie.expires}`);
+        }
+        str += "; Expires=" + cookie.expires.toUTCString();
+    }
+    if (cookie.httpOnly) {
+        str += "; HttpOnly";
+    }
+    if (cookie.secure) {
+        str += "; Secure";
+    }
+    if (cookie.partitioned) {
+        str += "; Partitioned";
+    }
+    if (cookie.priority) {
+        const priority = typeof cookie.priority === "string" ? cookie.priority.toLowerCase() : undefined;
+        switch(priority){
+            case "low":
+                str += "; Priority=Low";
+                break;
+            case "medium":
+                str += "; Priority=Medium";
+                break;
+            case "high":
+                str += "; Priority=High";
+                break;
+            default:
+                throw new TypeError(`option priority is invalid: ${cookie.priority}`);
+        }
+    }
+    if (cookie.sameSite) {
+        const sameSite = typeof cookie.sameSite === "string" ? cookie.sameSite.toLowerCase() : cookie.sameSite;
+        switch(sameSite){
+            case true:
+            case "strict":
+                str += "; SameSite=Strict";
+                break;
+            case "lax":
+                str += "; SameSite=Lax";
+                break;
+            case "none":
+                str += "; SameSite=None";
+                break;
+            default:
+                throw new TypeError(`option sameSite is invalid: ${cookie.sameSite}`);
+        }
+    }
+    return str;
+}
+/**
+ * Deserialize a `Set-Cookie` header into an object.
+ *
+ * deserialize('foo=bar; httpOnly')
+ *   => { name: 'foo', value: 'bar', httpOnly: true }
+ */ function parseSetCookie(str, options) {
+    const dec = options?.decode || decode;
+    const len = str.length;
+    const endIdx = endIndex(str, 0, len);
+    const eqIdx = eqIndex(str, 0, endIdx);
+    const setCookie = eqIdx === -1 ? {
+        name: "",
+        value: dec(valueSlice(str, 0, endIdx))
+    } : {
+        name: valueSlice(str, 0, eqIdx),
+        value: dec(valueSlice(str, eqIdx + 1, endIdx))
+    };
+    let index = endIdx + 1;
+    while(index < len){
+        const endIdx = endIndex(str, index, len);
+        const eqIdx = eqIndex(str, index, endIdx);
+        const attr = eqIdx === -1 ? valueSlice(str, index, endIdx) : valueSlice(str, index, eqIdx);
+        const val = eqIdx === -1 ? undefined : valueSlice(str, eqIdx + 1, endIdx);
+        switch(attr.toLowerCase()){
+            case "httponly":
+                setCookie.httpOnly = true;
+                break;
+            case "secure":
+                setCookie.secure = true;
+                break;
+            case "partitioned":
+                setCookie.partitioned = true;
+                break;
+            case "domain":
+                setCookie.domain = val;
+                break;
+            case "path":
+                setCookie.path = val;
+                break;
+            case "max-age":
+                if (val && maxAgeRegExp.test(val)) setCookie.maxAge = Number(val);
+                break;
+            case "expires":
+                if (!val) break;
+                const date = new Date(val);
+                if (Number.isFinite(date.valueOf())) setCookie.expires = date;
+                break;
+            case "priority":
+                if (!val) break;
+                const priority = val.toLowerCase();
+                if (priority === "low" || priority === "medium" || priority === "high") {
+                    setCookie.priority = priority;
+                }
+                break;
+            case "samesite":
+                if (!val) break;
+                const sameSite = val.toLowerCase();
+                if (sameSite === "lax" || sameSite === "strict" || sameSite === "none") {
+                    setCookie.sameSite = sameSite;
+                }
+                break;
+        }
+        index = endIdx + 1;
+    }
+    return setCookie;
+}
+/**
+ * Find the `;` character between `min` and `len` in str.
+ */ function endIndex(str, min, len) {
+    const index = str.indexOf(";", min);
+    return index === -1 ? len : index;
+}
+/**
+ * Find the `=` character between `min` and `max` in str.
+ */ function eqIndex(str, min, max) {
+    const index = str.indexOf("=", min);
+    return index < max ? index : -1;
+}
+/**
+ * Slice out a value between startPod to max.
+ */ function valueSlice(str, min, max) {
+    let start = min;
+    let end = max;
+    do {
+        const code = str.charCodeAt(start);
+        if (code !== 0x20 /*   */  && code !== 0x09 /* \t */ ) break;
+    }while (++start < end)
+    while(end > start){
+        const code = str.charCodeAt(end - 1);
+        if (code !== 0x20 /*   */  && code !== 0x09 /* \t */ ) break;
+        end--;
+    }
+    return str.slice(start, end);
+}
+/**
+ * URL-decode string value. Optimized to skip native call when no %.
+ */ function decode(str) {
+    if (str.indexOf("%") === -1) return str;
+    try {
+        return decodeURIComponent(str);
+    } catch (e) {
+        return str;
+    }
+}
+/**
+ * Determine if value is a Date.
+ */ function isDate(val) {
+    return __toString.call(val) === "[object Date]";
+} //# sourceMappingURL=index.js.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-themes/dist/index.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "ThemeProvider",
+    ()=>J,
+    "useTheme",
+    ()=>z
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+"use client";
+;
+var M = (e, i, s, u, m, a, l, h)=>{
+    let d = document.documentElement, w = [
+        "light",
+        "dark"
+    ];
+    function p(n) {
+        (Array.isArray(e) ? e : [
+            e
+        ]).forEach((y)=>{
+            let k = y === "class", S = k && a ? m.map((f)=>a[f] || f) : m;
+            k ? (d.classList.remove(...S), d.classList.add(a && a[n] ? a[n] : n)) : d.setAttribute(y, n);
+        }), R(n);
+    }
+    function R(n) {
+        h && w.includes(n) && (d.style.colorScheme = n);
+    }
+    function c() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    if (u) p(u);
+    else try {
+        let n = localStorage.getItem(i) || s, y = l && n === "system" ? c() : n;
+        p(y);
+    } catch (n) {}
+};
+var b = [
+    "light",
+    "dark"
+], I = "(prefers-color-scheme: dark)", O = ("TURBOPACK compile-time value", "undefined") == "undefined", x = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createContext"](void 0), U = {
+    setTheme: (e)=>{},
+    themes: []
+}, z = ()=>{
+    var e;
+    return (e = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useContext"](x)) != null ? e : U;
+}, J = (e)=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useContext"](x) ? __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createElement"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], null, e.children) : __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createElement"](V, {
+        ...e
+    }), N = [
+    "light",
+    "dark"
+], V = ({ forcedTheme: e, disableTransitionOnChange: i = !1, enableSystem: s = !0, enableColorScheme: u = !0, storageKey: m = "theme", themes: a = N, defaultTheme: l = s ? "system" : "light", attribute: h = "data-theme", value: d, children: w, nonce: p, scriptProps: R })=>{
+    let [c, n] = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"](()=>H(m, l)), [T, y] = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"](()=>c === "system" ? E() : c), k = d ? Object.values(d) : a, S = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"]((o)=>{
+        let r = o;
+        if (!r) return;
+        o === "system" && s && (r = E());
+        let v = d ? d[r] : r, C = i ? W(p) : null, P = document.documentElement, L = (g)=>{
+            g === "class" ? (P.classList.remove(...k), v && P.classList.add(v)) : g.startsWith("data-") && (v ? P.setAttribute(g, v) : P.removeAttribute(g));
+        };
+        if (Array.isArray(h) ? h.forEach(L) : L(h), u) {
+            let g = b.includes(l) ? l : null, D = b.includes(r) ? r : g;
+            P.style.colorScheme = D;
+        }
+        C == null || C();
+    }, [
+        p
+    ]), f = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"]((o)=>{
+        let r = typeof o == "function" ? o(c) : o;
+        n(r);
+        try {
+            localStorage.setItem(m, r);
+        } catch (v) {}
+    }, [
+        c
+    ]), A = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"]((o)=>{
+        let r = E(o);
+        y(r), c === "system" && s && !e && S("system");
+    }, [
+        c,
+        e
+    ]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"](()=>{
+        let o = window.matchMedia(I);
+        return o.addListener(A), A(o), ()=>o.removeListener(A);
+    }, [
+        A
+    ]), __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"](()=>{
+        let o = (r)=>{
+            r.key === m && (r.newValue ? n(r.newValue) : f(l));
+        };
+        return window.addEventListener("storage", o), ()=>window.removeEventListener("storage", o);
+    }, [
+        f
+    ]), __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"](()=>{
+        S(e != null ? e : c);
+    }, [
+        e,
+        c
+    ]);
+    let Q = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"](()=>({
+            theme: c,
+            setTheme: f,
+            forcedTheme: e,
+            resolvedTheme: c === "system" ? T : c,
+            themes: s ? [
+                ...a,
+                "system"
+            ] : a,
+            systemTheme: s ? T : void 0
+        }), [
+        c,
+        f,
+        e,
+        T,
+        s,
+        a
+    ]);
+    return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createElement"](x.Provider, {
+        value: Q
+    }, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createElement"](_, {
+        forcedTheme: e,
+        storageKey: m,
+        attribute: h,
+        enableSystem: s,
+        enableColorScheme: u,
+        defaultTheme: l,
+        value: d,
+        themes: a,
+        nonce: p,
+        scriptProps: R
+    }), w);
+}, _ = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["memo"](({ forcedTheme: e, storageKey: i, attribute: s, enableSystem: u, enableColorScheme: m, defaultTheme: a, value: l, themes: h, nonce: d, scriptProps: w })=>{
+    let p = JSON.stringify([
+        s,
+        i,
+        a,
+        e,
+        h,
+        l,
+        u,
+        m
+    ]).slice(1, -1);
+    return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createElement"]("script", {
+        ...w,
+        suppressHydrationWarning: !0,
+        nonce: ("TURBOPACK compile-time truthy", 1) ? d : "TURBOPACK unreachable",
+        dangerouslySetInnerHTML: {
+            __html: `(${M.toString()})(${p})`
+        }
+    });
+}), H = (e, i)=>{
+    if ("TURBOPACK compile-time truthy", 1) return;
+    //TURBOPACK unreachable
+    ;
+    let s;
+}, W = (e)=>{
+    let i = document.createElement("style");
+    return e && i.setAttribute("nonce", e), i.appendChild(document.createTextNode("*,*::before,*::after{-webkit-transition:none!important;-moz-transition:none!important;-o-transition:none!important;-ms-transition:none!important;transition:none!important}")), document.head.appendChild(i), ()=>{
+        window.getComputedStyle(document.body), setTimeout(()=>{
+            document.head.removeChild(i);
+        }, 1);
+    };
+}, E = (e)=>(e || (e = window.matchMedia(I)), e.matches ? "dark" : "light");
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/routing/defineRouting.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>defineRouting
+]);
+function defineRouting(config) {
+    if (config.domains) {
+        validateUniqueLocalesPerDomain(config.domains);
+    }
+    return config;
+}
+function validateUniqueLocalesPerDomain(domains) {
+    const domainsByLocale = new Map();
+    for (const { domain, locales } of domains){
+        for (const locale of locales){
+            const localeDomains = domainsByLocale.get(locale) || new Set();
+            localeDomains.add(domain);
+            domainsByLocale.set(locale, localeDomains);
+        }
+    }
+    const duplicateLocaleMessages = Array.from(domainsByLocale.entries()).filter(([, localeDomains])=>localeDomains.size > 1).map(([locale, localeDomains])=>`- "${locale}" is used by: ${Array.from(localeDomains).join(', ')}`);
+    if (duplicateLocaleMessages.length > 0) {
+        console.warn('Locales are expected to be unique per domain, but found overlap:\n' + duplicateLocaleMessages.join('\n') + '\nPlease see https://next-intl.dev/docs/routing/configuration#domains');
+    }
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/routing/defineRouting.js [app-ssr] (ecmascript) <export default as defineRouting>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "defineRouting",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$routing$2f$defineRouting$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$routing$2f$defineRouting$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/routing/defineRouting.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/routing/config.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "receiveRoutingConfig",
+    ()=>receiveRoutingConfig
+]);
+function receiveRoutingConfig(input) {
+    return {
+        ...input,
+        localePrefix: receiveLocalePrefixConfig(input.localePrefix),
+        localeCookie: receiveLocaleCookie(input.localeCookie),
+        localeDetection: input.localeDetection ?? true,
+        alternateLinks: input.alternateLinks ?? true
+    };
+}
+function receiveLocaleCookie(localeCookie) {
+    return localeCookie ?? true ? {
+        name: 'NEXT_LOCALE',
+        sameSite: 'lax',
+        ...typeof localeCookie === 'object' && localeCookie
+    } : false;
+}
+function receiveLocalePrefixConfig(localePrefix) {
+    return typeof localePrefix === 'object' ? localePrefix : {
+        mode: localePrefix || 'always'
+    };
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/shared/use.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>use
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+;
+// @ts-expect-error -- Ooof, Next.js doesn't make this easy.
+// `use` is only available in React 19 canary, but we can
+// use it in Next.js already as Next.js "vendors" a fixed
+// version of React. However, if we'd simply put `use` in
+// ESM code, then the build doesn't work since React does
+// not export `use` officially. Therefore, we have to use
+// something that is not statically analyzable. Once React
+// 19 is out, we can remove this in the next major version.
+var use = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__['use'.trim()];
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/shared/utils.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "getLocaleAsPrefix",
+    ()=>getLocaleAsPrefix,
+    "getLocalePrefix",
+    ()=>getLocalePrefix,
+    "getLocalizedTemplate",
+    ()=>getLocalizedTemplate,
+    "getSortedPathnames",
+    ()=>getSortedPathnames,
+    "hasPathnamePrefixed",
+    ()=>hasPathnamePrefixed,
+    "isLocalizableHref",
+    ()=>isLocalizableHref,
+    "isPromise",
+    ()=>isPromise,
+    "matchesPathname",
+    ()=>matchesPathname,
+    "normalizeTrailingSlash",
+    ()=>normalizeTrailingSlash,
+    "prefixPathname",
+    ()=>prefixPathname,
+    "templateToRegex",
+    ()=>templateToRegex,
+    "unprefixPathname",
+    ()=>unprefixPathname
+]);
+function isRelativeHref(href) {
+    const pathname = typeof href === 'object' ? href.pathname : href;
+    return pathname != null && !pathname.startsWith('/');
+}
+function isLocalHref(href) {
+    if (typeof href === 'object') {
+        return href.host == null && href.hostname == null;
+    } else {
+        const hasProtocol = /^[a-z]+:/i.test(href);
+        return !hasProtocol;
+    }
+}
+function isLocalizableHref(href) {
+    return isLocalHref(href) && !isRelativeHref(href);
+}
+function unprefixPathname(pathname, prefix) {
+    return pathname.replace(new RegExp(`^${prefix}`), '') || '/';
+}
+function prefixPathname(prefix, pathname) {
+    let localizedHref = prefix;
+    // Avoid trailing slashes
+    if (/^\/(\?.*)?$/.test(pathname)) {
+        pathname = pathname.slice(1);
+    }
+    localizedHref += pathname;
+    return localizedHref;
+}
+function hasPathnamePrefixed(prefix, pathname) {
+    return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+function hasTrailingSlash() {
+    try {
+        // Provided via `env` setting in `next.config.js` via the plugin
+        return process.env._next_intl_trailing_slash === 'true';
+    } catch  {
+        return false;
+    }
+}
+function getLocalizedTemplate(pathnameConfig, locale, internalTemplate) {
+    return typeof pathnameConfig === 'string' ? pathnameConfig : pathnameConfig[locale] || internalTemplate;
+}
+function normalizeTrailingSlash(pathname) {
+    const trailingSlash = hasTrailingSlash();
+    const [path, ...hashParts] = pathname.split('#');
+    const hash = hashParts.join('#');
+    let normalizedPath = path;
+    if (normalizedPath !== '/') {
+        const pathnameEndsWithSlash = normalizedPath.endsWith('/');
+        if (trailingSlash && !pathnameEndsWithSlash) {
+            normalizedPath += '/';
+        } else if (!trailingSlash && pathnameEndsWithSlash) {
+            normalizedPath = normalizedPath.slice(0, -1);
+        }
+    }
+    if (hash) {
+        normalizedPath += '#' + hash;
+    }
+    return normalizedPath;
+}
+function matchesPathname(/** E.g. `/users/[userId]-[userName]` */ template, /** E.g. `/users/23-jane` */ pathname) {
+    const normalizedTemplate = normalizeTrailingSlash(template);
+    const normalizedPathname = normalizeTrailingSlash(pathname);
+    const regex = templateToRegex(normalizedTemplate);
+    return regex.test(normalizedPathname);
+}
+function getLocalePrefix(locale, localePrefix) {
+    return localePrefix.mode !== 'never' && localePrefix.prefixes?.[locale] || // We return a prefix even if `mode: 'never'`. It's up to the consumer
+    // to decide to use it or not.
+    getLocaleAsPrefix(locale);
+}
+function getLocaleAsPrefix(locale) {
+    return '/' + locale;
+}
+function templateToRegex(template) {
+    const regexPattern = template// Replace optional catchall ('[[...slug]]')
+    .replace(/\/\[\[(\.\.\.[^\]]+)\]\]/g, '(?:/(.*))?') // With leading slash
+    .replace(/\[\[(\.\.\.[^\]]+)\]\]/g, '(?:/(.*))?') // Without leading slash
+    // Replace catchall ('[...slug]')
+    .replace(/\[(\.\.\.[^\]]+)\]/g, '(.+)')// Replace regular parameter ('[slug]')
+    .replace(/\[([^\]]+)\]/g, '([^/]+)');
+    return new RegExp(`^${regexPattern}$`);
+}
+function isOptionalCatchAllSegment(pathname) {
+    return pathname.includes('[[...');
+}
+function isCatchAllSegment(pathname) {
+    return pathname.includes('[...');
+}
+function isDynamicSegment(pathname) {
+    return pathname.includes('[');
+}
+function comparePathnamePairs(a, b) {
+    const pathA = a.split('/');
+    const pathB = b.split('/');
+    const maxLength = Math.max(pathA.length, pathB.length);
+    for(let i = 0; i < maxLength; i++){
+        const segmentA = pathA[i];
+        const segmentB = pathB[i];
+        // If one of the paths ends, prioritize the shorter path
+        if (!segmentA && segmentB) return -1;
+        if (segmentA && !segmentB) return 1;
+        if (!segmentA && !segmentB) continue;
+        // Prioritize static segments over dynamic segments
+        if (!isDynamicSegment(segmentA) && isDynamicSegment(segmentB)) return -1;
+        if (isDynamicSegment(segmentA) && !isDynamicSegment(segmentB)) return 1;
+        // Prioritize non-catch-all segments over catch-all segments
+        if (!isCatchAllSegment(segmentA) && isCatchAllSegment(segmentB)) return -1;
+        if (isCatchAllSegment(segmentA) && !isCatchAllSegment(segmentB)) return 1;
+        // Prioritize non-optional catch-all segments over optional catch-all segments
+        if (!isOptionalCatchAllSegment(segmentA) && isOptionalCatchAllSegment(segmentB)) {
+            return -1;
+        }
+        if (isOptionalCatchAllSegment(segmentA) && !isOptionalCatchAllSegment(segmentB)) {
+            return 1;
+        }
+        if (segmentA === segmentB) continue;
+    }
+    // Both pathnames are completely static
+    return 0;
+}
+function getSortedPathnames(pathnames) {
+    return pathnames.sort(comparePathnamePairs);
+}
+function isPromise(value) {
+    // https://github.com/amannn/next-intl/issues/1711
+    return typeof value.then === 'function';
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/shared/utils.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "applyPathnamePrefix",
+    ()=>applyPathnamePrefix,
+    "compileLocalizedPathname",
+    ()=>compileLocalizedPathname,
+    "getBasePath",
+    ()=>getBasePath,
+    "getRoute",
+    ()=>getRoute,
+    "normalizeNameOrNameWithParams",
+    ()=>normalizeNameOrNameWithParams,
+    "serializeSearchParams",
+    ()=>serializeSearchParams,
+    "validateReceivedConfig",
+    ()=>validateReceivedConfig
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/shared/utils.js [app-ssr] (ecmascript)");
+;
+// Minor false positive: A route that has both optional and
+// required params will allow optional params.
+// For `Link`
+// For `getPathname` (hence also its consumers: `redirect`, `useRouter`, …)
+function normalizeNameOrNameWithParams(href) {
+    return typeof href === 'string' ? {
+        pathname: href
+    } : href;
+}
+function serializeSearchParams(searchParams) {
+    function serializeValue(value) {
+        return String(value);
+    }
+    const urlSearchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(searchParams)){
+        if (Array.isArray(value)) {
+            value.forEach((cur)=>{
+                urlSearchParams.append(key, serializeValue(cur));
+            });
+        } else {
+            urlSearchParams.set(key, serializeValue(value));
+        }
+    }
+    return '?' + urlSearchParams.toString();
+}
+function compileLocalizedPathname({ pathname, locale, params, pathnames, query }) {
+    function compilePath(value) {
+        const pathnameConfig = pathnames[value];
+        let compiled;
+        if (pathnameConfig) {
+            const template = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getLocalizedTemplate"])(pathnameConfig, locale, value);
+            compiled = template;
+            if (params) {
+                Object.entries(params).forEach(([key, paramValue])=>{
+                    let regexp, replacer;
+                    if (Array.isArray(paramValue)) {
+                        regexp = `(\\[)?\\[...${key}\\](\\])?`;
+                        replacer = paramValue.map((v)=>String(v)).join('/');
+                    } else {
+                        regexp = `\\[${key}\\]`;
+                        replacer = String(paramValue);
+                    }
+                    compiled = compiled.replace(new RegExp(regexp, 'g'), replacer);
+                });
+            }
+            // Clean up optional catch-all segments that were not replaced
+            compiled = compiled.replace(/\[\[\.\.\..+\]\]/g, '');
+            if (compiled.includes('[')) {
+                // Next.js throws anyway, therefore better provide a more helpful error message
+                throw new Error(`Insufficient params provided for localized pathname.\nTemplate: ${template}\nParams: ${JSON.stringify(params)}`);
+            }
+            compiled = encodePathname(compiled);
+        } else {
+            // Unknown pathnames
+            compiled = value;
+        }
+        compiled = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["normalizeTrailingSlash"])(compiled);
+        if (query) {
+            // This also encodes non-ASCII characters by
+            // using `new URLSearchParams()` internally
+            compiled += serializeSearchParams(query);
+        }
+        return compiled;
+    }
+    if (typeof pathname === 'string') {
+        return compilePath(pathname);
+    } else {
+        const { pathname: internalPathname, ...rest } = pathname;
+        const compiled = compilePath(internalPathname);
+        const result = {
+            ...rest,
+            pathname: compiled
+        };
+        return result;
+    }
+}
+function encodePathname(pathname) {
+    // Generally, to comply with RFC 3986 and Google's best practices for URL structures
+    // (https://developers.google.com/search/docs/crawling-indexing/url-structure),
+    // we should always encode non-ASCII characters.
+    //
+    // There are two places where next-intl interacts with potentially non-ASCII URLs:
+    // 1. Middleware: When mapping a localized pathname to a non-localized pathname internally
+    // 2. Navigation APIs: When generating a URLs to be used for <Link /> & friends
+    //
+    // Next.js normalizes incoming pathnames to always be encoded, therefore we can safely
+    // decode them there (see middleware.tsx). On the other hand, Next.js doesn't consistently
+    // encode non-ASCII characters that are passed to navigation APIs:
+    // 1. <Link /> doesn't encode non-ASCII characters
+    // 2. useRouter() uses `new URL()` internally, which will encode—but only if necessary
+    // 3. redirect() uses useRouter() on the client, but on the server side only
+    //    assigns the location header without encoding.
+    //
+    // In addition to this, for getPathname() we need to encode non-ASCII characters.
+    //
+    // Therefore, the bottom line is that next-intl should take care of encoding non-ASCII
+    // characters in all cases, but can rely on `new URL()` to not double-encode characters.
+    return new URL(pathname, 'http://l').pathname;
+}
+function getRoute(locale, pathname, pathnames) {
+    const sortedPathnames = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getSortedPathnames"])(Object.keys(pathnames));
+    const decoded = decodeURI(pathname);
+    for (const internalPathname of sortedPathnames){
+        const localizedPathnamesOrPathname = pathnames[internalPathname];
+        if (typeof localizedPathnamesOrPathname === 'string') {
+            const localizedPathname = localizedPathnamesOrPathname;
+            if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["matchesPathname"])(localizedPathname, decoded)) {
+                return internalPathname;
+            }
+        } else {
+            if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["matchesPathname"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getLocalizedTemplate"])(localizedPathnamesOrPathname, locale, internalPathname), decoded)) {
+                return internalPathname;
+            }
+        }
+    }
+    return pathname;
+}
+function getBasePath(pathname, windowPathname = window.location.pathname) {
+    if (pathname === '/') {
+        return windowPathname;
+    } else {
+        return windowPathname.replace(pathname, '');
+    }
+}
+function applyPathnamePrefix(pathname, locale, routing, force) {
+    const { mode } = routing.localePrefix;
+    let shouldPrefix;
+    if (force !== undefined) {
+        shouldPrefix = force;
+    } else if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isLocalizableHref"])(pathname)) {
+        if (mode === 'always') {
+            shouldPrefix = true;
+        } else if (mode === 'as-needed') {
+            shouldPrefix = routing.domains ? // Since locales are unique per domain, any locale that is a
+            // default locale of a domain doesn't require a prefix
+            !routing.domains.some((cur)=>cur.defaultLocale === locale) : locale !== routing.defaultLocale;
+        }
+    }
+    return shouldPrefix ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["prefixPathname"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getLocalePrefix"])(locale, routing.localePrefix), pathname) : pathname;
+}
+function validateReceivedConfig(config) {
+    if (config.localePrefix?.mode === 'as-needed' && !('defaultLocale' in config)) {
+        throw new Error("`localePrefix: 'as-needed' requires a `defaultLocale`.");
+    }
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/shared/syncLocaleCookie.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>syncLocaleCookie
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/shared/utils.js [app-ssr] (ecmascript)");
+;
+/**
+ * We have to keep the cookie value in sync as Next.js might
+ * skip a request to the server due to its router cache.
+ * See https://github.com/amannn/next-intl/issues/786.
+ */ function syncLocaleCookie(localeCookie, pathname, locale, nextLocale) {
+    const isSwitchingLocale = nextLocale !== locale && nextLocale != null;
+    if (!localeCookie || !isSwitchingLocale || // Theoretical case, we always have a pathname in a real app,
+    // only not when running e.g. in a simulated test environment
+    !pathname) {
+        return;
+    }
+    const basePath = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getBasePath"])(pathname);
+    const hasBasePath = basePath !== '';
+    const defaultPath = hasBasePath ? basePath : '/';
+    const { name, ...rest } = localeCookie;
+    if (!rest.path) {
+        rest.path = defaultPath;
+    }
+    let localeCookieString = `${name}=${nextLocale};`;
+    for (const [key, value] of Object.entries(rest)){
+        // Map object properties to cookie properties.
+        // Interestingly, `maxAge` corresponds to `max-age`,
+        // while `sameSite` corresponds to `SameSite`.
+        // Also, keys are case-insensitive.
+        const targetKey = key === 'maxAge' ? 'max-age' : key;
+        localeCookieString += `${targetKey}`;
+        if (typeof value !== 'boolean') {
+            localeCookieString += '=' + value;
+        }
+        // A trailing ";" is allowed by browsers
+        localeCookieString += ';';
+    }
+    // Note that writing to `document.cookie` doesn't overwrite all
+    // cookies, but only the ones referenced via the name here.
+    document.cookie = localeCookieString;
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/shared/BaseLink.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>BaseLink$1
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/client/app-dir/link.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/navigation.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$syncLocaleCookie$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/shared/syncLocaleCookie.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-runtime.js [app-ssr] (ecmascript)");
+"use client";
+;
+;
+;
+;
+;
+;
+function BaseLink({ href, locale, localeCookie, onClick, prefetch, ...rest }, ref) {
+    const curLocale = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useLocale"])();
+    const isChangingLocale = locale != null && locale !== curLocale;
+    // The types aren't entirely correct here. Outside of Next.js
+    // `useParams` can be called, but the return type is `null`.
+    const pathname = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["usePathname"])();
+    function onLinkClick(event) {
+        // Even though we force a prefix when changing locales,
+        // this could be a cache hit of the client-side router,
+        // therefore we sync the cookie to ensure it's up to date.
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$syncLocaleCookie$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(localeCookie, pathname, curLocale, locale);
+        if (onClick) onClick(event);
+    }
+    if (isChangingLocale) {
+        if (prefetch && "development" !== 'production') {
+            console.error('The `prefetch` prop is currently not supported when using the `locale` prop on `Link` to switch the locale.`');
+        }
+        prefetch = false;
+    }
+    // Somehow the types for `next/link` don't work as expected
+    // when `moduleResolution: "nodenext"` is used.
+    const Link = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"];
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsx"])(Link, {
+        ref: ref,
+        href: href,
+        hrefLang: isChangingLocale ? locale : undefined,
+        onClick: onLinkClick,
+        prefetch: prefetch,
+        ...rest
+    });
+}
+var BaseLink$1 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["forwardRef"])(BaseLink);
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/shared/createSharedNavigationFns.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>createSharedNavigationFns
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/navigation.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$routing$2f$config$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/routing/config.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$use$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/shared/use.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/shared/utils.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$BaseLink$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/shared/BaseLink.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/shared/utils.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-runtime.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+;
+;
+;
+;
+/**
+ * Shared implementations for `react-server` and `react-client`
+ */ function createSharedNavigationFns(getLocale, routing) {
+    const config = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$routing$2f$config$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["receiveRoutingConfig"])(routing || {});
+    {
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["validateReceivedConfig"])(config);
+    }
+    const pathnames = config.pathnames;
+    function Link({ href, locale, ...rest }, ref) {
+        let pathname, params;
+        if (typeof href === 'object') {
+            pathname = href.pathname;
+            // @ts-expect-error -- This is ok
+            params = href.params;
+        } else {
+            pathname = href;
+        }
+        // @ts-expect-error -- This is ok
+        const isLocalizable = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isLocalizableHref"])(href);
+        const localePromiseOrValue = getLocale();
+        const curLocale = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isPromise"])(localePromiseOrValue) ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$use$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(localePromiseOrValue) : localePromiseOrValue;
+        const finalPathname = isLocalizable ? getPathname({
+            locale: locale || curLocale,
+            // @ts-expect-error -- This is ok
+            href: pathnames == null ? pathname : {
+                pathname,
+                params
+            },
+            // Always include a prefix when changing locales
+            forcePrefix: locale != null || undefined
+        }) : pathname;
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$BaseLink$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
+            ref: ref,
+            href: typeof href === 'object' ? {
+                ...href,
+                pathname: finalPathname
+            } : finalPathname,
+            locale: locale,
+            localeCookie: config.localeCookie,
+            ...rest
+        });
+    }
+    const LinkWithRef = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["forwardRef"])(Link);
+    function getPathname(args) {
+        const { forcePrefix, href, locale } = args;
+        let pathname;
+        if (pathnames == null) {
+            if (typeof href === 'object') {
+                pathname = href.pathname;
+                if (href.query) {
+                    pathname += (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["serializeSearchParams"])(href.query);
+                }
+            } else {
+                pathname = href;
+            }
+        } else {
+            pathname = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["compileLocalizedPathname"])({
+                locale,
+                // @ts-expect-error -- This is ok
+                ...(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["normalizeNameOrNameWithParams"])(href),
+                // @ts-expect-error -- This is ok
+                pathnames: config.pathnames
+            });
+        }
+        return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["applyPathnamePrefix"])(pathname, locale, config, forcePrefix);
+    }
+    function getRedirectFn(fn) {
+        /** @see https://next-intl.dev/docs/routing/navigation#redirect */ return function redirectFn(args, ...rest) {
+            return fn(getPathname(args), ...rest);
+        };
+    }
+    const redirect$1 = getRedirectFn(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["redirect"]);
+    const permanentRedirect$1 = getRedirectFn(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["permanentRedirect"]);
+    return {
+        config,
+        Link: LinkWithRef,
+        redirect: redirect$1,
+        permanentRedirect: permanentRedirect$1,
+        getPathname
+    };
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/react-client/useBasePathname.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>useBasePathname
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/navigation.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/shared/utils.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+function useBasePathname(config) {
+    // The types aren't entirely correct here. Outside of Next.js
+    // `useParams` can be called, but the return type is `null`.
+    // Notes on `useNextPathname`:
+    // - Types aren't entirely correct. Outside of Next.js the
+    //   hook will return `null` (e.g. unit tests)
+    // - A base path is stripped from the result
+    // - Rewrites *are* taken into account (i.e. the pathname
+    //   that the user sees in the browser is returned)
+    const pathname = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["usePathname"])();
+    const locale = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useLocale"])();
+    return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
+        if (!pathname) return pathname;
+        let unlocalizedPathname = pathname;
+        const prefix = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getLocalePrefix"])(locale, config.localePrefix);
+        const isPathnamePrefixed = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["hasPathnamePrefixed"])(prefix, pathname);
+        if (isPathnamePrefixed) {
+            unlocalizedPathname = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["unprefixPathname"])(pathname, prefix);
+        } else if (config.localePrefix.mode !== 'never' && config.localePrefix.prefixes) {
+            // Workaround for https://github.com/vercel/next.js/issues/73085
+            const localeAsPrefix = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getLocaleAsPrefix"])(locale);
+            if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["hasPathnamePrefixed"])(localeAsPrefix, pathname)) {
+                unlocalizedPathname = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["unprefixPathname"])(pathname, localeAsPrefix);
+            }
+        }
+        return unlocalizedPathname;
+    }, [
+        config.localePrefix,
+        locale,
+        pathname
+    ]);
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/react-client/createNavigation.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>createNavigation
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/navigation.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$createSharedNavigationFns$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/shared/createSharedNavigationFns.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$syncLocaleCookie$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/shared/syncLocaleCookie.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/shared/utils.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$react$2d$client$2f$useBasePathname$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/react-client/useBasePathname.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+;
+;
+;
+function createNavigation(routing) {
+    const { Link, config, getPathname, ...redirects } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$createSharedNavigationFns$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useLocale"], routing);
+    /** @see https://next-intl.dev/docs/routing/navigation#usepathname */ function usePathname$1() {
+        const pathname = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$react$2d$client$2f$useBasePathname$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(config);
+        const locale = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useLocale"])();
+        // @ts-expect-error -- Mirror the behavior from Next.js, where `null` is returned when `usePathname` is used outside of Next, but the types indicate that a string is always returned.
+        return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>pathname && // @ts-expect-error -- This is fine
+            config.pathnames ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$utils$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getRoute"])(locale, pathname, // @ts-expect-error -- This is fine
+            config.pathnames) : pathname, [
+            locale,
+            pathname
+        ]);
+    }
+    function useRouter$1() {
+        const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRouter"])();
+        const curLocale = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useLocale"])();
+        const nextPathname = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["usePathname"])();
+        return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
+            function createHandler(fn) {
+                return function handler(href, options) {
+                    const { locale: nextLocale, ...rest } = options || {};
+                    const pathname = getPathname({
+                        href,
+                        locale: nextLocale || curLocale,
+                        // Always include a prefix when changing locales. Theoretically,
+                        // this is only necessary for the case described in #2020. However,
+                        // the full detection is rather expensive, and this behavior is
+                        // consistent with the `Link` component. The downside is an
+                        // additional redirect for users in other situations. Locale
+                        // changes should be rare though, so this might be fine.
+                        forcePrefix: nextLocale != null || undefined
+                    });
+                    const args = [
+                        pathname
+                    ];
+                    if (Object.keys(rest).length > 0) {
+                        // @ts-expect-error -- This is fine
+                        args.push(rest);
+                    }
+                    (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$shared$2f$syncLocaleCookie$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(config.localeCookie, nextPathname, curLocale, nextLocale);
+                    fn(...args);
+                };
+            }
+            return {
+                ...router,
+                /** @see https://next-intl.dev/docs/routing/navigation#userouter */ push: createHandler(router.push),
+                /** @see https://next-intl.dev/docs/routing/navigation#userouter */ replace: createHandler(router.replace),
+                /** @see https://next-intl.dev/docs/routing/navigation#userouter */ prefetch: createHandler(router.prefetch)
+            };
+        }, [
+            curLocale,
+            nextPathname,
+            router
+        ]);
+    }
+    return {
+        ...redirects,
+        Link,
+        usePathname: usePathname$1,
+        useRouter: useRouter$1,
+        getPathname
+    };
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/react-client/createNavigation.js [app-ssr] (ecmascript) <export default as createNavigation>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "createNavigation",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$react$2d$client$2f$createNavigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2d$intl$2f$dist$2f$esm$2f$development$2f$navigation$2f$react$2d$client$2f$createNavigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/navigation/react-client/createNavigation.js [app-ssr] (ecmascript)");
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/react-client/index.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "useFormatter",
+    ()=>useFormatter,
+    "useTranslations",
+    ()=>useTranslations
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/react.js [app-ssr] (ecmascript)");
+;
+/**
+ * This is the main entry file when non-'react-server'
+ * environments import from 'next-intl'.
+ *
+ * Maintainer notes:
+ * - Make sure this mirrors the API from 'react-server'.
+ * - Make sure everything exported from this module is
+ *   supported in all Next.js versions that are supported.
+ */ // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+function callHook(name, hook) {
+    return (...args)=>{
+        try {
+            return hook(...args);
+        } catch  {
+            throw new Error(`Failed to call \`${name}\` because the context from \`NextIntlClientProvider\` was not found.
+
+This can happen because:
+1) You intended to render this component as a Server Component, the render
+   failed, and therefore React attempted to render the component on the client
+   instead. If this is the case, check the console for server errors.
+2) You intended to render this component on the client side, but no context was found.
+   Learn more about this error here: https://next-intl.dev/docs/environments/server-client-components#missing-context`);
+        }
+    };
+}
+const useTranslations = callHook('useTranslations', __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useTranslations"]);
+const useFormatter = callHook('useFormatter', __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useFormatter"]);
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/next-intl/dist/esm/development/shared/NextIntlClientProvider.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>NextIntlClientProvider
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-runtime.js [app-ssr] (ecmascript)");
+"use client";
+;
+;
+function NextIntlClientProvider({ locale, ...rest }) {
+    if (!locale) {
+        throw new Error("Couldn't infer the `locale` prop in `NextIntlClientProvider`, please provide it explicitly.\n\nSee https://next-intl.dev/docs/configuration#locale");
+    }
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["IntlProvider"], {
+        locale: locale,
+        ...rest
+    });
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@swc/helpers/cjs/_interop_require_wildcard.cjs [app-ssr] (ecmascript)", ((__turbopack_context__, module, exports) => {
+"use strict";
+
+function _getRequireWildcardCache(nodeInterop) {
+    if (typeof WeakMap !== "function") return null;
+    var cacheBabelInterop = new WeakMap();
+    var cacheNodeInterop = new WeakMap();
+    return (_getRequireWildcardCache = function(nodeInterop) {
+        return nodeInterop ? cacheNodeInterop : cacheBabelInterop;
+    })(nodeInterop);
+}
+function _interop_require_wildcard(obj, nodeInterop) {
+    if (!nodeInterop && obj && obj.__esModule) return obj;
+    if (obj === null || typeof obj !== "object" && typeof obj !== "function") return {
+        default: obj
+    };
+    var cache = _getRequireWildcardCache(nodeInterop);
+    if (cache && cache.has(obj)) return cache.get(obj);
+    var newObj = {
+        __proto__: null
+    };
+    var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor;
+    for(var key in obj){
+        if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) {
+            var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null;
+            if (desc && (desc.get || desc.set)) Object.defineProperty(newObj, key, desc);
+            else newObj[key] = obj[key];
+        }
+    }
+    newObj.default = obj;
+    if (cache) cache.set(obj, newObj);
+    return newObj;
+}
+exports._ = _interop_require_wildcard;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/fast-memoize/index.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "memoize",
+    ()=>memoize,
+    "strategies",
+    ()=>strategies
+]);
+function memoize(fn, options) {
+    const cache = options && options.cache ? options.cache : cacheDefault;
+    const serializer = options && options.serializer ? options.serializer : serializerDefault;
+    const strategy = options && options.strategy ? options.strategy : strategyDefault;
+    return strategy(fn, {
+        cache,
+        serializer
+    });
+}
+//
+// Strategy
+//
+function isPrimitive(value) {
+    return value == null || typeof value === "number" || typeof value === "boolean";
+}
+function monadic(fn, cache, serializer, arg) {
+    const cacheKey = isPrimitive(arg) ? arg : serializer(arg);
+    let computedValue = cache.get(cacheKey);
+    if (typeof computedValue === "undefined") {
+        computedValue = fn.call(this, arg);
+        cache.set(cacheKey, computedValue);
+    }
+    return computedValue;
+}
+function variadic(fn, cache, serializer) {
+    const args = Array.prototype.slice.call(arguments, 3);
+    const cacheKey = serializer(args);
+    let computedValue = cache.get(cacheKey);
+    if (typeof computedValue === "undefined") {
+        computedValue = fn.apply(this, args);
+        cache.set(cacheKey, computedValue);
+    }
+    return computedValue;
+}
+function assemble(fn, context, strategy, cache, serialize) {
+    return strategy.bind(context, fn, cache, serialize);
+}
+function strategyDefault(fn, options) {
+    const strategy = fn.length === 1 ? monadic : variadic;
+    return assemble(fn, this, strategy, options.cache.create(), options.serializer);
+}
+function strategyVariadic(fn, options) {
+    return assemble(fn, this, variadic, options.cache.create(), options.serializer);
+}
+function strategyMonadic(fn, options) {
+    return assemble(fn, this, monadic, options.cache.create(), options.serializer);
+}
+//
+// Serializer
+//
+const serializerDefault = function() {
+    return JSON.stringify(arguments);
+};
+//
+// Cache
+//
+class ObjectWithoutPrototypeCache {
+    cache;
+    constructor(){
+        this.cache = Object.create(null);
+    }
+    get(key) {
+        return this.cache[key];
+    }
+    set(key, value) {
+        this.cache[key] = value;
+    }
+}
+const cacheDefault = {
+    create: function create() {
+        return new ObjectWithoutPrototypeCache();
+    }
+};
+const strategies = {
+    variadic: strategyVariadic,
+    monadic: strategyMonadic
+};
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/formatters-r4aAmsMP.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "I",
+    ()=>IntlError,
+    "a",
+    ()=>IntlErrorCode,
+    "b",
+    ()=>createCache,
+    "c",
+    ()=>createIntlFormatters,
+    "m",
+    ()=>memoFn
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$fast$2d$memoize$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/fast-memoize/index.js [app-ssr] (ecmascript)");
+;
+class IntlError extends Error {
+    constructor(code, originalMessage){
+        let message = code;
+        if (originalMessage) {
+            message += ': ' + originalMessage;
+        }
+        super(message);
+        this.code = code;
+        if (originalMessage) {
+            this.originalMessage = originalMessage;
+        }
+    }
+}
+var IntlErrorCode = /*#__PURE__*/ function(IntlErrorCode) {
+    IntlErrorCode["MISSING_MESSAGE"] = "MISSING_MESSAGE";
+    IntlErrorCode["MISSING_FORMAT"] = "MISSING_FORMAT";
+    IntlErrorCode["ENVIRONMENT_FALLBACK"] = "ENVIRONMENT_FALLBACK";
+    IntlErrorCode["INSUFFICIENT_PATH"] = "INSUFFICIENT_PATH";
+    IntlErrorCode["INVALID_MESSAGE"] = "INVALID_MESSAGE";
+    IntlErrorCode["INVALID_KEY"] = "INVALID_KEY";
+    IntlErrorCode["FORMATTING_ERROR"] = "FORMATTING_ERROR";
+    return IntlErrorCode;
+}(IntlErrorCode || {});
+function createCache() {
+    return {
+        dateTime: {},
+        number: {},
+        message: {},
+        relativeTime: {},
+        pluralRules: {},
+        list: {},
+        displayNames: {}
+    };
+}
+function createMemoCache(store) {
+    return {
+        create () {
+            return {
+                get (key) {
+                    return store[key];
+                },
+                set (key, value) {
+                    store[key] = value;
+                }
+            };
+        }
+    };
+}
+function memoFn(fn, cache) {
+    return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$fast$2d$memoize$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["memoize"])(fn, {
+        cache: createMemoCache(cache),
+        strategy: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$fast$2d$memoize$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["strategies"].variadic
+    });
+}
+function memoConstructor(ConstructorFn, cache) {
+    return memoFn((...args)=>new ConstructorFn(...args), cache);
+}
+function createIntlFormatters(cache) {
+    const getDateTimeFormat = memoConstructor(Intl.DateTimeFormat, cache.dateTime);
+    const getNumberFormat = memoConstructor(Intl.NumberFormat, cache.number);
+    const getPluralRules = memoConstructor(Intl.PluralRules, cache.pluralRules);
+    const getRelativeTimeFormat = memoConstructor(Intl.RelativeTimeFormat, cache.relativeTime);
+    const getListFormat = memoConstructor(Intl.ListFormat, cache.list);
+    const getDisplayNames = memoConstructor(Intl.DisplayNames, cache.displayNames);
+    return {
+        getDateTimeFormat,
+        getNumberFormat,
+        getPluralRules,
+        getRelativeTimeFormat,
+        getListFormat,
+        getDisplayNames
+    };
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/format-message/index.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>formatMessage
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$core$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/intl-messageformat/src/core.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/formatters-r4aAmsMP.js [app-ssr] (ecmascript)");
+;
+;
+;
+/**
+ * `intl-messageformat` uses separate keys for `date` and `time`, but there's
+ * only one native API: `Intl.DateTimeFormat`. Additionally you might want to
+ * include both a time and a date in a value, therefore the separation doesn't
+ * seem so useful. We offer a single `dateTime` namespace instead, but we have
+ * to convert the format before `intl-messageformat` can be used.
+ */ function convertFormatsToIntlMessageFormat(globalFormats, inlineFormats, timeZone) {
+    const mfDateDefaults = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$core$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["IntlMessageFormat"].formats.date;
+    const mfTimeDefaults = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$core$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["IntlMessageFormat"].formats.time;
+    const dateTimeFormats = {
+        ...globalFormats?.dateTime,
+        ...inlineFormats?.dateTime
+    };
+    const allFormats = {
+        date: {
+            ...mfDateDefaults,
+            ...dateTimeFormats
+        },
+        time: {
+            ...mfTimeDefaults,
+            ...dateTimeFormats
+        },
+        number: {
+            ...globalFormats?.number,
+            ...inlineFormats?.number
+        }
+    };
+    if (timeZone) {
+        // The only way to set a time zone with `intl-messageformat` is to merge it into the formats
+        // https://github.com/formatjs/formatjs/blob/8256c5271505cf2606e48e3c97ecdd16ede4f1b5/packages/intl/src/message.ts#L15
+        [
+            'date',
+            'time'
+        ].forEach((property)=>{
+            const formats = allFormats[property];
+            for (const [key, value] of Object.entries(formats)){
+                formats[key] = {
+                    timeZone,
+                    ...value
+                };
+            }
+        });
+    }
+    return allFormats;
+}
+// Placed here for improved tree shaking. Somehow when this is placed in
+// `formatters.tsx`, then it can't be shaken off from `next-intl`.
+function createMessageFormatter(cache, intlFormatters) {
+    const getMessageFormat = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["m"])((...args)=>new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$core$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["IntlMessageFormat"](args[0], args[1], args[2], {
+            formatters: intlFormatters,
+            ...args[3]
+        }), cache.message);
+    return getMessageFormat;
+}
+function getPlainMessage(candidate, values) {
+    // To improve runtime performance, only compile message if:
+    return(// 1. Values are provided
+    values || // 2. There are escaped braces (e.g. "'{name'}")
+    /'[{}]/.test(candidate) || // 3. There are missing arguments or tags (dev-only error handling)
+    /<|{/.test(candidate) ? undefined // Compile
+     : candidate // Don't compile
+    );
+}
+/**
+ * Compiles and formats an ICU message at runtime using intl-messageformat.
+ * This is the default implementation used when messages are not precompiled.
+ */ function formatMessage(/** The raw ICU message string (or precompiled message, though this implementation ignores precompilation) */ ...[key, message, values, options]) {
+    if (Array.isArray(message)) {
+        throw new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].INVALID_MESSAGE, `Message at \`${key}\` resolved to an array, but only strings are supported. See https://next-intl.dev/docs/usage/translations#arrays-of-messages`);
+    }
+    if (typeof message === 'object') {
+        throw new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].INSUFFICIENT_PATH, `Message at \`${key}\` resolved to \`${typeof message}\`, but only strings are supported. Use a \`.\` to retrieve nested messages. See https://next-intl.dev/docs/usage/translations#structuring-messages`);
+    }
+    // Hot path that avoids creating an `IntlMessageFormat` instance
+    if (typeof message === 'string') {
+        const plainMessage = getPlainMessage(message, values);
+        if (plainMessage) return plainMessage;
+    }
+    const { cache, formats, formatters, globalFormats, locale, timeZone } = options;
+    // Lazy init the message formatter for better tree
+    // shaking in case message formatting is not used.
+    if (!formatters.getMessageFormat) {
+        formatters.getMessageFormat = createMessageFormatter(cache, formatters);
+    }
+    let messageFormat;
+    try {
+        messageFormat = formatters.getMessageFormat(message, locale, convertFormatsToIntlMessageFormat(globalFormats, formats, timeZone), {
+            formatters: {
+                ...formatters,
+                getDateTimeFormat (locales, dateTimeOptions) {
+                    // Workaround for https://github.com/formatjs/formatjs/issues/4279
+                    return formatters.getDateTimeFormat(locales, {
+                        ...dateTimeOptions,
+                        timeZone: dateTimeOptions?.timeZone ?? timeZone
+                    });
+                }
+            }
+        });
+    } catch (error) {
+        throw new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].INVALID_MESSAGE, `${error.message} (${error.originalMessage})`);
+    }
+    const formattedMessage = messageFormat.format(// @ts-expect-error `intl-messageformat` expects a different format
+    // for rich text elements since a recent minor update. This
+    // needs to be evaluated in detail, possibly also in regard
+    // to be able to format to parts.
+    values);
+    // Limit the function signature to return strings or React elements
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isValidElement"])(formattedMessage) || // Arrays of React elements
+    Array.isArray(formattedMessage) || typeof formattedMessage === 'string' ? formattedMessage : String(formattedMessage);
+}
+// `t.raw` is supported
+formatMessage.raw = true;
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/initializeConfig-DzxNJxi9.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "a",
+    ()=>createBaseTranslator,
+    "b",
+    ()=>defaultOnError,
+    "c",
+    ()=>createFormatter,
+    "d",
+    ()=>defaultGetMessageFallback,
+    "i",
+    ()=>initializeConfig,
+    "r",
+    ()=>resolveNamespace
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$format$2d$message$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/format-message/index.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/formatters-r4aAmsMP.js [app-ssr] (ecmascript)");
+;
+;
+;
+function joinPath(...parts) {
+    return parts.filter(Boolean).join('.');
+}
+/**
+ * Contains defaults that are used for all entry points into the core.
+ * See also `InitializedIntlConfiguration`.
+ */ function defaultGetMessageFallback(props) {
+    return joinPath(props.namespace, props.key);
+}
+function defaultOnError(error) {
+    console.error(error);
+}
+function prepareTranslationValues(values) {
+    // Related to https://github.com/formatjs/formatjs/issues/1467
+    const transformedValues = {};
+    Object.keys(values).forEach((key)=>{
+        let index = 0;
+        const value = values[key];
+        let transformed;
+        if (typeof value === 'function') {
+            transformed = (chunks)=>{
+                const result = value(chunks);
+                return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isValidElement"])(result) ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cloneElement"])(result, {
+                    key: key + index++
+                }) : result;
+            };
+        } else {
+            transformed = value;
+        }
+        transformedValues[key] = transformed;
+    });
+    return transformedValues;
+}
+function resolvePath(locale, messages, key, namespace) {
+    const fullKey = joinPath(namespace, key);
+    if (!messages) {
+        throw new Error(`No messages available at \`${namespace}\`.`);
+    }
+    let message = messages;
+    key.split('.').forEach((part)=>{
+        const next = message[part];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (part == null || next == null) {
+            throw new Error(`Could not resolve \`${fullKey}\` in messages for locale \`${locale}\`.`);
+        }
+        message = next;
+    });
+    return message;
+}
+function getMessagesOrError(locale, messages, namespace) {
+    try {
+        if (!messages) {
+            throw new Error(`No messages were configured.`);
+        }
+        const retrievedMessages = namespace ? resolvePath(locale, messages, namespace) : messages;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!retrievedMessages) {
+            throw new Error(`No messages for namespace \`${namespace}\` found.`);
+        }
+        return retrievedMessages;
+    } catch (error) {
+        const intlError = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].MISSING_MESSAGE, error.message);
+        return intlError;
+    }
+}
+function createBaseTranslator(config) {
+    const messagesOrError = getMessagesOrError(config.locale, config.messages, config.namespace);
+    return createBaseTranslatorImpl({
+        ...config,
+        messagesOrError
+    });
+}
+function createBaseTranslatorImpl({ cache, formats: globalFormats, formatters, getMessageFallback = defaultGetMessageFallback, locale, messagesOrError, namespace, onError, timeZone }) {
+    const hasMessagesError = messagesOrError instanceof __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"];
+    function getFallbackFromErrorAndNotify(key, code, message, fallback) {
+        const error = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](code, message);
+        onError(error);
+        return fallback ?? getMessageFallback({
+            error,
+            key,
+            namespace
+        });
+    }
+    function translateBaseFn(/** Use a dot to indicate a level of nesting (e.g. `namespace.nestedLabel`). */ key, /** Key value pairs for values to interpolate into the message. */ values, /** Provide custom formats for numbers, dates and times. */ formats, _fallback) {
+        const fallback = _fallback;
+        let message;
+        if (hasMessagesError) {
+            if (fallback) {
+                message = fallback;
+            } else {
+                onError(messagesOrError);
+                return getMessageFallback({
+                    error: messagesOrError,
+                    key,
+                    namespace
+                });
+            }
+        } else {
+            const messages = messagesOrError;
+            try {
+                message = resolvePath(locale, messages, key, namespace);
+            } catch (error) {
+                if (fallback) {
+                    message = fallback;
+                } else {
+                    return getFallbackFromErrorAndNotify(key, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].MISSING_MESSAGE, error.message, fallback);
+                }
+            }
+        }
+        try {
+            const messagePath = joinPath(namespace, key);
+            return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$format$2d$message$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(messagePath, // @ts-expect-error -- We have additional validation either in `compile-format.tsx` or in case of `format-only.tsx` in the loader
+            message, values ? prepareTranslationValues(values) : values, {
+                cache,
+                formatters,
+                globalFormats,
+                formats,
+                locale,
+                timeZone
+            });
+        } catch (error) {
+            let errorCode, errorMessage;
+            if (error instanceof __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"]) {
+                errorCode = error.code;
+                errorMessage = error.originalMessage;
+            } else {
+                errorCode = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].FORMATTING_ERROR;
+                errorMessage = error.message;
+            }
+            return getFallbackFromErrorAndNotify(key, errorCode, errorMessage, fallback);
+        }
+    }
+    function translateFn(/** Use a dot to indicate a level of nesting (e.g. `namespace.nestedLabel`). */ key, /** Key value pairs for values to interpolate into the message. */ values, /** Custom formats for numbers, dates and times. */ formats, _fallback) {
+        const result = translateBaseFn(key, values, formats, _fallback);
+        if (typeof result !== 'string') {
+            return getFallbackFromErrorAndNotify(key, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].INVALID_MESSAGE, `The message \`${key}\` in ${namespace ? `namespace \`${namespace}\`` : 'messages'} didn't resolve to a string. If you want to format rich text, use \`t.rich\` instead.`);
+        }
+        return result;
+    }
+    translateFn.rich = translateBaseFn;
+    // Augment `translateBaseFn` to return plain strings
+    translateFn.markup = (key, values, formats, _fallback)=>{
+        const result = translateBaseFn(key, // @ts-expect-error -- `MarkupTranslationValues` is practically a sub type
+        // of `RichTranslationValues` but TypeScript isn't smart enough here.
+        values, formats, _fallback);
+        if (typeof result !== 'string') {
+            const error = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].FORMATTING_ERROR, "`t.markup` only accepts functions for formatting that receive and return strings.\n\nE.g. t.markup('markup', {b: (chunks) => `<b>${chunks}</b>`})");
+            onError(error);
+            return getMessageFallback({
+                error,
+                key,
+                namespace
+            });
+        }
+        return result;
+    };
+    translateFn.raw = (key)=>{
+        {
+            if (!__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$format$2d$message$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].raw) {
+                throw new Error('`t.raw` is not supported when messages are precompiled.');
+            }
+        }
+        if (hasMessagesError) {
+            onError(messagesOrError);
+            return getMessageFallback({
+                error: messagesOrError,
+                key,
+                namespace
+            });
+        }
+        const messages = messagesOrError;
+        try {
+            return resolvePath(locale, messages, key, namespace);
+        } catch (error) {
+            return getFallbackFromErrorAndNotify(key, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].MISSING_MESSAGE, error.message);
+        }
+    };
+    translateFn.has = (key)=>{
+        if (hasMessagesError) {
+            return false;
+        }
+        try {
+            resolvePath(locale, messagesOrError, key, namespace);
+            return true;
+        } catch  {
+            return false;
+        }
+    };
+    return translateFn;
+}
+/**
+ * For the strictly typed messages to work we have to wrap the namespace into
+ * a mandatory prefix. See https://stackoverflow.com/a/71529575/343045
+ */ function resolveNamespace(namespace, namespacePrefix) {
+    return namespace === namespacePrefix ? undefined : namespace.slice((namespacePrefix + '.').length);
+}
+const SECOND = 1;
+const MINUTE = SECOND * 60;
+const HOUR = MINUTE * 60;
+const DAY = HOUR * 24;
+const WEEK = DAY * 7;
+const MONTH = DAY * (365 / 12); // Approximation
+const QUARTER = MONTH * 3;
+const YEAR = DAY * 365;
+const UNIT_SECONDS = {
+    second: SECOND,
+    seconds: SECOND,
+    minute: MINUTE,
+    minutes: MINUTE,
+    hour: HOUR,
+    hours: HOUR,
+    day: DAY,
+    days: DAY,
+    week: WEEK,
+    weeks: WEEK,
+    month: MONTH,
+    months: MONTH,
+    quarter: QUARTER,
+    quarters: QUARTER,
+    year: YEAR,
+    years: YEAR
+};
+function resolveRelativeTimeUnit(seconds) {
+    const absValue = Math.abs(seconds);
+    if (absValue < MINUTE) {
+        return 'second';
+    } else if (absValue < HOUR) {
+        return 'minute';
+    } else if (absValue < DAY) {
+        return 'hour';
+    } else if (absValue < WEEK) {
+        return 'day';
+    } else if (absValue < MONTH) {
+        return 'week';
+    } else if (absValue < YEAR) {
+        return 'month';
+    }
+    return 'year';
+}
+function calculateRelativeTimeValue(seconds, unit) {
+    // We have to round the resulting values, as `Intl.RelativeTimeFormat`
+    // will include fractions like '2.1 hours ago'.
+    return Math.round(seconds / UNIT_SECONDS[unit]);
+}
+function createFormatter(props) {
+    const { _cache: cache = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["b"])(), _formatters: formatters = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["c"])(cache), formats, locale, onError = defaultOnError, timeZone: globalTimeZone } = props;
+    function applyTimeZone(options) {
+        if (!options?.timeZone) {
+            if (globalTimeZone) {
+                options = {
+                    ...options,
+                    timeZone: globalTimeZone
+                };
+            } else {
+                onError(new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].ENVIRONMENT_FALLBACK, `The \`timeZone\` parameter wasn't provided and there is no global default configured. Consider adding a global default to avoid markup mismatches caused by environment differences. Learn more: https://next-intl.dev/docs/configuration#time-zone`));
+            }
+        }
+        return options;
+    }
+    function resolveFormatOrOptions(typeFormats, formatOrOptions, overrides) {
+        let options;
+        if (typeof formatOrOptions === 'string') {
+            const formatName = formatOrOptions;
+            options = typeFormats?.[formatName];
+            if (!options) {
+                const error = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].MISSING_FORMAT, `Format \`${formatName}\` is not available.`);
+                onError(error);
+                throw error;
+            }
+        } else {
+            options = formatOrOptions;
+        }
+        if (overrides) {
+            options = {
+                ...options,
+                ...overrides
+            };
+        }
+        return options;
+    }
+    function getFormattedValue(formatOrOptions, overrides, typeFormats, formatter, getFallback) {
+        let options;
+        try {
+            options = resolveFormatOrOptions(typeFormats, formatOrOptions, overrides);
+        } catch  {
+            return getFallback();
+        }
+        try {
+            return formatter(options);
+        } catch (error) {
+            onError(new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].FORMATTING_ERROR, error.message));
+            return getFallback();
+        }
+    }
+    function dateTime(value, formatOrOptions, overrides) {
+        return getFormattedValue(formatOrOptions, overrides, formats?.dateTime, (options)=>{
+            options = applyTimeZone(options);
+            return formatters.getDateTimeFormat(locale, options).format(value);
+        }, ()=>String(value));
+    }
+    function dateTimeRange(start, end, formatOrOptions, overrides) {
+        return getFormattedValue(formatOrOptions, overrides, formats?.dateTime, (options)=>{
+            options = applyTimeZone(options);
+            return formatters.getDateTimeFormat(locale, options).formatRange(start, end);
+        }, ()=>[
+                dateTime(start),
+                dateTime(end)
+            ].join(' – '));
+    }
+    function number(value, formatOrOptions, overrides) {
+        return getFormattedValue(formatOrOptions, overrides, formats?.number, (options)=>formatters.getNumberFormat(locale, options).format(value), ()=>String(value));
+    }
+    function getGlobalNow() {
+        // Only read when necessary to avoid triggering a `dynamicIO` error
+        // unnecessarily (`now` is only needed for `format.relativeTime`)
+        if (props.now) {
+            return props.now;
+        } else {
+            onError(new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].ENVIRONMENT_FALLBACK, `The \`now\` parameter wasn't provided to \`relativeTime\` and there is no global default configured, therefore the current time will be used as a fallback. See https://next-intl.dev/docs/usage/dates-times#relative-times-usenow`));
+            return new Date();
+        }
+    }
+    function relativeTime(date, nowOrOptions) {
+        try {
+            let nowDate, unit;
+            const opts = {};
+            if (nowOrOptions instanceof Date || typeof nowOrOptions === 'number') {
+                nowDate = new Date(nowOrOptions);
+            } else if (nowOrOptions) {
+                if (nowOrOptions.now != null) {
+                    nowDate = new Date(nowOrOptions.now);
+                } else {
+                    nowDate = getGlobalNow();
+                }
+                unit = nowOrOptions.unit;
+                opts.style = nowOrOptions.style;
+                // @ts-expect-error -- Types are slightly outdated
+                opts.numberingSystem = nowOrOptions.numberingSystem;
+            }
+            if (!nowDate) {
+                nowDate = getGlobalNow();
+            }
+            const dateDate = new Date(date);
+            const seconds = (dateDate.getTime() - nowDate.getTime()) / 1000;
+            if (!unit) {
+                unit = resolveRelativeTimeUnit(seconds);
+            }
+            // `numeric: 'auto'` can theoretically produce output like "yesterday",
+            // but it only works with integers. E.g. -1 day will produce "yesterday",
+            // but -1.1 days will produce "-1.1 days". Rounding before formatting is
+            // not desired, as the given dates might cross a threshold were the
+            // output isn't correct anymore. Example: 2024-01-08T23:00:00.000Z and
+            // 2024-01-08T01:00:00.000Z would produce "yesterday", which is not the
+            // case. By using `always` we can ensure correct output. The only exception
+            // is the formatting of times <1 second as "now".
+            opts.numeric = unit === 'second' ? 'auto' : 'always';
+            const value = calculateRelativeTimeValue(seconds, unit);
+            return formatters.getRelativeTimeFormat(locale, opts).format(value, unit);
+        } catch (error) {
+            onError(new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].FORMATTING_ERROR, error.message));
+            return String(date);
+        }
+    }
+    function list(value, formatOrOptions, overrides) {
+        const serializedValue = [];
+        const richValues = new Map();
+        // `formatToParts` only accepts strings, therefore we have to temporarily
+        // replace React elements with a placeholder ID that can be used to retrieve
+        // the original value afterwards.
+        let index = 0;
+        for (const item of value){
+            let serializedItem;
+            if (typeof item === 'object') {
+                serializedItem = String(index);
+                richValues.set(serializedItem, item);
+            } else {
+                serializedItem = String(item);
+            }
+            serializedValue.push(serializedItem);
+            index++;
+        }
+        return getFormattedValue(formatOrOptions, overrides, formats?.list, // @ts-expect-error -- `richValues.size` is used to determine the return type, but TypeScript can't infer the meaning of this correctly
+        (options)=>{
+            const result = formatters.getListFormat(locale, options).formatToParts(serializedValue).map((part)=>part.type === 'literal' ? part.value : richValues.get(part.value) || part.value);
+            if (richValues.size > 0) {
+                return result;
+            } else {
+                return result.join('');
+            }
+        }, ()=>String(value));
+    }
+    return {
+        dateTime,
+        number,
+        relativeTime,
+        list,
+        dateTimeRange
+    };
+}
+function validateMessagesSegment(messages, invalidKeyLabels, parentPath) {
+    Object.entries(messages).forEach(([key, messageOrMessages])=>{
+        if (key.includes('.')) {
+            let keyLabel = key;
+            if (parentPath) keyLabel += ` (at ${parentPath})`;
+            invalidKeyLabels.push(keyLabel);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (messageOrMessages != null && typeof messageOrMessages === 'object') {
+            validateMessagesSegment(messageOrMessages, invalidKeyLabels, joinPath(parentPath, key));
+        }
+    });
+}
+function validateMessages(messages, onError) {
+    const invalidKeyLabels = [];
+    validateMessagesSegment(messages, invalidKeyLabels);
+    if (invalidKeyLabels.length > 0) {
+        onError(new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].INVALID_KEY, `Namespace keys can not contain the character "." as this is used to express nesting. Please remove it or replace it with another character.
+
+Invalid ${invalidKeyLabels.length === 1 ? 'key' : 'keys'}: ${invalidKeyLabels.join(', ')}
+
+If you're migrating from a flat structure, you can convert your messages as follows:
+
+import {set} from "lodash";
+
+const input = {
+  "one.one": "1.1",
+  "one.two": "1.2",
+  "two.one.one": "2.1.1"
+};
+
+const output = Object.entries(input).reduce(
+  (acc, [key, value]) => set(acc, key, value),
+  {}
+);
+
+// Output:
+//
+// {
+//   "one": {
+//     "one": "1.1",
+//     "two": "1.2"
+//   },
+//   "two": {
+//     "one": {
+//       "one": "2.1.1"
+//     }
+//   }
+// }
+`));
+    }
+}
+/**
+ * Enhances the incoming props with defaults.
+ */ function initializeConfig({ formats, getMessageFallback, messages, onError, ...rest }) {
+    const finalOnError = onError || defaultOnError;
+    const finalGetMessageFallback = getMessageFallback || defaultGetMessageFallback;
+    {
+        if (messages) {
+            validateMessages(messages, finalOnError);
+        }
+    }
+    return {
+        ...rest,
+        formats: formats || undefined,
+        messages: messages || undefined,
+        onError: finalOnError,
+        getMessageFallback: finalGetMessageFallback
+    };
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/react.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "IntlProvider",
+    ()=>IntlProvider,
+    "_useExtracted",
+    ()=>useExtracted,
+    "useFormatter",
+    ()=>useFormatter,
+    "useLocale",
+    ()=>useLocale,
+    "useMessages",
+    ()=>useMessages,
+    "useNow",
+    ()=>useNow,
+    "useTimeZone",
+    ()=>useTimeZone,
+    "useTranslations",
+    ()=>useTranslations
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/formatters-r4aAmsMP.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$initializeConfig$2d$DzxNJxi9$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/use-intl/dist/esm/development/initializeConfig-DzxNJxi9.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-runtime.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+const IntlContext = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createContext"])(undefined);
+function IntlProvider({ children, formats, getMessageFallback, locale, messages, now, onError, timeZone }) {
+    const prevContext = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useContext"])(IntlContext);
+    // The formatter cache is released when the locale changes. For
+    // long-running apps with a persistent `IntlProvider` at the root,
+    // this can reduce the memory footprint (e.g. in React Native).
+    const cache = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
+        return prevContext?.cache || (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["b"])();
+    }, [
+        locale,
+        prevContext?.cache
+    ]);
+    const formatters = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>prevContext?.formatters || (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["c"])(cache), [
+        cache,
+        prevContext?.formatters
+    ]);
+    // Memoizing this value helps to avoid triggering a re-render of all
+    // context consumers in case the configuration didn't change. However,
+    // if some of the non-primitive values change, a re-render will still
+    // be triggered. Note that there's no need to put `memo` on `IntlProvider`
+    // itself, because the `children` typically change on every render.
+    // There's some burden on the consumer side if it's important to reduce
+    // re-renders, put that's how React works.
+    // See: https://blog.isquaredsoftware.com/2020/05/blogged-answers-a-mostly-complete-guide-to-react-rendering-behavior/#context-updates-and-render-optimizations
+    const value = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>({
+            ...(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$initializeConfig$2d$DzxNJxi9$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["i"])({
+                locale,
+                // (required by provider)
+                formats: formats === undefined ? prevContext?.formats : formats,
+                getMessageFallback: getMessageFallback || prevContext?.getMessageFallback,
+                messages: messages === undefined ? prevContext?.messages : messages,
+                now: now || prevContext?.now,
+                onError: onError || prevContext?.onError,
+                timeZone: timeZone || prevContext?.timeZone
+            }),
+            formatters,
+            cache
+        }), [
+        cache,
+        formats,
+        formatters,
+        getMessageFallback,
+        locale,
+        messages,
+        now,
+        onError,
+        prevContext,
+        timeZone
+    ]);
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsx"])(IntlContext.Provider, {
+        value: value,
+        children: children
+    });
+}
+function useIntlContext() {
+    const context = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useContext"])(IntlContext);
+    if (!context) {
+        throw new Error('No intl context found. Have you configured the provider? See https://next-intl.dev/docs/usage/configuration#server-client-components');
+    }
+    return context;
+}
+let hasWarnedForMissingTimezone = false;
+const isServer = ("TURBOPACK compile-time value", "undefined") === 'undefined';
+function useTranslationsImpl(allMessagesPrefixed, namespacePrefixed, namespacePrefix) {
+    const { cache, formats: globalFormats, formatters, getMessageFallback, locale, onError, timeZone } = useIntlContext();
+    // The `namespacePrefix` is part of the type system.
+    // See the comment in the hook invocation.
+    const allMessages = allMessagesPrefixed[namespacePrefix];
+    const namespace = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$initializeConfig$2d$DzxNJxi9$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["r"])(namespacePrefixed, namespacePrefix);
+    if (!timeZone && !hasWarnedForMissingTimezone && isServer) {
+        // eslint-disable-next-line react-compiler/react-compiler
+        hasWarnedForMissingTimezone = true;
+        onError(new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["I"](__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$formatters$2d$r4aAmsMP$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"].ENVIRONMENT_FALLBACK, `There is no \`timeZone\` configured, this can lead to markup mismatches caused by environment differences. Consider adding a global default: https://next-intl.dev/docs/configuration#time-zone`));
+    }
+    const translate = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$initializeConfig$2d$DzxNJxi9$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["a"])({
+            cache,
+            formatters,
+            getMessageFallback,
+            messages: allMessages,
+            namespace,
+            onError,
+            formats: globalFormats,
+            locale,
+            timeZone
+        }), [
+        cache,
+        formatters,
+        getMessageFallback,
+        allMessages,
+        namespace,
+        onError,
+        globalFormats,
+        locale,
+        timeZone
+    ]);
+    return translate;
+}
+/**
+ * Translates messages from the given namespace by using the ICU syntax.
+ * See https://formatjs.io/docs/core-concepts/icu-syntax.
+ *
+ * If no namespace is provided, all available messages are returned.
+ * The namespace can also indicate nesting by using a dot
+ * (e.g. `namespace.Component`).
+ */ function useTranslations(namespace) {
+    const context = useIntlContext();
+    const messages = context.messages;
+    // We have to wrap the actual hook so the type inference for the optional
+    // namespace works correctly. See https://stackoverflow.com/a/71529575/343045
+    // The prefix ("!") is arbitrary.
+    // @ts-expect-error Use the explicit annotation instead
+    return useTranslationsImpl({
+        '!': messages
+    }, // @ts-expect-error
+    namespace ? `!.${namespace}` : '!', '!');
+}
+function useLocale() {
+    return useIntlContext().locale;
+}
+function getNow() {
+    return new Date();
+}
+/**
+ * @see https://next-intl.dev/docs/usage/dates-times#relative-times-usenow
+ */ function useNow(options) {
+    const updateInterval = options?.updateInterval;
+    const { now: globalNow } = useIntlContext();
+    const [now, setNow] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(globalNow || getNow());
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        if (!updateInterval) return;
+        const intervalId = setInterval(()=>{
+            setNow(getNow());
+        }, updateInterval);
+        return ()=>{
+            clearInterval(intervalId);
+        };
+    }, [
+        globalNow,
+        updateInterval
+    ]);
+    return updateInterval == null && globalNow ? globalNow : now;
+}
+function useTimeZone() {
+    return useIntlContext().timeZone;
+}
+function useMessages() {
+    const context = useIntlContext();
+    if (!context.messages) {
+        throw new Error('No messages found. Have you configured them correctly? See https://next-intl.dev/docs/configuration#messages');
+    }
+    return context.messages;
+}
+function useFormatter() {
+    const { formats, formatters, locale, now: globalNow, onError, timeZone } = useIntlContext();
+    return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$use$2d$intl$2f$dist$2f$esm$2f$development$2f$initializeConfig$2d$DzxNJxi9$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["c"])({
+            formats,
+            locale,
+            now: globalNow,
+            onError,
+            timeZone,
+            _formatters: formatters
+        }), [
+        formats,
+        formatters,
+        globalNow,
+        locale,
+        onError,
+        timeZone
+    ]);
+}
+function getArgs(messageOrParams, ...rest) {
+    let message, values, formats;
+    if (typeof messageOrParams === 'string') {
+        message = messageOrParams;
+        values = rest[0];
+        formats = rest[1];
+    } else {
+        message = messageOrParams.message;
+        values = messageOrParams.values;
+        formats = messageOrParams.formats;
+    // `description` is is not used at runtime
+    }
+    // @ts-expect-error -- Secret fallback parameter
+    return [
+        undefined,
+        // Always use fallback if not compiled
+        values,
+        formats,
+        message
+    ];
+}
+// Note: This API is usually compiled into `useTranslations`,
+// but there is some fallback handling which allows this hook
+// to still work when not being compiled.
+//
+// This is relevant for:
+// - Isolated environments like tests, Storybook, etc.
+// - Fallbacks in case an extracted message is not yet available
+function useExtracted(namespace) {
+    const t = useTranslations(namespace);
+    function translateFn(...params) {
+        // @ts-expect-error -- Passing `undefined` as an ID is secretly allowed here
+        return t(...getArgs(...params));
+    }
+    translateFn.rich = (...params)=>// @ts-expect-error -- Passing `undefined` as an ID is secretly allowed here
+        t.rich(...getArgs(...params));
+    translateFn.markup = (...params)=>// @ts-expect-error -- Passing `undefined` as an ID is secretly allowed here
+        t.markup(...getArgs(...params));
+    translateFn.has = function translateHasFn(// eslint-disable-next-line @typescript-eslint/no-unused-vars
+    message) {
+        // Not really something better we can do here
+        return true;
+    };
+    return translateFn;
+}
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-skeleton-parser/date-time.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "parseDateTimeSkeleton",
+    ()=>parseDateTimeSkeleton
+]);
+/**
+* https://unicode.org/reports/tr35/tr35-dates.html#Date_Field_Symbol_Table
+* Credit: https://github.com/caridy/intl-datetimeformat-pattern/blob/master/index.js
+* with some tweaks
+*/ const DATE_TIME_REGEX = /(?:[Eec]{1,6}|G{1,5}|[Qq]{1,5}|(?:[yYur]+|U{1,5})|[ML]{1,5}|d{1,2}|D{1,3}|F{1}|[abB]{1,5}|[hkHK]{1,2}|w{1,2}|W{1}|m{1,2}|s{1,2}|[zZOvVxX]{1,4})(?=([^']*'[^']*')*[^']*$)/g;
+function parseDateTimeSkeleton(skeleton) {
+    const result = {};
+    skeleton.replace(DATE_TIME_REGEX, (match)=>{
+        const len = match.length;
+        switch(match[0]){
+            case "G":
+                result.era = len === 4 ? "long" : len === 5 ? "narrow" : "short";
+                break;
+            case "y":
+                result.year = len === 2 ? "2-digit" : "numeric";
+                break;
+            case "Y":
+            case "u":
+            case "U":
+            case "r":
+                throw new RangeError("`Y/u/U/r` (year) patterns are not supported, use `y` instead");
+            case "q":
+            case "Q":
+                throw new RangeError("`q/Q` (quarter) patterns are not supported");
+            case "M":
+            case "L":
+                result.month = [
+                    "numeric",
+                    "2-digit",
+                    "short",
+                    "long",
+                    "narrow"
+                ][len - 1];
+                break;
+            case "w":
+            case "W":
+                throw new RangeError("`w/W` (week) patterns are not supported");
+            case "d":
+                result.day = [
+                    "numeric",
+                    "2-digit"
+                ][len - 1];
+                break;
+            case "D":
+            case "F":
+            case "g":
+                throw new RangeError("`D/F/g` (day) patterns are not supported, use `d` instead");
+            case "E":
+                result.weekday = len === 4 ? "long" : len === 5 ? "narrow" : "short";
+                break;
+            case "e":
+                if (len < 4) {
+                    throw new RangeError("`e..eee` (weekday) patterns are not supported");
+                }
+                result.weekday = [
+                    "short",
+                    "long",
+                    "narrow",
+                    "short"
+                ][len - 4];
+                break;
+            case "c":
+                if (len < 4) {
+                    throw new RangeError("`c..ccc` (weekday) patterns are not supported");
+                }
+                result.weekday = [
+                    "short",
+                    "long",
+                    "narrow",
+                    "short"
+                ][len - 4];
+                break;
+            case "a":
+                result.hour12 = true;
+                break;
+            case "b":
+            case "B":
+                throw new RangeError("`b/B` (period) patterns are not supported, use `a` instead");
+            case "h":
+                result.hourCycle = "h12";
+                result.hour = [
+                    "numeric",
+                    "2-digit"
+                ][len - 1];
+                break;
+            case "H":
+                result.hourCycle = "h23";
+                result.hour = [
+                    "numeric",
+                    "2-digit"
+                ][len - 1];
+                break;
+            case "K":
+                result.hourCycle = "h11";
+                result.hour = [
+                    "numeric",
+                    "2-digit"
+                ][len - 1];
+                break;
+            case "k":
+                result.hourCycle = "h24";
+                result.hour = [
+                    "numeric",
+                    "2-digit"
+                ][len - 1];
+                break;
+            case "j":
+            case "J":
+            case "C":
+                throw new RangeError("`j/J/C` (hour) patterns are not supported, use `h/H/K/k` instead");
+            case "m":
+                result.minute = [
+                    "numeric",
+                    "2-digit"
+                ][len - 1];
+                break;
+            case "s":
+                result.second = [
+                    "numeric",
+                    "2-digit"
+                ][len - 1];
+                break;
+            case "S":
+            case "A":
+                throw new RangeError("`S/A` (second) patterns are not supported, use `s` instead");
+            case "z":
+                result.timeZoneName = len < 4 ? "short" : "long";
+                break;
+            case "Z":
+            case "O":
+            case "v":
+            case "V":
+            case "X":
+            case "x":
+                throw new RangeError("`Z/O/v/V/X/x` (timeZone) patterns are not supported, use `z` instead");
+        }
+        return "";
+    });
+    return result;
+}
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-skeleton-parser/regex.generated.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+// @generated from regex-gen.ts
+__turbopack_context__.s([
+    "WHITE_SPACE_REGEX",
+    ()=>WHITE_SPACE_REGEX
+]);
+const WHITE_SPACE_REGEX = /[\t-\r \x85\u200E\u200F\u2028\u2029]/i;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-skeleton-parser/number.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "parseNumberSkeleton",
+    ()=>parseNumberSkeleton,
+    "parseNumberSkeletonFromString",
+    ()=>parseNumberSkeletonFromString
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$skeleton$2d$parser$2f$regex$2e$generated$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-skeleton-parser/regex.generated.js [app-ssr] (ecmascript)");
+;
+function parseNumberSkeletonFromString(skeleton) {
+    if (skeleton.length === 0) {
+        throw new Error("Number skeleton cannot be empty");
+    }
+    // Parse the skeleton
+    const stringTokens = skeleton.split(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$skeleton$2d$parser$2f$regex$2e$generated$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["WHITE_SPACE_REGEX"]).filter((x)=>x.length > 0);
+    const tokens = [];
+    for (const stringToken of stringTokens){
+        let stemAndOptions = stringToken.split("/");
+        if (stemAndOptions.length === 0) {
+            throw new Error("Invalid number skeleton");
+        }
+        const [stem, ...options] = stemAndOptions;
+        for (const option of options){
+            if (option.length === 0) {
+                throw new Error("Invalid number skeleton");
+            }
+        }
+        tokens.push({
+            stem,
+            options
+        });
+    }
+    return tokens;
+}
+function icuUnitToEcma(unit) {
+    return unit.replace(/^(.*?)-/, "");
+}
+const FRACTION_PRECISION_REGEX = /^\.(?:(0+)(\*)?|(#+)|(0+)(#+))$/g;
+const SIGNIFICANT_PRECISION_REGEX = /^(@+)?(\+|#+)?[rs]?$/g;
+const INTEGER_WIDTH_REGEX = /(\*)(0+)|(#+)(0+)|(0+)/g;
+const CONCISE_INTEGER_WIDTH_REGEX = /^(0+)$/;
+function parseSignificantPrecision(str) {
+    const result = {};
+    if (str[str.length - 1] === "r") {
+        result.roundingPriority = "morePrecision";
+    } else if (str[str.length - 1] === "s") {
+        result.roundingPriority = "lessPrecision";
+    }
+    str.replace(SIGNIFICANT_PRECISION_REGEX, function(_, g1, g2) {
+        // @@@ case
+        if (typeof g2 !== "string") {
+            result.minimumSignificantDigits = g1.length;
+            result.maximumSignificantDigits = g1.length;
+        } else if (g2 === "+") {
+            result.minimumSignificantDigits = g1.length;
+        } else if (g1[0] === "#") {
+            result.maximumSignificantDigits = g1.length;
+        } else {
+            result.minimumSignificantDigits = g1.length;
+            result.maximumSignificantDigits = g1.length + (typeof g2 === "string" ? g2.length : 0);
+        }
+        return "";
+    });
+    return result;
+}
+function parseSign(str) {
+    switch(str){
+        case "sign-auto":
+            return {
+                signDisplay: "auto"
+            };
+        case "sign-accounting":
+        case "()":
+            return {
+                currencySign: "accounting"
+            };
+        case "sign-always":
+        case "+!":
+            return {
+                signDisplay: "always"
+            };
+        case "sign-accounting-always":
+        case "()!":
+            return {
+                signDisplay: "always",
+                currencySign: "accounting"
+            };
+        case "sign-except-zero":
+        case "+?":
+            return {
+                signDisplay: "exceptZero"
+            };
+        case "sign-accounting-except-zero":
+        case "()?":
+            return {
+                signDisplay: "exceptZero",
+                currencySign: "accounting"
+            };
+        case "sign-never":
+        case "+_":
+            return {
+                signDisplay: "never"
+            };
+    }
+}
+function parseConciseScientificAndEngineeringStem(stem) {
+    // Engineering
+    let result;
+    if (stem[0] === "E" && stem[1] === "E") {
+        result = {
+            notation: "engineering"
+        };
+        stem = stem.slice(2);
+    } else if (stem[0] === "E") {
+        result = {
+            notation: "scientific"
+        };
+        stem = stem.slice(1);
+    }
+    if (result) {
+        const signDisplay = stem.slice(0, 2);
+        if (signDisplay === "+!") {
+            result.signDisplay = "always";
+            stem = stem.slice(2);
+        } else if (signDisplay === "+?") {
+            result.signDisplay = "exceptZero";
+            stem = stem.slice(2);
+        }
+        if (!CONCISE_INTEGER_WIDTH_REGEX.test(stem)) {
+            throw new Error("Malformed concise eng/scientific notation");
+        }
+        result.minimumIntegerDigits = stem.length;
+    }
+    return result;
+}
+function parseNotationOptions(opt) {
+    const result = {};
+    const signOpts = parseSign(opt);
+    if (signOpts) {
+        return signOpts;
+    }
+    return result;
+}
+function parseNumberSkeleton(tokens) {
+    let result = {};
+    for (const token of tokens){
+        switch(token.stem){
+            case "percent":
+            case "%":
+                result.style = "percent";
+                continue;
+            case "%x100":
+                result.style = "percent";
+                result.scale = 100;
+                continue;
+            case "currency":
+                result.style = "currency";
+                result.currency = token.options[0];
+                continue;
+            case "group-off":
+            case ",_":
+                result.useGrouping = false;
+                continue;
+            case "precision-integer":
+            case ".":
+                result.maximumFractionDigits = 0;
+                continue;
+            case "measure-unit":
+            case "unit":
+                result.style = "unit";
+                result.unit = icuUnitToEcma(token.options[0]);
+                continue;
+            case "compact-short":
+            case "K":
+                result.notation = "compact";
+                result.compactDisplay = "short";
+                continue;
+            case "compact-long":
+            case "KK":
+                result.notation = "compact";
+                result.compactDisplay = "long";
+                continue;
+            case "scientific":
+                result = {
+                    ...result,
+                    notation: "scientific",
+                    ...token.options.reduce((all, opt)=>({
+                            ...all,
+                            ...parseNotationOptions(opt)
+                        }), {})
+                };
+                continue;
+            case "engineering":
+                result = {
+                    ...result,
+                    notation: "engineering",
+                    ...token.options.reduce((all, opt)=>({
+                            ...all,
+                            ...parseNotationOptions(opt)
+                        }), {})
+                };
+                continue;
+            case "notation-simple":
+                result.notation = "standard";
+                continue;
+            case "unit-width-narrow":
+                result.currencyDisplay = "narrowSymbol";
+                result.unitDisplay = "narrow";
+                continue;
+            case "unit-width-short":
+                result.currencyDisplay = "code";
+                result.unitDisplay = "short";
+                continue;
+            case "unit-width-full-name":
+                result.currencyDisplay = "name";
+                result.unitDisplay = "long";
+                continue;
+            case "unit-width-iso-code":
+                result.currencyDisplay = "symbol";
+                continue;
+            case "scale":
+                result.scale = parseFloat(token.options[0]);
+                continue;
+            case "rounding-mode-floor":
+                result.roundingMode = "floor";
+                continue;
+            case "rounding-mode-ceiling":
+                result.roundingMode = "ceil";
+                continue;
+            case "rounding-mode-down":
+                result.roundingMode = "trunc";
+                continue;
+            case "rounding-mode-up":
+                result.roundingMode = "expand";
+                continue;
+            case "rounding-mode-half-even":
+                result.roundingMode = "halfEven";
+                continue;
+            case "rounding-mode-half-down":
+                result.roundingMode = "halfTrunc";
+                continue;
+            case "rounding-mode-half-up":
+                result.roundingMode = "halfExpand";
+                continue;
+            case "integer-width":
+                if (token.options.length > 1) {
+                    throw new RangeError("integer-width stems only accept a single optional option");
+                }
+                token.options[0].replace(INTEGER_WIDTH_REGEX, function(_, g1, g2, g3, g4, g5) {
+                    if (g1) {
+                        result.minimumIntegerDigits = g2.length;
+                    } else if (g3 && g4) {
+                        throw new Error("We currently do not support maximum integer digits");
+                    } else if (g5) {
+                        throw new Error("We currently do not support exact integer digits");
+                    }
+                    return "";
+                });
+                continue;
+        }
+        // https://unicode-org.github.io/icu/userguide/format_parse/numbers/skeletons.html#integer-width
+        if (CONCISE_INTEGER_WIDTH_REGEX.test(token.stem)) {
+            result.minimumIntegerDigits = token.stem.length;
+            continue;
+        }
+        if (FRACTION_PRECISION_REGEX.test(token.stem)) {
+            // Precision
+            // https://unicode-org.github.io/icu/userguide/format_parse/numbers/skeletons.html#fraction-precision
+            // precision-integer case
+            if (token.options.length > 1) {
+                throw new RangeError("Fraction-precision stems only accept a single optional option");
+            }
+            token.stem.replace(FRACTION_PRECISION_REGEX, function(_, g1, g2, g3, g4, g5) {
+                // .000* case (before ICU67 it was .000+)
+                if (g2 === "*") {
+                    result.minimumFractionDigits = g1.length;
+                } else if (g3 && g3[0] === "#") {
+                    result.maximumFractionDigits = g3.length;
+                } else if (g4 && g5) {
+                    result.minimumFractionDigits = g4.length;
+                    result.maximumFractionDigits = g4.length + g5.length;
+                } else {
+                    result.minimumFractionDigits = g1.length;
+                    result.maximumFractionDigits = g1.length;
+                }
+                return "";
+            });
+            const opt = token.options[0];
+            // https://unicode-org.github.io/icu/userguide/format_parse/numbers/skeletons.html#trailing-zero-display
+            if (opt === "w") {
+                result = {
+                    ...result,
+                    trailingZeroDisplay: "stripIfInteger"
+                };
+            } else if (opt) {
+                result = {
+                    ...result,
+                    ...parseSignificantPrecision(opt)
+                };
+            }
+            continue;
+        }
+        // https://unicode-org.github.io/icu/userguide/format_parse/numbers/skeletons.html#significant-digits-precision
+        if (SIGNIFICANT_PRECISION_REGEX.test(token.stem)) {
+            result = {
+                ...result,
+                ...parseSignificantPrecision(token.stem)
+            };
+            continue;
+        }
+        const signOpts = parseSign(token.stem);
+        if (signOpts) {
+            result = {
+                ...result,
+                ...signOpts
+            };
+        }
+        const conciseScientificAndEngineeringOpts = parseConciseScientificAndEngineeringStem(token.stem);
+        if (conciseScientificAndEngineeringOpts) {
+            result = {
+                ...result,
+                ...conciseScientificAndEngineeringOpts
+            };
+        }
+    }
+    return result;
+}
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-skeleton-parser/index.js [app-ssr] (ecmascript) <locals>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$skeleton$2d$parser$2f$date$2d$time$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-skeleton-parser/date-time.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$skeleton$2d$parser$2f$number$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-skeleton-parser/number.js [app-ssr] (ecmascript)");
+;
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/types.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "SKELETON_TYPE",
+    ()=>SKELETON_TYPE,
+    "TYPE",
+    ()=>TYPE,
+    "createLiteralElement",
+    ()=>createLiteralElement,
+    "createNumberElement",
+    ()=>createNumberElement,
+    "isArgumentElement",
+    ()=>isArgumentElement,
+    "isDateElement",
+    ()=>isDateElement,
+    "isDateTimeSkeleton",
+    ()=>isDateTimeSkeleton,
+    "isLiteralElement",
+    ()=>isLiteralElement,
+    "isNumberElement",
+    ()=>isNumberElement,
+    "isNumberSkeleton",
+    ()=>isNumberSkeleton,
+    "isPluralElement",
+    ()=>isPluralElement,
+    "isPoundElement",
+    ()=>isPoundElement,
+    "isSelectElement",
+    ()=>isSelectElement,
+    "isTagElement",
+    ()=>isTagElement,
+    "isTimeElement",
+    ()=>isTimeElement
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$skeleton$2d$parser$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-skeleton-parser/index.js [app-ssr] (ecmascript) <locals>");
+;
+let TYPE = /* @__PURE__ */ function(TYPE) {
+    /**
+	* Raw text
+	*/ TYPE[TYPE["literal"] = 0] = "literal";
+    /**
+	* Variable w/o any format, e.g `var` in `this is a {var}`
+	*/ TYPE[TYPE["argument"] = 1] = "argument";
+    /**
+	* Variable w/ number format
+	*/ TYPE[TYPE["number"] = 2] = "number";
+    /**
+	* Variable w/ date format
+	*/ TYPE[TYPE["date"] = 3] = "date";
+    /**
+	* Variable w/ time format
+	*/ TYPE[TYPE["time"] = 4] = "time";
+    /**
+	* Variable w/ select format
+	*/ TYPE[TYPE["select"] = 5] = "select";
+    /**
+	* Variable w/ plural format
+	*/ TYPE[TYPE["plural"] = 6] = "plural";
+    /**
+	* Only possible within plural argument.
+	* This is the `#` symbol that will be substituted with the count.
+	*/ TYPE[TYPE["pound"] = 7] = "pound";
+    /**
+	* XML-like tag
+	*/ TYPE[TYPE["tag"] = 8] = "tag";
+    return TYPE;
+}({});
+let SKELETON_TYPE = /* @__PURE__ */ function(SKELETON_TYPE) {
+    SKELETON_TYPE[SKELETON_TYPE["number"] = 0] = "number";
+    SKELETON_TYPE[SKELETON_TYPE["dateTime"] = 1] = "dateTime";
+    return SKELETON_TYPE;
+}({});
+function isLiteralElement(el) {
+    return el.type === TYPE.literal;
+}
+function isArgumentElement(el) {
+    return el.type === TYPE.argument;
+}
+function isNumberElement(el) {
+    return el.type === TYPE.number;
+}
+function isDateElement(el) {
+    return el.type === TYPE.date;
+}
+function isTimeElement(el) {
+    return el.type === TYPE.time;
+}
+function isSelectElement(el) {
+    return el.type === TYPE.select;
+}
+function isPluralElement(el) {
+    return el.type === TYPE.plural;
+}
+function isPoundElement(el) {
+    return el.type === TYPE.pound;
+}
+function isTagElement(el) {
+    return el.type === TYPE.tag;
+}
+function isNumberSkeleton(el) {
+    return !!(el && typeof el === "object" && el.type === SKELETON_TYPE.number);
+}
+function isDateTimeSkeleton(el) {
+    return !!(el && typeof el === "object" && el.type === SKELETON_TYPE.dateTime);
+}
+function createLiteralElement(value) {
+    return {
+        type: TYPE.literal,
+        value
+    };
+}
+function createNumberElement(value, style) {
+    return {
+        type: TYPE.number,
+        value,
+        style
+    };
+}
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/error.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "ErrorKind",
+    ()=>ErrorKind
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/types.js [app-ssr] (ecmascript)");
+;
+let ErrorKind = /* @__PURE__ */ function(ErrorKind) {
+    /** Argument is unclosed (e.g. `{0`) */ ErrorKind[ErrorKind["EXPECT_ARGUMENT_CLOSING_BRACE"] = 1] = "EXPECT_ARGUMENT_CLOSING_BRACE";
+    /** Argument is empty (e.g. `{}`). */ ErrorKind[ErrorKind["EMPTY_ARGUMENT"] = 2] = "EMPTY_ARGUMENT";
+    /** Argument is malformed (e.g. `{foo!}``) */ ErrorKind[ErrorKind["MALFORMED_ARGUMENT"] = 3] = "MALFORMED_ARGUMENT";
+    /** Expect an argument type (e.g. `{foo,}`) */ ErrorKind[ErrorKind["EXPECT_ARGUMENT_TYPE"] = 4] = "EXPECT_ARGUMENT_TYPE";
+    /** Unsupported argument type (e.g. `{foo,foo}`) */ ErrorKind[ErrorKind["INVALID_ARGUMENT_TYPE"] = 5] = "INVALID_ARGUMENT_TYPE";
+    /** Expect an argument style (e.g. `{foo, number, }`) */ ErrorKind[ErrorKind["EXPECT_ARGUMENT_STYLE"] = 6] = "EXPECT_ARGUMENT_STYLE";
+    /** The number skeleton is invalid. */ ErrorKind[ErrorKind["INVALID_NUMBER_SKELETON"] = 7] = "INVALID_NUMBER_SKELETON";
+    /** The date time skeleton is invalid. */ ErrorKind[ErrorKind["INVALID_DATE_TIME_SKELETON"] = 8] = "INVALID_DATE_TIME_SKELETON";
+    /** Exepct a number skeleton following the `::` (e.g. `{foo, number, ::}`) */ ErrorKind[ErrorKind["EXPECT_NUMBER_SKELETON"] = 9] = "EXPECT_NUMBER_SKELETON";
+    /** Exepct a date time skeleton following the `::` (e.g. `{foo, date, ::}`) */ ErrorKind[ErrorKind["EXPECT_DATE_TIME_SKELETON"] = 10] = "EXPECT_DATE_TIME_SKELETON";
+    /** Unmatched apostrophes in the argument style (e.g. `{foo, number, 'test`) */ ErrorKind[ErrorKind["UNCLOSED_QUOTE_IN_ARGUMENT_STYLE"] = 11] = "UNCLOSED_QUOTE_IN_ARGUMENT_STYLE";
+    /** Missing select argument options (e.g. `{foo, select}`) */ ErrorKind[ErrorKind["EXPECT_SELECT_ARGUMENT_OPTIONS"] = 12] = "EXPECT_SELECT_ARGUMENT_OPTIONS";
+    /** Expecting an offset value in `plural` or `selectordinal` argument (e.g `{foo, plural, offset}`) */ ErrorKind[ErrorKind["EXPECT_PLURAL_ARGUMENT_OFFSET_VALUE"] = 13] = "EXPECT_PLURAL_ARGUMENT_OFFSET_VALUE";
+    /** Offset value in `plural` or `selectordinal` is invalid (e.g. `{foo, plural, offset: x}`) */ ErrorKind[ErrorKind["INVALID_PLURAL_ARGUMENT_OFFSET_VALUE"] = 14] = "INVALID_PLURAL_ARGUMENT_OFFSET_VALUE";
+    /** Expecting a selector in `select` argument (e.g `{foo, select}`) */ ErrorKind[ErrorKind["EXPECT_SELECT_ARGUMENT_SELECTOR"] = 15] = "EXPECT_SELECT_ARGUMENT_SELECTOR";
+    /** Expecting a selector in `plural` or `selectordinal` argument (e.g `{foo, plural}`) */ ErrorKind[ErrorKind["EXPECT_PLURAL_ARGUMENT_SELECTOR"] = 16] = "EXPECT_PLURAL_ARGUMENT_SELECTOR";
+    /** Expecting a message fragment after the `select` selector (e.g. `{foo, select, apple}`) */ ErrorKind[ErrorKind["EXPECT_SELECT_ARGUMENT_SELECTOR_FRAGMENT"] = 17] = "EXPECT_SELECT_ARGUMENT_SELECTOR_FRAGMENT";
+    /**
+	* Expecting a message fragment after the `plural` or `selectordinal` selector
+	* (e.g. `{foo, plural, one}`)
+	*/ ErrorKind[ErrorKind["EXPECT_PLURAL_ARGUMENT_SELECTOR_FRAGMENT"] = 18] = "EXPECT_PLURAL_ARGUMENT_SELECTOR_FRAGMENT";
+    /** Selector in `plural` or `selectordinal` is malformed (e.g. `{foo, plural, =x {#}}`) */ ErrorKind[ErrorKind["INVALID_PLURAL_ARGUMENT_SELECTOR"] = 19] = "INVALID_PLURAL_ARGUMENT_SELECTOR";
+    /**
+	* Duplicate selectors in `plural` or `selectordinal` argument.
+	* (e.g. {foo, plural, one {#} one {#}})
+	*/ ErrorKind[ErrorKind["DUPLICATE_PLURAL_ARGUMENT_SELECTOR"] = 20] = "DUPLICATE_PLURAL_ARGUMENT_SELECTOR";
+    /** Duplicate selectors in `select` argument.
+	* (e.g. {foo, select, apple {apple} apple {apple}})
+	*/ ErrorKind[ErrorKind["DUPLICATE_SELECT_ARGUMENT_SELECTOR"] = 21] = "DUPLICATE_SELECT_ARGUMENT_SELECTOR";
+    /** Plural or select argument option must have `other` clause. */ ErrorKind[ErrorKind["MISSING_OTHER_CLAUSE"] = 22] = "MISSING_OTHER_CLAUSE";
+    /** The tag is malformed. (e.g. `<bold!>foo</bold!>) */ ErrorKind[ErrorKind["INVALID_TAG"] = 23] = "INVALID_TAG";
+    /** The tag name is invalid. (e.g. `<123>foo</123>`) */ ErrorKind[ErrorKind["INVALID_TAG_NAME"] = 25] = "INVALID_TAG_NAME";
+    /** The closing tag does not match the opening tag. (e.g. `<bold>foo</italic>`) */ ErrorKind[ErrorKind["UNMATCHED_CLOSING_TAG"] = 26] = "UNMATCHED_CLOSING_TAG";
+    /** The opening tag has unmatched closing tag. (e.g. `<bold>foo`) */ ErrorKind[ErrorKind["UNCLOSED_TAG"] = 27] = "UNCLOSED_TAG";
+    return ErrorKind;
+}({});
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/regex.generated.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+// @generated from regex-gen.ts
+__turbopack_context__.s([
+    "SPACE_SEPARATOR_REGEX",
+    ()=>SPACE_SEPARATOR_REGEX,
+    "WHITE_SPACE_REGEX",
+    ()=>WHITE_SPACE_REGEX
+]);
+const SPACE_SEPARATOR_REGEX = /[ \xA0\u1680\u2000-\u200A\u202F\u205F\u3000]/;
+const WHITE_SPACE_REGEX = /[\t-\r \x85\u200E\u200F\u2028\u2029]/;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/time-data.generated.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+// @generated from time-data-gen.ts
+// prettier-ignore
+__turbopack_context__.s([
+    "timeData",
+    ()=>timeData
+]);
+const timeData = {
+    "001": [
+        "H",
+        "h"
+    ],
+    "419": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "AC": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "AD": [
+        "H",
+        "hB"
+    ],
+    "AE": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "AF": [
+        "H",
+        "hb",
+        "hB",
+        "h"
+    ],
+    "AG": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "AI": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "AL": [
+        "h",
+        "H",
+        "hB"
+    ],
+    "AM": [
+        "H",
+        "hB"
+    ],
+    "AO": [
+        "H",
+        "hB"
+    ],
+    "AR": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "AS": [
+        "h",
+        "H"
+    ],
+    "AT": [
+        "H",
+        "hB"
+    ],
+    "AU": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "AW": [
+        "H",
+        "hB"
+    ],
+    "AX": [
+        "H"
+    ],
+    "AZ": [
+        "H",
+        "hB",
+        "h"
+    ],
+    "BA": [
+        "H",
+        "hB",
+        "h"
+    ],
+    "BB": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "BD": [
+        "h",
+        "hB",
+        "H"
+    ],
+    "BE": [
+        "H",
+        "hB"
+    ],
+    "BF": [
+        "H",
+        "hB"
+    ],
+    "BG": [
+        "H",
+        "hB",
+        "h"
+    ],
+    "BH": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "BI": [
+        "H",
+        "h"
+    ],
+    "BJ": [
+        "H",
+        "hB"
+    ],
+    "BL": [
+        "H",
+        "hB"
+    ],
+    "BM": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "BN": [
+        "hb",
+        "hB",
+        "h",
+        "H"
+    ],
+    "BO": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "BQ": [
+        "H"
+    ],
+    "BR": [
+        "H",
+        "hB"
+    ],
+    "BS": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "BT": [
+        "h",
+        "H"
+    ],
+    "BW": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "BY": [
+        "H",
+        "h"
+    ],
+    "BZ": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "CA": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "CC": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "CD": [
+        "hB",
+        "H"
+    ],
+    "CF": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "CG": [
+        "H",
+        "hB"
+    ],
+    "CH": [
+        "H",
+        "hB",
+        "h"
+    ],
+    "CI": [
+        "H",
+        "hB"
+    ],
+    "CK": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "CL": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "CM": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "CN": [
+        "H",
+        "hB",
+        "hb",
+        "h"
+    ],
+    "CO": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "CP": [
+        "H"
+    ],
+    "CR": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "CU": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "CV": [
+        "H",
+        "hB"
+    ],
+    "CW": [
+        "H",
+        "hB"
+    ],
+    "CX": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "CY": [
+        "h",
+        "H",
+        "hb",
+        "hB"
+    ],
+    "CZ": [
+        "H"
+    ],
+    "DE": [
+        "H",
+        "hB"
+    ],
+    "DG": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "DJ": [
+        "h",
+        "H"
+    ],
+    "DK": [
+        "H"
+    ],
+    "DM": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "DO": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "DZ": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "EA": [
+        "H",
+        "h",
+        "hB",
+        "hb"
+    ],
+    "EC": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "EE": [
+        "H",
+        "hB"
+    ],
+    "EG": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "EH": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "ER": [
+        "h",
+        "H"
+    ],
+    "ES": [
+        "H",
+        "hB",
+        "h",
+        "hb"
+    ],
+    "ET": [
+        "hB",
+        "hb",
+        "h",
+        "H"
+    ],
+    "FI": [
+        "H"
+    ],
+    "FJ": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "FK": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "FM": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "FO": [
+        "H",
+        "h"
+    ],
+    "FR": [
+        "H",
+        "hB"
+    ],
+    "GA": [
+        "H",
+        "hB"
+    ],
+    "GB": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "GD": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "GE": [
+        "H",
+        "hB",
+        "h"
+    ],
+    "GF": [
+        "H",
+        "hB"
+    ],
+    "GG": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "GH": [
+        "h",
+        "H"
+    ],
+    "GI": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "GL": [
+        "H",
+        "h"
+    ],
+    "GM": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "GN": [
+        "H",
+        "hB"
+    ],
+    "GP": [
+        "H",
+        "hB"
+    ],
+    "GQ": [
+        "H",
+        "hB",
+        "h",
+        "hb"
+    ],
+    "GR": [
+        "h",
+        "H",
+        "hb",
+        "hB"
+    ],
+    "GS": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "GT": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "GU": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "GW": [
+        "H",
+        "hB"
+    ],
+    "GY": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "HK": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "HN": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "HR": [
+        "H",
+        "hB"
+    ],
+    "HU": [
+        "H",
+        "h"
+    ],
+    "IC": [
+        "H",
+        "h",
+        "hB",
+        "hb"
+    ],
+    "ID": [
+        "H"
+    ],
+    "IE": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "IL": [
+        "H",
+        "hB"
+    ],
+    "IM": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "IN": [
+        "h",
+        "H"
+    ],
+    "IO": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "IQ": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "IR": [
+        "hB",
+        "H"
+    ],
+    "IS": [
+        "H"
+    ],
+    "IT": [
+        "H",
+        "hB"
+    ],
+    "JE": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "JM": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "JO": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "JP": [
+        "H",
+        "K",
+        "h"
+    ],
+    "KE": [
+        "hB",
+        "hb",
+        "H",
+        "h"
+    ],
+    "KG": [
+        "H",
+        "h",
+        "hB",
+        "hb"
+    ],
+    "KH": [
+        "hB",
+        "h",
+        "H",
+        "hb"
+    ],
+    "KI": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "KM": [
+        "H",
+        "h",
+        "hB",
+        "hb"
+    ],
+    "KN": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "KP": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "KR": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "KW": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "KY": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "KZ": [
+        "H",
+        "hB"
+    ],
+    "LA": [
+        "H",
+        "hb",
+        "hB",
+        "h"
+    ],
+    "LB": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "LC": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "LI": [
+        "H",
+        "hB",
+        "h"
+    ],
+    "LK": [
+        "H",
+        "h",
+        "hB",
+        "hb"
+    ],
+    "LR": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "LS": [
+        "h",
+        "H"
+    ],
+    "LT": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "LU": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "LV": [
+        "H",
+        "hB",
+        "hb",
+        "h"
+    ],
+    "LY": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "MA": [
+        "H",
+        "h",
+        "hB",
+        "hb"
+    ],
+    "MC": [
+        "H",
+        "hB"
+    ],
+    "MD": [
+        "H",
+        "hB"
+    ],
+    "ME": [
+        "H",
+        "hB",
+        "h"
+    ],
+    "MF": [
+        "H",
+        "hB"
+    ],
+    "MG": [
+        "H",
+        "h"
+    ],
+    "MH": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "MK": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "ML": [
+        "H"
+    ],
+    "MM": [
+        "hB",
+        "hb",
+        "H",
+        "h"
+    ],
+    "MN": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "MO": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "MP": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "MQ": [
+        "H",
+        "hB"
+    ],
+    "MR": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "MS": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "MT": [
+        "H",
+        "h"
+    ],
+    "MU": [
+        "H",
+        "h"
+    ],
+    "MV": [
+        "H",
+        "h"
+    ],
+    "MW": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "MX": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "MY": [
+        "hb",
+        "hB",
+        "h",
+        "H"
+    ],
+    "MZ": [
+        "H",
+        "hB"
+    ],
+    "NA": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "NC": [
+        "H",
+        "hB"
+    ],
+    "NE": [
+        "H"
+    ],
+    "NF": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "NG": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "NI": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "NL": [
+        "H",
+        "hB"
+    ],
+    "NO": [
+        "H",
+        "h"
+    ],
+    "NP": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "NR": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "NU": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "NZ": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "OM": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "PA": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "PE": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "PF": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "PG": [
+        "h",
+        "H"
+    ],
+    "PH": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "PK": [
+        "h",
+        "hB",
+        "H"
+    ],
+    "PL": [
+        "H",
+        "h"
+    ],
+    "PM": [
+        "H",
+        "hB"
+    ],
+    "PN": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "PR": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "PS": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "PT": [
+        "H",
+        "hB"
+    ],
+    "PW": [
+        "h",
+        "H"
+    ],
+    "PY": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "QA": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "RE": [
+        "H",
+        "hB"
+    ],
+    "RO": [
+        "H",
+        "hB"
+    ],
+    "RS": [
+        "H",
+        "hB",
+        "h"
+    ],
+    "RU": [
+        "H"
+    ],
+    "RW": [
+        "H",
+        "h"
+    ],
+    "SA": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "SB": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "SC": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "SD": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "SE": [
+        "H"
+    ],
+    "SG": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "SH": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "SI": [
+        "H",
+        "hB"
+    ],
+    "SJ": [
+        "H"
+    ],
+    "SK": [
+        "H"
+    ],
+    "SL": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "SM": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "SN": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "SO": [
+        "h",
+        "H"
+    ],
+    "SR": [
+        "H",
+        "hB"
+    ],
+    "SS": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "ST": [
+        "H",
+        "hB"
+    ],
+    "SV": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "SX": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "SY": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "SZ": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "TA": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "TC": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "TD": [
+        "h",
+        "H",
+        "hB"
+    ],
+    "TF": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "TG": [
+        "H",
+        "hB"
+    ],
+    "TH": [
+        "H",
+        "h"
+    ],
+    "TJ": [
+        "H",
+        "h"
+    ],
+    "TL": [
+        "H",
+        "hB",
+        "hb",
+        "h"
+    ],
+    "TM": [
+        "H",
+        "h"
+    ],
+    "TN": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "TO": [
+        "h",
+        "H"
+    ],
+    "TR": [
+        "H",
+        "hB"
+    ],
+    "TT": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "TW": [
+        "hB",
+        "hb",
+        "h",
+        "H"
+    ],
+    "TZ": [
+        "hB",
+        "hb",
+        "H",
+        "h"
+    ],
+    "UA": [
+        "H",
+        "hB",
+        "h"
+    ],
+    "UG": [
+        "hB",
+        "hb",
+        "H",
+        "h"
+    ],
+    "UM": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "US": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "UY": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "UZ": [
+        "H",
+        "hB",
+        "h"
+    ],
+    "VA": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "VC": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "VE": [
+        "h",
+        "H",
+        "hB",
+        "hb"
+    ],
+    "VG": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "VI": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "VN": [
+        "H",
+        "h"
+    ],
+    "VU": [
+        "h",
+        "H"
+    ],
+    "WF": [
+        "H",
+        "hB"
+    ],
+    "WS": [
+        "h",
+        "H"
+    ],
+    "XK": [
+        "H",
+        "hB",
+        "h"
+    ],
+    "YE": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "YT": [
+        "H",
+        "hB"
+    ],
+    "ZA": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "ZM": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "ZW": [
+        "H",
+        "h"
+    ],
+    "af-ZA": [
+        "H",
+        "h",
+        "hB",
+        "hb"
+    ],
+    "ar-001": [
+        "h",
+        "hB",
+        "hb",
+        "H"
+    ],
+    "ca-ES": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "en-001": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "en-HK": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "en-IL": [
+        "H",
+        "h",
+        "hb",
+        "hB"
+    ],
+    "en-MY": [
+        "h",
+        "hb",
+        "H",
+        "hB"
+    ],
+    "es-BR": [
+        "H",
+        "h",
+        "hB",
+        "hb"
+    ],
+    "es-ES": [
+        "H",
+        "h",
+        "hB",
+        "hb"
+    ],
+    "es-GQ": [
+        "H",
+        "h",
+        "hB",
+        "hb"
+    ],
+    "fr-CA": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "gl-ES": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "gu-IN": [
+        "hB",
+        "hb",
+        "h",
+        "H"
+    ],
+    "hi-IN": [
+        "hB",
+        "h",
+        "H"
+    ],
+    "it-CH": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "it-IT": [
+        "H",
+        "h",
+        "hB"
+    ],
+    "kn-IN": [
+        "hB",
+        "h",
+        "H"
+    ],
+    "ku-SY": [
+        "H",
+        "hB"
+    ],
+    "ml-IN": [
+        "hB",
+        "h",
+        "H"
+    ],
+    "mr-IN": [
+        "hB",
+        "hb",
+        "h",
+        "H"
+    ],
+    "pa-IN": [
+        "hB",
+        "hb",
+        "h",
+        "H"
+    ],
+    "ta-IN": [
+        "hB",
+        "h",
+        "hb",
+        "H"
+    ],
+    "te-IN": [
+        "hB",
+        "h",
+        "H"
+    ],
+    "zu-ZA": [
+        "H",
+        "hB",
+        "hb",
+        "h"
+    ]
+};
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/date-time-pattern-generator.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "getBestPattern",
+    ()=>getBestPattern
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$time$2d$data$2e$generated$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/time-data.generated.js [app-ssr] (ecmascript)");
+;
+function getBestPattern(skeleton, locale) {
+    let skeletonCopy = "";
+    for(let patternPos = 0; patternPos < skeleton.length; patternPos++){
+        const patternChar = skeleton.charAt(patternPos);
+        if (patternChar === "j") {
+            let extraLength = 0;
+            while(patternPos + 1 < skeleton.length && skeleton.charAt(patternPos + 1) === patternChar){
+                extraLength++;
+                patternPos++;
+            }
+            let hourLen = 1 + (extraLength & 1);
+            let dayPeriodLen = extraLength < 2 ? 1 : 3 + (extraLength >> 1);
+            let dayPeriodChar = "a";
+            let hourChar = getDefaultHourSymbolFromLocale(locale);
+            if (hourChar == "H" || hourChar == "k") {
+                dayPeriodLen = 0;
+            }
+            while(dayPeriodLen-- > 0){
+                skeletonCopy += dayPeriodChar;
+            }
+            while(hourLen-- > 0){
+                skeletonCopy = hourChar + skeletonCopy;
+            }
+        } else if (patternChar === "J") {
+            skeletonCopy += "H";
+        } else {
+            skeletonCopy += patternChar;
+        }
+    }
+    return skeletonCopy;
+}
+/**
+* Maps the [hour cycle type](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale/hourCycle)
+* of the given `locale` to the corresponding time pattern.
+* @param locale
+*/ function getDefaultHourSymbolFromLocale(locale) {
+    let hourCycle = locale.hourCycle;
+    if (hourCycle === undefined && locale.hourCycles && locale.hourCycles.length) {
+        // @ts-ignore
+        hourCycle = locale.hourCycles[0];
+    }
+    if (hourCycle) {
+        switch(hourCycle){
+            case "h24":
+                return "k";
+            case "h23":
+                return "H";
+            case "h12":
+                return "h";
+            case "h11":
+                return "K";
+            default:
+                throw new Error("Invalid hourCycle");
+        }
+    }
+    // TODO: Once hourCycle is fully supported remove the following with data generation
+    const languageTag = locale.language;
+    let regionTag;
+    if (languageTag !== "root") {
+        regionTag = locale.maximize().region;
+    }
+    const hourCycles = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$time$2d$data$2e$generated$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["timeData"][regionTag || ""] || __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$time$2d$data$2e$generated$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["timeData"][languageTag || ""] || __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$time$2d$data$2e$generated$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["timeData"][`${languageTag}-001`] || __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$time$2d$data$2e$generated$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["timeData"]["001"];
+    return hourCycles[0];
+}
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/parser.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Parser",
+    ()=>Parser
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/error.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/types.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$regex$2e$generated$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/regex.generated.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$skeleton$2d$parser$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-skeleton-parser/index.js [app-ssr] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$skeleton$2d$parser$2f$number$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-skeleton-parser/number.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$skeleton$2d$parser$2f$date$2d$time$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-skeleton-parser/date-time.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$date$2d$time$2d$pattern$2d$generator$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/date-time-pattern-generator.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+;
+const SPACE_SEPARATOR_START_REGEX = new RegExp(`^${__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$regex$2e$generated$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SPACE_SEPARATOR_REGEX"].source}*`);
+const SPACE_SEPARATOR_END_REGEX = new RegExp(`${__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$regex$2e$generated$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SPACE_SEPARATOR_REGEX"].source}*$`);
+function createLocation(start, end) {
+    return {
+        start,
+        end
+    };
+}
+// #region Ponyfills
+// Consolidate these variables up top for easier toggling during debugging
+const hasNativeFromEntries = !!Object.fromEntries;
+const hasTrimStart = !!String.prototype.trimStart;
+const hasTrimEnd = !!String.prototype.trimEnd;
+const fromEntries = hasNativeFromEntries ? Object.fromEntries : function fromEntries(entries) {
+    const obj = {};
+    for (const [k, v] of entries){
+        obj[k] = v;
+    }
+    return obj;
+};
+const trimStart = hasTrimStart ? function trimStart(s) {
+    return s.trimStart();
+} : function trimStart(s) {
+    return s.replace(SPACE_SEPARATOR_START_REGEX, "");
+};
+const trimEnd = hasTrimEnd ? function trimEnd(s) {
+    return s.trimEnd();
+} : function trimEnd(s) {
+    return s.replace(SPACE_SEPARATOR_END_REGEX, "");
+};
+// #endregion
+const IDENTIFIER_PREFIX_RE = new RegExp("([^\\p{White_Space}\\p{Pattern_Syntax}]*)", "yu");
+function matchIdentifierAtIndex(s, index) {
+    IDENTIFIER_PREFIX_RE.lastIndex = index;
+    const match = IDENTIFIER_PREFIX_RE.exec(s);
+    return match[1] ?? "";
+}
+class Parser {
+    message;
+    position;
+    locale;
+    ignoreTag;
+    requiresOtherClause;
+    shouldParseSkeletons;
+    constructor(message, options = {}){
+        this.message = message;
+        this.position = {
+            offset: 0,
+            line: 1,
+            column: 1
+        };
+        this.ignoreTag = !!options.ignoreTag;
+        this.locale = options.locale;
+        this.requiresOtherClause = !!options.requiresOtherClause;
+        this.shouldParseSkeletons = !!options.shouldParseSkeletons;
+    }
+    parse() {
+        if (this.offset() !== 0) {
+            throw Error("parser can only be used once");
+        }
+        return this.parseMessage(0, "", false);
+    }
+    parseMessage(nestingLevel, parentArgType, expectingCloseTag) {
+        let elements = [];
+        while(!this.isEOF()){
+            const char = this.char();
+            if (char === 123) {
+                const result = this.parseArgument(nestingLevel, expectingCloseTag);
+                if (result.err) {
+                    return result;
+                }
+                elements.push(result.val);
+            } else if (char === 125 && nestingLevel > 0) {
+                break;
+            } else if (char === 35 && (parentArgType === "plural" || parentArgType === "selectordinal")) {
+                const position = this.clonePosition();
+                this.bump();
+                elements.push({
+                    type: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].pound,
+                    location: createLocation(position, this.clonePosition())
+                });
+            } else if (char === 60 && !this.ignoreTag && this.peek() === 47) {
+                if (expectingCloseTag) {
+                    break;
+                } else {
+                    return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].UNMATCHED_CLOSING_TAG, createLocation(this.clonePosition(), this.clonePosition()));
+                }
+            } else if (char === 60 && !this.ignoreTag && _isAlpha(this.peek() || 0)) {
+                const result = this.parseTag(nestingLevel, parentArgType);
+                if (result.err) {
+                    return result;
+                }
+                elements.push(result.val);
+            } else {
+                const result = this.parseLiteral(nestingLevel, parentArgType);
+                if (result.err) {
+                    return result;
+                }
+                elements.push(result.val);
+            }
+        }
+        return {
+            val: elements,
+            err: null
+        };
+    }
+    /**
+	* A tag name must start with an ASCII lower/upper case letter. The grammar is based on the
+	* [custom element name][] except that a dash is NOT always mandatory and uppercase letters
+	* are accepted:
+	*
+	* ```
+	* tag ::= "<" tagName (whitespace)* "/>" | "<" tagName (whitespace)* ">" message "</" tagName (whitespace)* ">"
+	* tagName ::= [a-z] (PENChar)*
+	* PENChar ::=
+	*     "-" | "." | [0-9] | "_" | [a-z] | [A-Z] | #xB7 | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x37D] |
+	*     [#x37F-#x1FFF] | [#x200C-#x200D] | [#x203F-#x2040] | [#x2070-#x218F] | [#x2C00-#x2FEF] |
+	*     [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
+	* ```
+	*
+	* [custom element name]: https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name
+	* NOTE: We're a bit more lax here since HTML technically does not allow uppercase HTML element but we do
+	* since other tag-based engines like React allow it
+	*/ parseTag(nestingLevel, parentArgType) {
+        const startPosition = this.clonePosition();
+        this.bump();
+        const tagName = this.parseTagName();
+        this.bumpSpace();
+        if (this.bumpIf("/>")) {
+            // Self closing tag
+            return {
+                val: {
+                    type: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].literal,
+                    value: `<${tagName}/>`,
+                    location: createLocation(startPosition, this.clonePosition())
+                },
+                err: null
+            };
+        } else if (this.bumpIf(">")) {
+            const childrenResult = this.parseMessage(nestingLevel + 1, parentArgType, true);
+            if (childrenResult.err) {
+                return childrenResult;
+            }
+            const children = childrenResult.val;
+            // Expecting a close tag
+            const endTagStartPosition = this.clonePosition();
+            if (this.bumpIf("</")) {
+                if (this.isEOF() || !_isAlpha(this.char())) {
+                    return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].INVALID_TAG, createLocation(endTagStartPosition, this.clonePosition()));
+                }
+                const closingTagNameStartPosition = this.clonePosition();
+                const closingTagName = this.parseTagName();
+                if (tagName !== closingTagName) {
+                    return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].UNMATCHED_CLOSING_TAG, createLocation(closingTagNameStartPosition, this.clonePosition()));
+                }
+                this.bumpSpace();
+                if (!this.bumpIf(">")) {
+                    return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].INVALID_TAG, createLocation(endTagStartPosition, this.clonePosition()));
+                }
+                return {
+                    val: {
+                        type: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].tag,
+                        value: tagName,
+                        children,
+                        location: createLocation(startPosition, this.clonePosition())
+                    },
+                    err: null
+                };
+            } else {
+                return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].UNCLOSED_TAG, createLocation(startPosition, this.clonePosition()));
+            }
+        } else {
+            return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].INVALID_TAG, createLocation(startPosition, this.clonePosition()));
+        }
+    }
+    /**
+	* This method assumes that the caller has peeked ahead for the first tag character.
+	*/ parseTagName() {
+        const startOffset = this.offset();
+        this.bump();
+        while(!this.isEOF() && _isPotentialElementNameChar(this.char())){
+            this.bump();
+        }
+        return this.message.slice(startOffset, this.offset());
+    }
+    parseLiteral(nestingLevel, parentArgType) {
+        const start = this.clonePosition();
+        let value = "";
+        while(true){
+            const parseQuoteResult = this.tryParseQuote(parentArgType);
+            if (parseQuoteResult) {
+                value += parseQuoteResult;
+                continue;
+            }
+            const parseUnquotedResult = this.tryParseUnquoted(nestingLevel, parentArgType);
+            if (parseUnquotedResult) {
+                value += parseUnquotedResult;
+                continue;
+            }
+            const parseLeftAngleResult = this.tryParseLeftAngleBracket();
+            if (parseLeftAngleResult) {
+                value += parseLeftAngleResult;
+                continue;
+            }
+            break;
+        }
+        const location = createLocation(start, this.clonePosition());
+        return {
+            val: {
+                type: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].literal,
+                value,
+                location
+            },
+            err: null
+        };
+    }
+    tryParseLeftAngleBracket() {
+        if (!this.isEOF() && this.char() === 60 && (this.ignoreTag || !_isAlphaOrSlash(this.peek() || 0))) {
+            this.bump();
+            return "<";
+        }
+        return null;
+    }
+    /**
+	* Starting with ICU 4.8, an ASCII apostrophe only starts quoted text if it immediately precedes
+	* a character that requires quoting (that is, "only where needed"), and works the same in
+	* nested messages as on the top level of the pattern. The new behavior is otherwise compatible.
+	*/ tryParseQuote(parentArgType) {
+        if (this.isEOF() || this.char() !== 39) {
+            return null;
+        }
+        // Parse escaped char following the apostrophe, or early return if there is no escaped char.
+        // Check if is valid escaped character
+        switch(this.peek()){
+            case 39:
+                // double quote, should return as a single quote.
+                this.bump();
+                this.bump();
+                return "'";
+            case 123:
+            case 60:
+            case 62:
+            case 125:
+                break;
+            case 35:
+                if (parentArgType === "plural" || parentArgType === "selectordinal") {
+                    break;
+                }
+                return null;
+            default:
+                return null;
+        }
+        this.bump();
+        const codePoints = [
+            this.char()
+        ];
+        this.bump();
+        // read chars until the optional closing apostrophe is found
+        while(!this.isEOF()){
+            const ch = this.char();
+            if (ch === 39) {
+                if (this.peek() === 39) {
+                    codePoints.push(39);
+                    // Bump one more time because we need to skip 2 characters.
+                    this.bump();
+                } else {
+                    // Optional closing apostrophe.
+                    this.bump();
+                    break;
+                }
+            } else {
+                codePoints.push(ch);
+            }
+            this.bump();
+        }
+        return String.fromCodePoint(...codePoints);
+    }
+    tryParseUnquoted(nestingLevel, parentArgType) {
+        if (this.isEOF()) {
+            return null;
+        }
+        const ch = this.char();
+        if (ch === 60 || ch === 123 || ch === 35 && (parentArgType === "plural" || parentArgType === "selectordinal") || ch === 125 && nestingLevel > 0) {
+            return null;
+        } else {
+            this.bump();
+            return String.fromCodePoint(ch);
+        }
+    }
+    parseArgument(nestingLevel, expectingCloseTag) {
+        const openingBracePosition = this.clonePosition();
+        this.bump();
+        this.bumpSpace();
+        if (this.isEOF()) {
+            return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_ARGUMENT_CLOSING_BRACE, createLocation(openingBracePosition, this.clonePosition()));
+        }
+        if (this.char() === 125) {
+            this.bump();
+            return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EMPTY_ARGUMENT, createLocation(openingBracePosition, this.clonePosition()));
+        }
+        // argument name
+        let value = this.parseIdentifierIfPossible().value;
+        if (!value) {
+            return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].MALFORMED_ARGUMENT, createLocation(openingBracePosition, this.clonePosition()));
+        }
+        this.bumpSpace();
+        if (this.isEOF()) {
+            return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_ARGUMENT_CLOSING_BRACE, createLocation(openingBracePosition, this.clonePosition()));
+        }
+        switch(this.char()){
+            case 125:
+                {
+                    this.bump();
+                    return {
+                        val: {
+                            type: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].argument,
+                            value,
+                            location: createLocation(openingBracePosition, this.clonePosition())
+                        },
+                        err: null
+                    };
+                }
+            case 44:
+                {
+                    this.bump();
+                    this.bumpSpace();
+                    if (this.isEOF()) {
+                        return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_ARGUMENT_CLOSING_BRACE, createLocation(openingBracePosition, this.clonePosition()));
+                    }
+                    return this.parseArgumentOptions(nestingLevel, expectingCloseTag, value, openingBracePosition);
+                }
+            default:
+                return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].MALFORMED_ARGUMENT, createLocation(openingBracePosition, this.clonePosition()));
+        }
+    }
+    /**
+	* Advance the parser until the end of the identifier, if it is currently on
+	* an identifier character. Return an empty string otherwise.
+	*/ parseIdentifierIfPossible() {
+        const startingPosition = this.clonePosition();
+        const startOffset = this.offset();
+        const value = matchIdentifierAtIndex(this.message, startOffset);
+        const endOffset = startOffset + value.length;
+        this.bumpTo(endOffset);
+        const endPosition = this.clonePosition();
+        const location = createLocation(startingPosition, endPosition);
+        return {
+            value,
+            location
+        };
+    }
+    parseArgumentOptions(nestingLevel, expectingCloseTag, value, openingBracePosition) {
+        // Parse this range:
+        // {name, type, style}
+        //        ^---^
+        let typeStartPosition = this.clonePosition();
+        let argType = this.parseIdentifierIfPossible().value;
+        let typeEndPosition = this.clonePosition();
+        switch(argType){
+            case "":
+                // Expecting a style string number, date, time, plural, selectordinal, or select.
+                return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_ARGUMENT_TYPE, createLocation(typeStartPosition, typeEndPosition));
+            case "number":
+            case "date":
+            case "time":
+                {
+                    // Parse this range:
+                    // {name, number, style}
+                    //              ^-------^
+                    this.bumpSpace();
+                    let styleAndLocation = null;
+                    if (this.bumpIf(",")) {
+                        this.bumpSpace();
+                        const styleStartPosition = this.clonePosition();
+                        const result = this.parseSimpleArgStyleIfPossible();
+                        if (result.err) {
+                            return result;
+                        }
+                        const style = trimEnd(result.val);
+                        if (style.length === 0) {
+                            return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_ARGUMENT_STYLE, createLocation(this.clonePosition(), this.clonePosition()));
+                        }
+                        const styleLocation = createLocation(styleStartPosition, this.clonePosition());
+                        styleAndLocation = {
+                            style,
+                            styleLocation
+                        };
+                    }
+                    const argCloseResult = this.tryParseArgumentClose(openingBracePosition);
+                    if (argCloseResult.err) {
+                        return argCloseResult;
+                    }
+                    const location = createLocation(openingBracePosition, this.clonePosition());
+                    // Extract style or skeleton
+                    if (styleAndLocation && styleAndLocation.style.startsWith("::")) {
+                        // Skeleton starts with `::`.
+                        let skeleton = trimStart(styleAndLocation.style.slice(2));
+                        if (argType === "number") {
+                            const result = this.parseNumberSkeletonFromString(skeleton, styleAndLocation.styleLocation);
+                            if (result.err) {
+                                return result;
+                            }
+                            return {
+                                val: {
+                                    type: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].number,
+                                    value,
+                                    location,
+                                    style: result.val
+                                },
+                                err: null
+                            };
+                        } else {
+                            if (skeleton.length === 0) {
+                                return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_DATE_TIME_SKELETON, location);
+                            }
+                            let dateTimePattern = skeleton;
+                            // Get "best match" pattern only if locale is passed, if not, let it
+                            // pass as-is where `parseDateTimeSkeleton()` will throw an error
+                            // for unsupported patterns.
+                            if (this.locale) {
+                                dateTimePattern = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$date$2d$time$2d$pattern$2d$generator$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getBestPattern"])(skeleton, this.locale);
+                            }
+                            const style = {
+                                type: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SKELETON_TYPE"].dateTime,
+                                pattern: dateTimePattern,
+                                location: styleAndLocation.styleLocation,
+                                parsedOptions: this.shouldParseSkeletons ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$skeleton$2d$parser$2f$date$2d$time$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["parseDateTimeSkeleton"])(dateTimePattern) : {}
+                            };
+                            const type = argType === "date" ? __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].date : __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].time;
+                            return {
+                                val: {
+                                    type,
+                                    value,
+                                    location,
+                                    style
+                                },
+                                err: null
+                            };
+                        }
+                    }
+                    // Regular style or no style.
+                    return {
+                        val: {
+                            type: argType === "number" ? __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].number : argType === "date" ? __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].date : __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].time,
+                            value,
+                            location,
+                            style: styleAndLocation?.style ?? null
+                        },
+                        err: null
+                    };
+                }
+            case "plural":
+            case "selectordinal":
+            case "select":
+                {
+                    // Parse this range:
+                    // {name, plural, options}
+                    //              ^---------^
+                    const typeEndPosition = this.clonePosition();
+                    this.bumpSpace();
+                    if (!this.bumpIf(",")) {
+                        return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_SELECT_ARGUMENT_OPTIONS, createLocation(typeEndPosition, {
+                            ...typeEndPosition
+                        }));
+                    }
+                    this.bumpSpace();
+                    // Parse offset:
+                    // {name, plural, offset:1, options}
+                    //                ^-----^
+                    //
+                    // or the first option:
+                    //
+                    // {name, plural, one {...} other {...}}
+                    //                ^--^
+                    let identifierAndLocation = this.parseIdentifierIfPossible();
+                    let pluralOffset = 0;
+                    if (argType !== "select" && identifierAndLocation.value === "offset") {
+                        if (!this.bumpIf(":")) {
+                            return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_PLURAL_ARGUMENT_OFFSET_VALUE, createLocation(this.clonePosition(), this.clonePosition()));
+                        }
+                        this.bumpSpace();
+                        const result = this.tryParseDecimalInteger(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_PLURAL_ARGUMENT_OFFSET_VALUE, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].INVALID_PLURAL_ARGUMENT_OFFSET_VALUE);
+                        if (result.err) {
+                            return result;
+                        }
+                        // Parse another identifier for option parsing
+                        this.bumpSpace();
+                        identifierAndLocation = this.parseIdentifierIfPossible();
+                        pluralOffset = result.val;
+                    }
+                    const optionsResult = this.tryParsePluralOrSelectOptions(nestingLevel, argType, expectingCloseTag, identifierAndLocation);
+                    if (optionsResult.err) {
+                        return optionsResult;
+                    }
+                    const argCloseResult = this.tryParseArgumentClose(openingBracePosition);
+                    if (argCloseResult.err) {
+                        return argCloseResult;
+                    }
+                    const location = createLocation(openingBracePosition, this.clonePosition());
+                    if (argType === "select") {
+                        return {
+                            val: {
+                                type: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].select,
+                                value,
+                                options: fromEntries(optionsResult.val),
+                                location
+                            },
+                            err: null
+                        };
+                    } else {
+                        return {
+                            val: {
+                                type: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].plural,
+                                value,
+                                options: fromEntries(optionsResult.val),
+                                offset: pluralOffset,
+                                pluralType: argType === "plural" ? "cardinal" : "ordinal",
+                                location
+                            },
+                            err: null
+                        };
+                    }
+                }
+            default:
+                return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].INVALID_ARGUMENT_TYPE, createLocation(typeStartPosition, typeEndPosition));
+        }
+    }
+    tryParseArgumentClose(openingBracePosition) {
+        // Parse: {value, number, ::currency/GBP }
+        //
+        if (this.isEOF() || this.char() !== 125) {
+            return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_ARGUMENT_CLOSING_BRACE, createLocation(openingBracePosition, this.clonePosition()));
+        }
+        this.bump();
+        return {
+            val: true,
+            err: null
+        };
+    }
+    /**
+	* See: https://github.com/unicode-org/icu/blob/af7ed1f6d2298013dc303628438ec4abe1f16479/icu4c/source/common/messagepattern.cpp#L659
+	*/ parseSimpleArgStyleIfPossible() {
+        let nestedBraces = 0;
+        const startPosition = this.clonePosition();
+        while(!this.isEOF()){
+            const ch = this.char();
+            switch(ch){
+                case 39:
+                    {
+                        // Treat apostrophe as quoting but include it in the style part.
+                        // Find the end of the quoted literal text.
+                        this.bump();
+                        let apostrophePosition = this.clonePosition();
+                        if (!this.bumpUntil("'")) {
+                            return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].UNCLOSED_QUOTE_IN_ARGUMENT_STYLE, createLocation(apostrophePosition, this.clonePosition()));
+                        }
+                        this.bump();
+                        break;
+                    }
+                case 123:
+                    {
+                        nestedBraces += 1;
+                        this.bump();
+                        break;
+                    }
+                case 125:
+                    {
+                        if (nestedBraces > 0) {
+                            nestedBraces -= 1;
+                        } else {
+                            return {
+                                val: this.message.slice(startPosition.offset, this.offset()),
+                                err: null
+                            };
+                        }
+                        break;
+                    }
+                default:
+                    this.bump();
+                    break;
+            }
+        }
+        return {
+            val: this.message.slice(startPosition.offset, this.offset()),
+            err: null
+        };
+    }
+    parseNumberSkeletonFromString(skeleton, location) {
+        let tokens = [];
+        try {
+            tokens = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$skeleton$2d$parser$2f$number$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["parseNumberSkeletonFromString"])(skeleton);
+        } catch  {
+            return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].INVALID_NUMBER_SKELETON, location);
+        }
+        return {
+            val: {
+                type: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SKELETON_TYPE"].number,
+                tokens,
+                location,
+                parsedOptions: this.shouldParseSkeletons ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$skeleton$2d$parser$2f$number$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["parseNumberSkeleton"])(tokens) : {}
+            },
+            err: null
+        };
+    }
+    /**
+	* @param nesting_level The current nesting level of messages.
+	*     This can be positive when parsing message fragment in select or plural argument options.
+	* @param parent_arg_type The parent argument's type.
+	* @param parsed_first_identifier If provided, this is the first identifier-like selector of
+	*     the argument. It is a by-product of a previous parsing attempt.
+	* @param expecting_close_tag If true, this message is directly or indirectly nested inside
+	*     between a pair of opening and closing tags. The nested message will not parse beyond
+	*     the closing tag boundary.
+	*/ tryParsePluralOrSelectOptions(nestingLevel, parentArgType, expectCloseTag, parsedFirstIdentifier) {
+        let hasOtherClause = false;
+        const options = [];
+        const parsedSelectors = new Set();
+        let { value: selector, location: selectorLocation } = parsedFirstIdentifier;
+        // Parse:
+        // one {one apple}
+        // ^--^
+        while(true){
+            if (selector.length === 0) {
+                const startPosition = this.clonePosition();
+                if (parentArgType !== "select" && this.bumpIf("=")) {
+                    // Try parse `={number}` selector
+                    const result = this.tryParseDecimalInteger(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_PLURAL_ARGUMENT_SELECTOR, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].INVALID_PLURAL_ARGUMENT_SELECTOR);
+                    if (result.err) {
+                        return result;
+                    }
+                    selectorLocation = createLocation(startPosition, this.clonePosition());
+                    selector = this.message.slice(startPosition.offset, this.offset());
+                } else {
+                    break;
+                }
+            }
+            // Duplicate selector clauses
+            if (parsedSelectors.has(selector)) {
+                return this.error(parentArgType === "select" ? __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].DUPLICATE_SELECT_ARGUMENT_SELECTOR : __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].DUPLICATE_PLURAL_ARGUMENT_SELECTOR, selectorLocation);
+            }
+            if (selector === "other") {
+                hasOtherClause = true;
+            }
+            // Parse:
+            // one {one apple}
+            //     ^----------^
+            this.bumpSpace();
+            const openingBracePosition = this.clonePosition();
+            if (!this.bumpIf("{")) {
+                return this.error(parentArgType === "select" ? __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_SELECT_ARGUMENT_SELECTOR_FRAGMENT : __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_PLURAL_ARGUMENT_SELECTOR_FRAGMENT, createLocation(this.clonePosition(), this.clonePosition()));
+            }
+            const fragmentResult = this.parseMessage(nestingLevel + 1, parentArgType, expectCloseTag);
+            if (fragmentResult.err) {
+                return fragmentResult;
+            }
+            const argCloseResult = this.tryParseArgumentClose(openingBracePosition);
+            if (argCloseResult.err) {
+                return argCloseResult;
+            }
+            options.push([
+                selector,
+                {
+                    value: fragmentResult.val,
+                    location: createLocation(openingBracePosition, this.clonePosition())
+                }
+            ]);
+            // Keep track of the existing selectors
+            parsedSelectors.add(selector);
+            // Prep next selector clause.
+            this.bumpSpace();
+            ({ value: selector, location: selectorLocation } = this.parseIdentifierIfPossible());
+        }
+        if (options.length === 0) {
+            return this.error(parentArgType === "select" ? __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_SELECT_ARGUMENT_SELECTOR : __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].EXPECT_PLURAL_ARGUMENT_SELECTOR, createLocation(this.clonePosition(), this.clonePosition()));
+        }
+        if (this.requiresOtherClause && !hasOtherClause) {
+            return this.error(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"].MISSING_OTHER_CLAUSE, createLocation(this.clonePosition(), this.clonePosition()));
+        }
+        return {
+            val: options,
+            err: null
+        };
+    }
+    tryParseDecimalInteger(expectNumberError, invalidNumberError) {
+        let sign = 1;
+        const startingPosition = this.clonePosition();
+        if (this.bumpIf("+")) {} else if (this.bumpIf("-")) {
+            sign = -1;
+        }
+        let hasDigits = false;
+        let decimal = 0;
+        while(!this.isEOF()){
+            const ch = this.char();
+            if (ch >= 48 && ch <= 57) {
+                hasDigits = true;
+                decimal = decimal * 10 + (ch - 48);
+                this.bump();
+            } else {
+                break;
+            }
+        }
+        const location = createLocation(startingPosition, this.clonePosition());
+        if (!hasDigits) {
+            return this.error(expectNumberError, location);
+        }
+        decimal *= sign;
+        if (!Number.isSafeInteger(decimal)) {
+            return this.error(invalidNumberError, location);
+        }
+        return {
+            val: decimal,
+            err: null
+        };
+    }
+    offset() {
+        return this.position.offset;
+    }
+    isEOF() {
+        return this.offset() === this.message.length;
+    }
+    clonePosition() {
+        // This is much faster than `Object.assign` or spread.
+        return {
+            offset: this.position.offset,
+            line: this.position.line,
+            column: this.position.column
+        };
+    }
+    /**
+	* Return the code point at the current position of the parser.
+	* Throws if the index is out of bound.
+	*/ char() {
+        const offset = this.position.offset;
+        if (offset >= this.message.length) {
+            throw Error("out of bound");
+        }
+        const code = this.message.codePointAt(offset);
+        if (code === undefined) {
+            throw Error(`Offset ${offset} is at invalid UTF-16 code unit boundary`);
+        }
+        return code;
+    }
+    error(kind, location) {
+        return {
+            val: null,
+            err: {
+                kind,
+                message: this.message,
+                location
+            }
+        };
+    }
+    /** Bump the parser to the next UTF-16 code unit. */ bump() {
+        if (this.isEOF()) {
+            return;
+        }
+        const code = this.char();
+        if (code === 10) {
+            this.position.line += 1;
+            this.position.column = 1;
+            this.position.offset += 1;
+        } else {
+            this.position.column += 1;
+            // 0 ~ 0x10000 -> unicode BMP, otherwise skip the surrogate pair.
+            this.position.offset += code < 65536 ? 1 : 2;
+        }
+    }
+    /**
+	* If the substring starting at the current position of the parser has
+	* the given prefix, then bump the parser to the character immediately
+	* following the prefix and return true. Otherwise, don't bump the parser
+	* and return false.
+	*/ bumpIf(prefix) {
+        if (this.message.startsWith(prefix, this.offset())) {
+            for(let i = 0; i < prefix.length; i++){
+                this.bump();
+            }
+            return true;
+        }
+        return false;
+    }
+    /**
+	* Bump the parser until the pattern character is found and return `true`.
+	* Otherwise bump to the end of the file and return `false`.
+	*/ bumpUntil(pattern) {
+        const currentOffset = this.offset();
+        const index = this.message.indexOf(pattern, currentOffset);
+        if (index >= 0) {
+            this.bumpTo(index);
+            return true;
+        } else {
+            this.bumpTo(this.message.length);
+            return false;
+        }
+    }
+    /**
+	* Bump the parser to the target offset.
+	* If target offset is beyond the end of the input, bump the parser to the end of the input.
+	*/ bumpTo(targetOffset) {
+        if (this.offset() > targetOffset) {
+            throw Error(`targetOffset ${targetOffset} must be greater than or equal to the current offset ${this.offset()}`);
+        }
+        targetOffset = Math.min(targetOffset, this.message.length);
+        while(true){
+            const offset = this.offset();
+            if (offset === targetOffset) {
+                break;
+            }
+            if (offset > targetOffset) {
+                throw Error(`targetOffset ${targetOffset} is at invalid UTF-16 code unit boundary`);
+            }
+            this.bump();
+            if (this.isEOF()) {
+                break;
+            }
+        }
+    }
+    /** advance the parser through all whitespace to the next non-whitespace code unit. */ bumpSpace() {
+        while(!this.isEOF() && _isWhiteSpace(this.char())){
+            this.bump();
+        }
+    }
+    /**
+	* Peek at the *next* Unicode codepoint in the input without advancing the parser.
+	* If the input has been exhausted, then this returns null.
+	*/ peek() {
+        if (this.isEOF()) {
+            return null;
+        }
+        const code = this.char();
+        const offset = this.offset();
+        const nextCode = this.message.charCodeAt(offset + (code >= 65536 ? 2 : 1));
+        return nextCode ?? null;
+    }
+}
+/**
+* This check if codepoint is alphabet (lower & uppercase)
+* @param codepoint
+* @returns
+*/ function _isAlpha(codepoint) {
+    return codepoint >= 97 && codepoint <= 122 || codepoint >= 65 && codepoint <= 90;
+}
+function _isAlphaOrSlash(codepoint) {
+    return _isAlpha(codepoint) || codepoint === 47;
+}
+/** See `parseTag` function docs. */ function _isPotentialElementNameChar(c) {
+    return c === 45 || c === 46 || c >= 48 && c <= 57 || c === 95 || c >= 97 && c <= 122 || c >= 65 && c <= 90 || c == 183 || c >= 192 && c <= 214 || c >= 216 && c <= 246 || c >= 248 && c <= 893 || c >= 895 && c <= 8191 || c >= 8204 && c <= 8205 || c >= 8255 && c <= 8256 || c >= 8304 && c <= 8591 || c >= 11264 && c <= 12271 || c >= 12289 && c <= 55295 || c >= 63744 && c <= 64975 || c >= 65008 && c <= 65533 || c >= 65536 && c <= 983039;
+}
+/**
+* Code point equivalent of regex `\p{White_Space}`.
+* From: https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
+*/ function _isWhiteSpace(c) {
+    return c >= 9 && c <= 13 || c === 32 || c === 133 || c >= 8206 && c <= 8207 || c === 8232 || c === 8233;
+}
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/manipulator.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "hoistSelectors",
+    ()=>hoistSelectors,
+    "isStructurallySame",
+    ()=>isStructurallySame
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/types.js [app-ssr] (ecmascript)");
+;
+function cloneDeep(obj) {
+    if (Array.isArray(obj)) {
+        // @ts-expect-error meh
+        return obj.map(cloneDeep);
+    }
+    if (obj !== null && typeof obj === "object") {
+        // @ts-expect-error meh
+        return Object.keys(obj).reduce((cloned, k)=>{
+            // @ts-expect-error meh
+            cloned[k] = cloneDeep(obj[k]);
+            return cloned;
+        }, {});
+    }
+    return obj;
+}
+/**
+* Replace pound elements with number elements referencing the given variable.
+* This is needed when nesting plurals - the # in the outer plural should become
+* an explicit variable reference when nested inside another plural.
+* GH #4202
+*/ function replacePoundWithArgument(ast, variableName) {
+    return ast.map((el)=>{
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isPoundElement"])(el)) {
+            // Replace # with {variableName, number}
+            return {
+                type: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"].number,
+                value: variableName,
+                style: null,
+                location: el.location
+            };
+        }
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isPluralElement"])(el) || (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isSelectElement"])(el)) {
+            // Recursively process options
+            const newOptions = {};
+            for (const key of Object.keys(el.options)){
+                newOptions[key] = {
+                    value: replacePoundWithArgument(el.options[key].value, variableName)
+                };
+            }
+            return {
+                ...el,
+                options: newOptions
+            };
+        }
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isTagElement"])(el)) {
+            return {
+                ...el,
+                children: replacePoundWithArgument(el.children, variableName)
+            };
+        }
+        return el;
+    });
+}
+function hoistPluralOrSelectElement(ast, el, positionToInject) {
+    // pull this out of the ast and move it to the top
+    const cloned = cloneDeep(el);
+    const { options } = cloned;
+    // GH #4202: Check if there are other plural/select elements after this one
+    const afterElements = ast.slice(positionToInject + 1);
+    const hasSubsequentPluralOrSelect = afterElements.some(isPluralOrSelectElement);
+    cloned.options = Object.keys(options).reduce((all, k)=>{
+        let optionValue = options[k].value;
+        // GH #4202: If there are subsequent plurals/selects and this is a plural,
+        // replace # with explicit variable reference to avoid ambiguity
+        if (hasSubsequentPluralOrSelect && (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isPluralElement"])(el)) {
+            optionValue = replacePoundWithArgument(optionValue, el.value);
+        }
+        const newValue = hoistSelectors([
+            ...ast.slice(0, positionToInject),
+            ...optionValue,
+            ...afterElements
+        ]);
+        all[k] = {
+            value: newValue
+        };
+        return all;
+    }, {});
+    return cloned;
+}
+function isPluralOrSelectElement(el) {
+    return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isPluralElement"])(el) || (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isSelectElement"])(el);
+}
+function findPluralOrSelectElement(ast) {
+    return !!ast.find((el)=>{
+        if (isPluralOrSelectElement(el)) {
+            return true;
+        }
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isTagElement"])(el)) {
+            return findPluralOrSelectElement(el.children);
+        }
+        return false;
+    });
+}
+function hoistSelectors(ast) {
+    for(let i = 0; i < ast.length; i++){
+        const el = ast[i];
+        if (isPluralOrSelectElement(el)) {
+            return [
+                hoistPluralOrSelectElement(ast, el, i)
+            ];
+        }
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isTagElement"])(el) && findPluralOrSelectElement([
+            el
+        ])) {
+            throw new Error("Cannot hoist plural/select within a tag element. Please put the tag element inside each plural/select option");
+        }
+    }
+    return ast;
+}
+/**
+* Collect all variables in an AST to Record<string, TYPE>
+* @param ast AST to collect variables from
+* @param vars Record of variable name to variable type
+*/ function collectVariables(ast, vars = new Map()) {
+    ast.forEach((el)=>{
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isArgumentElement"])(el) || (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isDateElement"])(el) || (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isTimeElement"])(el) || (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isNumberElement"])(el)) {
+            if (el.value in vars && vars.get(el.value) !== el.type) {
+                throw new Error(`Variable ${el.value} has conflicting types`);
+            }
+            vars.set(el.value, el.type);
+        }
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isPluralElement"])(el) || (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isSelectElement"])(el)) {
+            vars.set(el.value, el.type);
+            Object.keys(el.options).forEach((k)=>{
+                collectVariables(el.options[k].value, vars);
+            });
+        }
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isTagElement"])(el)) {
+            vars.set(el.value, el.type);
+            collectVariables(el.children, vars);
+        }
+    });
+}
+function isStructurallySame(a, b) {
+    const aVars = new Map();
+    const bVars = new Map();
+    collectVariables(a, aVars);
+    collectVariables(b, bVars);
+    if (aVars.size !== bVars.size) {
+        return {
+            success: false,
+            error: new Error(`Different number of variables: [${Array.from(aVars.keys()).join(", ")}] vs [${Array.from(bVars.keys()).join(", ")}]`)
+        };
+    }
+    return Array.from(aVars.entries()).reduce((result, [key, type])=>{
+        if (!result.success) {
+            return result;
+        }
+        const bType = bVars.get(key);
+        if (bType == null) {
+            return {
+                success: false,
+                error: new Error(`Missing variable ${key} in message`)
+            };
+        }
+        if (bType !== type) {
+            return {
+                success: false,
+                error: new Error(`Variable ${key} has conflicting types: ${__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"][type]} vs ${__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TYPE"][bType]}`)
+            };
+        }
+        return result;
+    }, {
+        success: true
+    });
+}
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/index.js [app-ssr] (ecmascript) <locals>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "_Parser",
+    ()=>_Parser,
+    "parse",
+    ()=>parse
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/error.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$parser$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/parser.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/types.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$manipulator$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/manipulator.js [app-ssr] (ecmascript)");
+;
+;
+;
+function pruneLocation(els) {
+    els.forEach((el)=>{
+        delete el.location;
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isSelectElement"])(el) || (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isPluralElement"])(el)) {
+            for(const k in el.options){
+                delete el.options[k].location;
+                pruneLocation(el.options[k].value);
+            }
+        } else if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isNumberElement"])(el) && (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isNumberSkeleton"])(el.style)) {
+            delete el.style.location;
+        } else if (((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isDateElement"])(el) || (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isTimeElement"])(el)) && (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isDateTimeSkeleton"])(el.style)) {
+            delete el.style.location;
+        } else if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isTagElement"])(el)) {
+            pruneLocation(el.children);
+        }
+    });
+}
+function parse(message, opts = {}) {
+    opts = {
+        shouldParseSkeletons: true,
+        requiresOtherClause: true,
+        ...opts
+    };
+    const result = new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$parser$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Parser"](message, opts).parse();
+    if (result.err) {
+        const error = SyntaxError(__TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorKind"][result.err.kind]);
+        // @ts-expect-error Assign to error object
+        error.location = result.err.location;
+        // @ts-expect-error Assign to error object
+        error.originalMessage = result.err.message;
+        throw error;
+    }
+    if (!opts?.captureLocation) {
+        pruneLocation(result.val);
+    }
+    return result.val;
+}
+;
+const _Parser = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$parser$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Parser"];
+;
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/intl-messageformat/src/error.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "ErrorCode",
+    ()=>ErrorCode,
+    "FormatError",
+    ()=>FormatError,
+    "InvalidValueError",
+    ()=>InvalidValueError,
+    "InvalidValueTypeError",
+    ()=>InvalidValueTypeError,
+    "MissingValueError",
+    ()=>MissingValueError
+]);
+let ErrorCode = /* @__PURE__ */ function(ErrorCode) {
+    // When we have a placeholder but no value to format
+    ErrorCode["MISSING_VALUE"] = "MISSING_VALUE";
+    // When value supplied is invalid
+    ErrorCode["INVALID_VALUE"] = "INVALID_VALUE";
+    // When we need specific Intl API but it's not available
+    ErrorCode["MISSING_INTL_API"] = "MISSING_INTL_API";
+    return ErrorCode;
+}({});
+class FormatError extends Error {
+    code;
+    /**
+	* Original message we're trying to format
+	* `undefined` if we're only dealing w/ AST
+	*
+	* @type {(string | undefined)}
+	* @memberof FormatError
+	*/ originalMessage;
+    constructor(msg, code, originalMessage){
+        super(msg);
+        this.code = code;
+        this.originalMessage = originalMessage;
+    }
+    toString() {
+        return `[formatjs Error: ${this.code}] ${this.message}`;
+    }
+}
+class InvalidValueError extends FormatError {
+    constructor(variableId, value, options, originalMessage){
+        super(`Invalid values for "${variableId}": "${value}". Options are "${Object.keys(options).join("\", \"")}"`, ErrorCode.INVALID_VALUE, originalMessage);
+    }
+}
+class InvalidValueTypeError extends FormatError {
+    constructor(value, type, originalMessage){
+        super(`Value for "${value}" must be of type ${type}`, ErrorCode.INVALID_VALUE, originalMessage);
+    }
+}
+class MissingValueError extends FormatError {
+    constructor(variableId, originalMessage){
+        super(`The intl string context variable "${variableId}" was not provided to the string "${originalMessage}"`, ErrorCode.MISSING_VALUE, originalMessage);
+    }
+}
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/intl-messageformat/src/formatters.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "PART_TYPE",
+    ()=>PART_TYPE,
+    "formatToParts",
+    ()=>formatToParts,
+    "isFormatXMLElementFn",
+    ()=>isFormatXMLElementFn
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/index.js [app-ssr] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/types.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/intl-messageformat/src/error.js [app-ssr] (ecmascript)");
+;
+;
+;
+let PART_TYPE = /* @__PURE__ */ function(PART_TYPE) {
+    PART_TYPE[PART_TYPE["literal"] = 0] = "literal";
+    PART_TYPE[PART_TYPE["object"] = 1] = "object";
+    return PART_TYPE;
+}({});
+function mergeLiteral(parts) {
+    if (parts.length < 2) {
+        return parts;
+    }
+    return parts.reduce((all, part)=>{
+        const lastPart = all[all.length - 1];
+        if (!lastPart || lastPart.type !== PART_TYPE.literal || part.type !== PART_TYPE.literal) {
+            all.push(part);
+        } else {
+            lastPart.value += part.value;
+        }
+        return all;
+    }, []);
+}
+function isFormatXMLElementFn(el) {
+    return typeof el === "function";
+}
+function formatToParts(els, locales, formatters, formats, values, currentPluralValue, originalMessage) {
+    // Hot path for straight simple msg translations
+    if (els.length === 1 && (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isLiteralElement"])(els[0])) {
+        return [
+            {
+                type: PART_TYPE.literal,
+                value: els[0].value
+            }
+        ];
+    }
+    const result = [];
+    for (const el of els){
+        // Exit early for string parts.
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isLiteralElement"])(el)) {
+            result.push({
+                type: PART_TYPE.literal,
+                value: el.value
+            });
+            continue;
+        }
+        // TODO: should this part be literal type?
+        // Replace `#` in plural rules with the actual numeric value.
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isPoundElement"])(el)) {
+            if (typeof currentPluralValue === "number") {
+                result.push({
+                    type: PART_TYPE.literal,
+                    value: formatters.getNumberFormat(locales).format(currentPluralValue)
+                });
+            }
+            continue;
+        }
+        const { value: varName } = el;
+        // Enforce that all required values are provided by the caller.
+        if (!(values && varName in values)) {
+            throw new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["MissingValueError"](varName, originalMessage);
+        }
+        let value = values[varName];
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isArgumentElement"])(el)) {
+            if (!value || typeof value === "string" || typeof value === "number" || typeof value === "bigint") {
+                value = typeof value === "string" || typeof value === "number" || typeof value === "bigint" ? String(value) : "";
+            }
+            result.push({
+                type: typeof value === "string" ? PART_TYPE.literal : PART_TYPE.object,
+                value
+            });
+            continue;
+        }
+        // Recursively format plural and select parts' option — which can be a
+        // nested pattern structure. The choosing of the option to use is
+        // abstracted-by and delegated-to the part helper object.
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isDateElement"])(el)) {
+            const style = typeof el.style === "string" ? formats.date[el.style] : (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isDateTimeSkeleton"])(el.style) ? el.style.parsedOptions : undefined;
+            result.push({
+                type: PART_TYPE.literal,
+                value: formatters.getDateTimeFormat(locales, style).format(value)
+            });
+            continue;
+        }
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isTimeElement"])(el)) {
+            const style = typeof el.style === "string" ? formats.time[el.style] : (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isDateTimeSkeleton"])(el.style) ? el.style.parsedOptions : formats.time.medium;
+            result.push({
+                type: PART_TYPE.literal,
+                value: formatters.getDateTimeFormat(locales, style).format(value)
+            });
+            continue;
+        }
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isNumberElement"])(el)) {
+            const style = typeof el.style === "string" ? formats.number[el.style] : (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isNumberSkeleton"])(el.style) ? el.style.parsedOptions : undefined;
+            if (style && style.scale) {
+                const scale = style.scale || 1;
+                // Handle bigint scale multiplication
+                // BigInt can only be multiplied by BigInt
+                if (typeof value === "bigint") {
+                    // Check if scale is a safe integer that can be converted to BigInt
+                    if (!Number.isInteger(scale)) {
+                        throw new TypeError(`Cannot apply fractional scale ${scale} to bigint value. Scale must be an integer when formatting bigint.`);
+                    }
+                    value = value * BigInt(scale);
+                } else {
+                    value = value * scale;
+                }
+            }
+            result.push({
+                type: PART_TYPE.literal,
+                value: formatters.getNumberFormat(locales, style).format(value)
+            });
+            continue;
+        }
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isTagElement"])(el)) {
+            const { children, value } = el;
+            const formatFn = values[value];
+            if (!isFormatXMLElementFn(formatFn)) {
+                throw new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["InvalidValueTypeError"](value, "function", originalMessage);
+            }
+            const parts = formatToParts(children, locales, formatters, formats, values, currentPluralValue);
+            let chunks = formatFn(parts.map((p)=>p.value));
+            if (!Array.isArray(chunks)) {
+                chunks = [
+                    chunks
+                ];
+            }
+            result.push(...chunks.map((c)=>{
+                return {
+                    type: typeof c === "string" ? PART_TYPE.literal : PART_TYPE.object,
+                    value: c
+                };
+            }));
+        }
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isSelectElement"])(el)) {
+            // GH #4490: Use hasOwnProperty to avoid prototype chain issues with keys like "constructor"
+            const key = value;
+            const opt = (Object.prototype.hasOwnProperty.call(el.options, key) ? el.options[key] : undefined) || el.options.other;
+            if (!opt) {
+                throw new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["InvalidValueError"](el.value, value, Object.keys(el.options), originalMessage);
+            }
+            result.push(...formatToParts(opt.value, locales, formatters, formats, values));
+            continue;
+        }
+        if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$types$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isPluralElement"])(el)) {
+            // GH #4490: Use hasOwnProperty to avoid prototype chain issues
+            const exactKey = `=${value}`;
+            let opt = Object.prototype.hasOwnProperty.call(el.options, exactKey) ? el.options[exactKey] : undefined;
+            if (!opt) {
+                if (!Intl.PluralRules) {
+                    throw new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FormatError"](`Intl.PluralRules is not available in this environment.
+Try polyfilling it using "@formatjs/intl-pluralrules"
+`, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ErrorCode"].MISSING_INTL_API, originalMessage);
+                }
+                // Convert bigint to number for PluralRules (which only accepts number)
+                const numericValue = typeof value === "bigint" ? Number(value) : value;
+                const rule = formatters.getPluralRules(locales, {
+                    type: el.pluralType
+                }).select(numericValue - (el.offset || 0));
+                opt = (Object.prototype.hasOwnProperty.call(el.options, rule) ? el.options[rule] : undefined) || el.options.other;
+            }
+            if (!opt) {
+                throw new __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$error$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["InvalidValueError"](el.value, value, Object.keys(el.options), originalMessage);
+            }
+            // Convert bigint to number for currentPluralValue
+            const numericValue = typeof value === "bigint" ? Number(value) : value;
+            result.push(...formatToParts(opt.value, locales, formatters, formats, values, numericValue - (el.offset || 0)));
+            continue;
+        }
+    }
+    return mergeLiteral(result);
+}
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/intl-messageformat/src/core.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "IntlMessageFormat",
+    ()=>IntlMessageFormat
+]);
+/*
+Copyright (c) 2014, Yahoo! Inc. All rights reserved.
+Copyrights licensed under the New BSD License.
+See the accompanying LICENSE file for terms.
+*/ var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$fast$2d$memoize$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/fast-memoize/index.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/@formatjs/icu-messageformat-parser/index.js [app-ssr] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$formatters$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/intl-messageformat/src/formatters.js [app-ssr] (ecmascript)");
+;
+;
+;
+// -- MessageFormat --------------------------------------------------------
+function mergeConfig(c1, c2) {
+    if (!c2) {
+        return c1;
+    }
+    return {
+        ...c1,
+        ...c2,
+        ...Object.keys(c1).reduce((all, k)=>{
+            all[k] = {
+                ...c1[k],
+                ...c2[k]
+            };
+            return all;
+        }, {})
+    };
+}
+function mergeConfigs(defaultConfig, configs) {
+    if (!configs) {
+        return defaultConfig;
+    }
+    return Object.keys(defaultConfig).reduce((all, k)=>{
+        all[k] = mergeConfig(defaultConfig[k], configs[k]);
+        return all;
+    }, {
+        ...defaultConfig
+    });
+}
+function createFastMemoizeCache(store) {
+    return {
+        create () {
+            return {
+                get (key) {
+                    return store[key];
+                },
+                set (key, value) {
+                    store[key] = value;
+                }
+            };
+        }
+    };
+}
+function createDefaultFormatters(cache = {
+    number: {},
+    dateTime: {},
+    pluralRules: {}
+}) {
+    return {
+        getNumberFormat: (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$fast$2d$memoize$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["memoize"])((...args)=>new Intl.NumberFormat(...args), {
+            cache: createFastMemoizeCache(cache.number),
+            strategy: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$fast$2d$memoize$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["strategies"].variadic
+        }),
+        getDateTimeFormat: (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$fast$2d$memoize$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["memoize"])((...args)=>new Intl.DateTimeFormat(...args), {
+            cache: createFastMemoizeCache(cache.dateTime),
+            strategy: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$fast$2d$memoize$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["strategies"].variadic
+        }),
+        getPluralRules: (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$fast$2d$memoize$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["memoize"])((...args)=>new Intl.PluralRules(...args), {
+            cache: createFastMemoizeCache(cache.pluralRules),
+            strategy: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$fast$2d$memoize$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["strategies"].variadic
+        })
+    };
+}
+class IntlMessageFormat {
+    ast;
+    locales;
+    resolvedLocale;
+    formatters;
+    formats;
+    message;
+    formatterCache = {
+        number: {},
+        dateTime: {},
+        pluralRules: {}
+    };
+    constructor(message, locales = IntlMessageFormat.defaultLocale, overrideFormats, opts){
+        // Defined first because it's used to build the format pattern.
+        this.locales = locales;
+        this.resolvedLocale = IntlMessageFormat.resolveLocale(locales);
+        if (typeof message === "string") {
+            this.message = message;
+            if (!IntlMessageFormat.__parse) {
+                throw new TypeError("IntlMessageFormat.__parse must be set to process `message` of type `string`");
+            }
+            const { ...parseOpts } = opts || {};
+            // Parse string messages into an AST.
+            this.ast = IntlMessageFormat.__parse(message, {
+                ...parseOpts,
+                locale: this.resolvedLocale
+            });
+        } else {
+            this.ast = message;
+        }
+        if (!Array.isArray(this.ast)) {
+            throw new TypeError("A message must be provided as a String or AST.");
+        }
+        // Creates a new object with the specified `formats` merged with the default
+        // formats.
+        this.formats = mergeConfigs(IntlMessageFormat.formats, overrideFormats);
+        this.formatters = opts && opts.formatters || createDefaultFormatters(this.formatterCache);
+    }
+    format = (values)=>{
+        const parts = this.formatToParts(values);
+        // Hot path for straight simple msg translations
+        if (parts.length === 1) {
+            return parts[0].value;
+        }
+        const result = parts.reduce((all, part)=>{
+            if (!all.length || part.type !== __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$formatters$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PART_TYPE"].literal || typeof all[all.length - 1] !== "string") {
+                all.push(part.value);
+            } else {
+                all[all.length - 1] += part.value;
+            }
+            return all;
+        }, []);
+        if (result.length <= 1) {
+            return result[0] || "";
+        }
+        return result;
+    };
+    formatToParts = (values)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$intl$2d$messageformat$2f$src$2f$formatters$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["formatToParts"])(this.ast, this.locales, this.formatters, this.formats, values, undefined, this.message);
+    resolvedOptions = ()=>({
+            locale: this.resolvedLocale?.toString() || Intl.NumberFormat.supportedLocalesOf(this.locales)[0]
+        });
+    getAst = ()=>this.ast;
+    static memoizedDefaultLocale = null;
+    static get defaultLocale() {
+        if (!IntlMessageFormat.memoizedDefaultLocale) {
+            IntlMessageFormat.memoizedDefaultLocale = new Intl.NumberFormat().resolvedOptions().locale;
+        }
+        return IntlMessageFormat.memoizedDefaultLocale;
+    }
+    static resolveLocale = (locales)=>{
+        if (typeof Intl.Locale === "undefined") {
+            return;
+        }
+        const supportedLocales = Intl.NumberFormat.supportedLocalesOf(locales);
+        if (supportedLocales.length > 0) {
+            return new Intl.Locale(supportedLocales[0]);
+        }
+        return new Intl.Locale(typeof locales === "string" ? locales : locales[0]);
+    };
+    static __parse = __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f40$formatjs$2f$icu$2d$messageformat$2d$parser$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["parse"];
+    // Default format options used as the prototype of the `formats` provided to the
+    // constructor. These are used when constructing the internal Intl.NumberFormat
+    // and Intl.DateTimeFormat instances.
+    static formats = {
+        number: {
+            integer: {
+                maximumFractionDigits: 0
+            },
+            currency: {
+                style: "currency"
+            },
+            percent: {
+                style: "percent"
+            }
+        },
+        date: {
+            short: {
+                month: "numeric",
+                day: "numeric",
+                year: "2-digit"
+            },
+            medium: {
+                month: "short",
+                day: "numeric",
+                year: "numeric"
+            },
+            long: {
+                month: "long",
+                day: "numeric",
+                year: "numeric"
+            },
+            full: {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                year: "numeric"
+            }
+        },
+        time: {
+            short: {
+                hour: "numeric",
+                minute: "numeric"
+            },
+            medium: {
+                hour: "numeric",
+                minute: "numeric",
+                second: "numeric"
+            },
+            long: {
+                hour: "numeric",
+                minute: "numeric",
+                second: "numeric",
+                timeZoneName: "short"
+            },
+            full: {
+                hour: "numeric",
+                minute: "numeric",
+                second: "numeric",
+                timeZoneName: "short"
+            }
+        }
+    };
+}
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/clamp.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "clamp",
+    ()=>clamp
+]);
+const clamp = (min, max, v)=>{
+    if (v > max) return max;
+    if (v < min) return min;
+    return v;
+};
+;
+ //# sourceMappingURL=clamp.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/format-error-message.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "formatErrorMessage",
+    ()=>formatErrorMessage
+]);
+function formatErrorMessage(message, errorCode) {
+    return errorCode ? `${message}. For more information and steps for solving, visit https://motion.dev/troubleshooting/${errorCode}` : message;
+}
+;
+ //# sourceMappingURL=format-error-message.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/errors.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "invariant",
+    ()=>invariant,
+    "warning",
+    ()=>warning
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$format$2d$error$2d$message$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/format-error-message.mjs [app-ssr] (ecmascript)");
+;
+let warning = ()=>{};
+let invariant = ()=>{};
+if (typeof process !== "undefined" && ("TURBOPACK compile-time value", "development") !== "production") {
+    warning = (check, message, errorCode)=>{
+        if (!check && typeof console !== "undefined") {
+            console.warn((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$format$2d$error$2d$message$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["formatErrorMessage"])(message, errorCode));
+        }
+    };
+    invariant = (check, message, errorCode)=>{
+        if (!check) {
+            throw new Error((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$format$2d$error$2d$message$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["formatErrorMessage"])(message, errorCode));
+        }
+    };
+}
+;
+ //# sourceMappingURL=errors.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/is-numerical-string.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "isNumericalString",
+    ()=>isNumericalString
+]);
+/**
+ * Check if value is a numerical string, ie a string that is purely a number eg "100" or "-100.1"
+ */ const isNumericalString = (v)=>/^-?(?:\d+(?:\.\d+)?|\.\d+)$/u.test(v);
+;
+ //# sourceMappingURL=is-numerical-string.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/noop.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "noop",
+    ()=>noop
+]);
+/*#__NO_SIDE_EFFECTS__*/ const noop = (any)=>any;
+;
+ //# sourceMappingURL=noop.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/global-config.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "MotionGlobalConfig",
+    ()=>MotionGlobalConfig
+]);
+const MotionGlobalConfig = {};
+;
+ //# sourceMappingURL=global-config.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/is-zero-value-string.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "isZeroValueString",
+    ()=>isZeroValueString
+]);
+/**
+ * Check if the value is a zero value string like "0px" or "0%"
+ */ const isZeroValueString = (v)=>/^0[^.\s]+$/u.test(v);
+;
+ //# sourceMappingURL=is-zero-value-string.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/warn-once.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "hasWarned",
+    ()=>hasWarned,
+    "warnOnce",
+    ()=>warnOnce
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$format$2d$error$2d$message$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/format-error-message.mjs [app-ssr] (ecmascript)");
+;
+const warned = new Set();
+function hasWarned(message) {
+    return warned.has(message);
+}
+function warnOnce(condition, message, errorCode) {
+    if (condition || warned.has(message)) return;
+    console.warn((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$format$2d$error$2d$message$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["formatErrorMessage"])(message, errorCode));
+    warned.add(message);
+}
+;
+ //# sourceMappingURL=warn-once.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/array.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "addUniqueItem",
+    ()=>addUniqueItem,
+    "moveItem",
+    ()=>moveItem,
+    "removeItem",
+    ()=>removeItem
+]);
+function addUniqueItem(arr, item) {
+    if (arr.indexOf(item) === -1) arr.push(item);
+}
+function removeItem(arr, item) {
+    const index = arr.indexOf(item);
+    if (index > -1) arr.splice(index, 1);
+}
+// Adapted from array-move
+function moveItem([...arr], fromIndex, toIndex) {
+    const startIndex = fromIndex < 0 ? arr.length + fromIndex : fromIndex;
+    if (startIndex >= 0 && startIndex < arr.length) {
+        const endIndex = toIndex < 0 ? arr.length + toIndex : toIndex;
+        const [item] = arr.splice(fromIndex, 1);
+        arr.splice(endIndex, 0, item);
+    }
+    return arr;
+}
+;
+ //# sourceMappingURL=array.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/subscription-manager.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "SubscriptionManager",
+    ()=>SubscriptionManager
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$array$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/array.mjs [app-ssr] (ecmascript)");
+;
+class SubscriptionManager {
+    constructor(){
+        this.subscriptions = [];
+    }
+    add(handler) {
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$array$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["addUniqueItem"])(this.subscriptions, handler);
+        return ()=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$array$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["removeItem"])(this.subscriptions, handler);
+    }
+    notify(a, b, c) {
+        const numSubscriptions = this.subscriptions.length;
+        if (!numSubscriptions) return;
+        if (numSubscriptions === 1) {
+            /**
+             * If there's only a single handler we can just call it without invoking a loop.
+             */ this.subscriptions[0](a, b, c);
+        } else {
+            for(let i = 0; i < numSubscriptions; i++){
+                /**
+                 * Check whether the handler exists before firing as it's possible
+                 * the subscriptions were modified during this loop running.
+                 */ const handler = this.subscriptions[i];
+                handler && handler(a, b, c);
+            }
+        }
+    }
+    getSize() {
+        return this.subscriptions.length;
+    }
+    clear() {
+        this.subscriptions.length = 0;
+    }
+}
+;
+ //# sourceMappingURL=subscription-manager.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/velocity-per-second.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "velocityPerSecond",
+    ()=>velocityPerSecond
+]);
+/*
+  Convert velocity into velocity per second
+
+  @param [number]: Unit per frame
+  @param [number]: Frame duration in ms
+*/ function velocityPerSecond(velocity, frameDuration) {
+    return frameDuration ? velocity * (1000 / frameDuration) : 0;
+}
+;
+ //# sourceMappingURL=velocity-per-second.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/time-conversion.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "millisecondsToSeconds",
+    ()=>millisecondsToSeconds,
+    "secondsToMilliseconds",
+    ()=>secondsToMilliseconds
+]);
+/**
+ * Converts seconds to milliseconds
+ *
+ * @param seconds - Time in seconds.
+ * @return milliseconds - Converted time in milliseconds.
+ */ /*#__NO_SIDE_EFFECTS__*/ const secondsToMilliseconds = (seconds)=>seconds * 1000;
+/*#__NO_SIDE_EFFECTS__*/ const millisecondsToSeconds = (milliseconds)=>milliseconds / 1000;
+;
+ //# sourceMappingURL=time-conversion.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/pipe.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "pipe",
+    ()=>pipe
+]);
+/**
+ * Pipe
+ * Compose other transformers to run linearily
+ * pipe(min(20), max(40))
+ * @param  {...functions} transformers
+ * @return {function}
+ */ const combineFunctions = (a, b)=>(v)=>b(a(v));
+const pipe = (...transformers)=>transformers.reduce(combineFunctions);
+;
+ //# sourceMappingURL=pipe.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/cubic-bezier.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "cubicBezier",
+    ()=>cubicBezier
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$noop$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/noop.mjs [app-ssr] (ecmascript)");
+;
+/*
+  Bezier function generator
+  This has been modified from Gaëtan Renaudeau's BezierEasing
+  https://github.com/gre/bezier-easing/blob/master/src/index.js
+  https://github.com/gre/bezier-easing/blob/master/LICENSE
+  
+  I've removed the newtonRaphsonIterate algo because in benchmarking it
+  wasn't noticeably faster than binarySubdivision, indeed removing it
+  usually improved times, depending on the curve.
+  I also removed the lookup table, as for the added bundle size and loop we're
+  only cutting ~4 or so subdivision iterations. I bumped the max iterations up
+  to 12 to compensate and this still tended to be faster for no perceivable
+  loss in accuracy.
+  Usage
+    const easeOut = cubicBezier(.17,.67,.83,.67);
+    const x = easeOut(0.5); // returns 0.627...
+*/ // Returns x(t) given t, x1, and x2, or y(t) given t, y1, and y2.
+const calcBezier = (t, a1, a2)=>(((1.0 - 3.0 * a2 + 3.0 * a1) * t + (3.0 * a2 - 6.0 * a1)) * t + 3.0 * a1) * t;
+const subdivisionPrecision = 0.0000001;
+const subdivisionMaxIterations = 12;
+function binarySubdivide(x, lowerBound, upperBound, mX1, mX2) {
+    let currentX;
+    let currentT;
+    let i = 0;
+    do {
+        currentT = lowerBound + (upperBound - lowerBound) / 2.0;
+        currentX = calcBezier(currentT, mX1, mX2) - x;
+        if (currentX > 0.0) {
+            upperBound = currentT;
+        } else {
+            lowerBound = currentT;
+        }
+    }while (Math.abs(currentX) > subdivisionPrecision && ++i < subdivisionMaxIterations)
+    return currentT;
+}
+function cubicBezier(mX1, mY1, mX2, mY2) {
+    // If this is a linear gradient, return linear easing
+    if (mX1 === mY1 && mX2 === mY2) return __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$noop$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"];
+    const getTForX = (aX)=>binarySubdivide(aX, 0, 1, mX1, mX2);
+    // If animation is at start/end, return t without easing
+    return (t)=>t === 0 || t === 1 ? t : calcBezier(getTForX(t), mY1, mY2);
+}
+;
+ //# sourceMappingURL=cubic-bezier.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/ease.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "easeIn",
+    ()=>easeIn,
+    "easeInOut",
+    ()=>easeInOut,
+    "easeOut",
+    ()=>easeOut
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$cubic$2d$bezier$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/cubic-bezier.mjs [app-ssr] (ecmascript)");
+;
+const easeIn = /*@__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$cubic$2d$bezier$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cubicBezier"])(0.42, 0, 1, 1);
+const easeOut = /*@__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$cubic$2d$bezier$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cubicBezier"])(0, 0, 0.58, 1);
+const easeInOut = /*@__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$cubic$2d$bezier$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cubicBezier"])(0.42, 0, 0.58, 1);
+;
+ //# sourceMappingURL=ease.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/utils/is-easing-array.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "isEasingArray",
+    ()=>isEasingArray
+]);
+const isEasingArray = (ease)=>{
+    return Array.isArray(ease) && typeof ease[0] !== "number";
+};
+;
+ //# sourceMappingURL=is-easing-array.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/modifiers/mirror.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "mirrorEasing",
+    ()=>mirrorEasing
+]);
+// Accepts an easing function and returns a new one that outputs mirrored values for
+// the second half of the animation. Turns easeIn into easeInOut.
+const mirrorEasing = (easing)=>(p)=>p <= 0.5 ? easing(2 * p) / 2 : (2 - easing(2 * (1 - p))) / 2;
+;
+ //# sourceMappingURL=mirror.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/modifiers/reverse.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "reverseEasing",
+    ()=>reverseEasing
+]);
+// Accepts an easing function and returns a new one that outputs reversed values.
+// Turns easeIn into easeOut.
+const reverseEasing = (easing)=>(p)=>1 - easing(1 - p);
+;
+ //# sourceMappingURL=reverse.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/back.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "backIn",
+    ()=>backIn,
+    "backInOut",
+    ()=>backInOut,
+    "backOut",
+    ()=>backOut
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$cubic$2d$bezier$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/cubic-bezier.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$modifiers$2f$mirror$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/modifiers/mirror.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$modifiers$2f$reverse$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/modifiers/reverse.mjs [app-ssr] (ecmascript)");
+;
+;
+;
+const backOut = /*@__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$cubic$2d$bezier$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cubicBezier"])(0.33, 1.53, 0.69, 0.99);
+const backIn = /*@__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$modifiers$2f$reverse$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["reverseEasing"])(backOut);
+const backInOut = /*@__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$modifiers$2f$mirror$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["mirrorEasing"])(backIn);
+;
+ //# sourceMappingURL=back.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/anticipate.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "anticipate",
+    ()=>anticipate
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$back$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/back.mjs [app-ssr] (ecmascript)");
+;
+const anticipate = (p)=>(p *= 2) < 1 ? 0.5 * (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$back$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["backIn"])(p) : 0.5 * (2 - Math.pow(2, -10 * (p - 1)));
+;
+ //# sourceMappingURL=anticipate.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/circ.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "circIn",
+    ()=>circIn,
+    "circInOut",
+    ()=>circInOut,
+    "circOut",
+    ()=>circOut
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$modifiers$2f$mirror$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/modifiers/mirror.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$modifiers$2f$reverse$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/modifiers/reverse.mjs [app-ssr] (ecmascript)");
+;
+;
+const circIn = (p)=>1 - Math.sin(Math.acos(p));
+const circOut = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$modifiers$2f$reverse$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["reverseEasing"])(circIn);
+const circInOut = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$modifiers$2f$mirror$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["mirrorEasing"])(circIn);
+;
+ //# sourceMappingURL=circ.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/utils/is-bezier-definition.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "isBezierDefinition",
+    ()=>isBezierDefinition
+]);
+const isBezierDefinition = (easing)=>Array.isArray(easing) && typeof easing[0] === "number";
+;
+ //# sourceMappingURL=is-bezier-definition.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/utils/map.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "easingDefinitionToFunction",
+    ()=>easingDefinitionToFunction
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$errors$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/errors.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$noop$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/noop.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$anticipate$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/anticipate.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$back$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/back.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$circ$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/circ.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$cubic$2d$bezier$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/cubic-bezier.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$ease$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/ease.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$utils$2f$is$2d$bezier$2d$definition$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/easing/utils/is-bezier-definition.mjs [app-ssr] (ecmascript)");
+;
+;
+;
+;
+;
+;
+;
+;
+const easingLookup = {
+    linear: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$noop$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["noop"],
+    easeIn: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$ease$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["easeIn"],
+    easeInOut: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$ease$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["easeInOut"],
+    easeOut: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$ease$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["easeOut"],
+    circIn: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$circ$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["circIn"],
+    circInOut: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$circ$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["circInOut"],
+    circOut: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$circ$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["circOut"],
+    backIn: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$back$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["backIn"],
+    backInOut: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$back$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["backInOut"],
+    backOut: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$back$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["backOut"],
+    anticipate: __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$anticipate$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["anticipate"]
+};
+const isValidEasing = (easing)=>{
+    return typeof easing === "string";
+};
+const easingDefinitionToFunction = (definition)=>{
+    if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$utils$2f$is$2d$bezier$2d$definition$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isBezierDefinition"])(definition)) {
+        // If cubic bezier definition, create bezier curve
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$errors$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["invariant"])(definition.length === 4, `Cubic bezier arrays must contain four numerical values.`, "cubic-bezier-length");
+        const [x1, y1, x2, y2] = definition;
+        return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$easing$2f$cubic$2d$bezier$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cubicBezier"])(x1, y1, x2, y2);
+    } else if (isValidEasing(definition)) {
+        // Else lookup from table
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$GitHub$2f$micro$2d$hack$2d$front$2f$node_modules$2f$motion$2d$utils$2f$dist$2f$es$2f$errors$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["invariant"])(easingLookup[definition] !== undefined, `Invalid easing type '${definition}'`, "invalid-easing-type");
+        return easingLookup[definition];
+    }
+    return definition;
+};
+;
+ //# sourceMappingURL=map.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/progress.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "progress",
+    ()=>progress
+]);
+/*
+  Progress within given range
+
+  Given a lower limit and an upper limit, we return the progress
+  (expressed as a number 0-1) represented by the given value, and
+  limit that progress to within 0-1.
+
+  @param [number]: Lower limit
+  @param [number]: Upper limit
+  @param [number]: Value to find progress within given range
+  @return [number]: Progress of value within range as expressed 0-1
+*/ /*#__NO_SIDE_EFFECTS__*/ const progress = (from, to, value)=>{
+    const toFromDifference = to - from;
+    return toFromDifference === 0 ? 1 : (value - from) / toFromDifference;
+};
+;
+ //# sourceMappingURL=progress.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/memo.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "memo",
+    ()=>memo
+]);
+/*#__NO_SIDE_EFFECTS__*/ function memo(callback) {
+    let result;
+    return ()=>{
+        if (result === undefined) result = callback();
+        return result;
+    };
+}
+;
+ //# sourceMappingURL=memo.mjs.map
+}),
+"[project]/Documents/GitHub/micro-hack-front/node_modules/motion-utils/dist/es/is-object.mjs [app-ssr] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "isObject",
+    ()=>isObject
+]);
+function isObject(value) {
+    return typeof value === "object" && value !== null;
+}
+;
+ //# sourceMappingURL=is-object.mjs.map
+}),
+];
+
+//# sourceMappingURL=b0af9_5a65d35e._.js.map

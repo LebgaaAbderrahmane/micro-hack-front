@@ -1,21 +1,31 @@
 "use client";
 
 import React from "react";
-import { usePathname, Link } from "@/i18n/routing";
-import { Bell, User } from "lucide-react";
+import { usePathname, Link, useRouter } from "@/i18n/routing";
+import { Bell, User, LogOut, Settings, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navItems = [
-  { label: "Dashboard", href: "/" },
-  { label: "Logging", href: "/bookings" },
-  { label: "Manage", href: "/fleet" },
-  { label: "Analytics", href: "/settings" },
+  { label: "Dashboard", href: "/", roles: ["ADMIN", "OPERATOR", "DISPATCHER"] },
+  { label: "Bookings", href: "/bookings", roles: ["ADMIN", "OPERATOR"] },
+  { label: "Manage", href: "/fleet", roles: ["ADMIN", "DISPATCHER"] },
+  { label: "Analytics", href: "/settings", roles: ["ADMIN"] },
 ];
 
 export const Header = () => {
   const pathname = usePathname();
-  const { profile: user } = useAuth();
+  const router = useRouter();
+  const { profile: user, signOut } = useAuth();
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/" || pathname === "";
@@ -119,15 +129,63 @@ export const Header = () => {
         >
           <Bell size={22} />
         </button>
-        <button
-          className="p-1 rounded-xl hover:bg-foreground/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-tile-blue"
-          title="User avatar"
-          aria-label="User avatar"
-        >
-          <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center">
-            <User size={18} className="text-foreground/60" />
-          </div>
-        </button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="p-1 rounded-xl hover:bg-foreground/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-tile-blue group"
+              title="User menu"
+              aria-label="User menu"
+            >
+              <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center overflow-hidden border border-foreground/5 group-hover:border-foreground/20 transition-all">
+                {user?.username ? (
+                  <span className="font-bold text-sm text-foreground/70">{user.username[0].toUpperCase()}</span>
+                ) : (
+                  <User size={18} className="text-foreground/60" />
+                )}
+              </div>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user?.username || "User"}</p>
+                <p className="text-xs leading-none text-muted-foreground">{user?.email || "user@example.com"}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer">
+              <UserIcon className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20"
+              onClick={async () => {
+                const toastId = toast.loading("Signing out...");
+                try {
+                  console.log("[Header] Initiating logout...");
+                  await signOut();
+                  console.log("[Header] Logout successful, redirecting...");
+                  toast.success("Signed out successfully", { id: toastId });
+                  router.push("/login");
+                } catch (error) {
+                  console.error("[Header] Logout failed:", error);
+                  toast.error("Logout failed, redirecting anyway...", { id: toastId });
+                  // Force redirect even on error
+                  router.push("/login");
+                }
+              }}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

@@ -1,0 +1,920 @@
+[00:00:03.779] Server  LOG     
+[00:00:03.780] Server  LOG       We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+[00:00:03.781] Server  LOG       The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+[00:00:03.782] Server  LOG       	- include was updated to add '.next-2/types/**/*.ts'
+[00:00:03.782] Server  LOG       	- include was updated to add '.next-2/dev/types/**/*.ts'
+[00:00:03.782] Server  LOG     
+[00:00:03.851] Server  WARN    ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+[00:00:04.264] Server  LOG     ✓ Ready in 3.4s
+[00:00:13.479] Server  LOG     ○ Compiling /[locale] ...
+[00:00:26.919] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:27.710] Browser GROUPCOLLAPSED %c[MSW] Mocking enabled. color:orangered;font-weight:bold;
+[00:00:27.710] Browser LOG     %cDocumentation: %chttps://mswjs.io/docs font-weight:bold font-weight:normal
+[00:00:27.710] Browser LOG     Found an issue? https://github.com/mswjs/msw/issues
+[00:00:27.710] Browser LOG     Worker script URL: http://localhost:3001/mockServiceWorker.js
+[00:00:27.710] Browser LOG     Worker scope: http://localhost:3001/
+[00:00:27.710] Browser LOG     Client ID: %s (%s) acbbdc43-614b-44ca-a636-6b3c285a23df top-level
+[00:00:27.710] Browser GROUPEND 
+[00:00:27.710] Browser LOG     [AuthProvider] Browser cookie check: {"hasSBCookie":true}
+[00:00:27.710] Browser LOG     [AuthProvider] Browser cookie check: {"hasSBCookie":true}
+[00:00:27.710] Browser LOG     useChat: hook rendering with identity: {"hasToken":false}
+[00:00:27.710] Browser LOG     useChat: hook rendering with identity: {"hasToken":false}
+[00:00:27.710] Browser LOG     [AuthProvider] State change: SIGNED_IN {"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:00:27.710] Browser LOG     useChat: hook rendering with identity: {"hasToken":true,"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:00:27.710] Browser LOG     useChat: hook rendering with identity: {"hasToken":true,"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:00:34.140] Browser WARN    [AuthProvider] Auth initialization timed out - forcing loading to false
+[00:00:34.140] Browser WARN    [AuthProvider] Auth initialization timed out - forcing loading to false
+[00:00:34.140] Browser LOG     useChat: hook rendering with identity: {"hasToken":true,"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:00:34.140] Browser LOG     useChat: hook rendering with identity: {"hasToken":true,"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:00:46.161] Server  LOG     ○ Compiling /[locale]/bookings ...
+[00:00:47.420] Server  ERROR   ⨯ ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+
+
+./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+
+[00:00:47.604] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:00:47.604] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:00:49.588] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:00:49.588] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:00:49.938] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:00:49.938] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:00:50.445] Server  LOG     ○ Compiling /_error ...
+[00:00:51.735] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:00:51.735] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:00:51.903] Server  ERROR   ⨯ ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+
+
+./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+
+[00:00:52.489] Browser ERROR   uncaughtError: Error: ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+
+[00:00:52.721] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:00:52.721] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:00:52.721] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:00:52.721] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:03:19.718] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:03:19.719] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:03:36.137] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:03:36.137] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:27.394] Server  ERROR   ⨯ ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+
+
+./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+
+[00:04:27.933] Browser ERROR   uncaughtError: Error: ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+
+[00:04:28.077] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:28.077] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:28.188] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:28.188] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:30.607] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:04:30.805] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:30.805] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:31.281] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:31.281] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:31.740] Browser GROUPCOLLAPSED %c[MSW] Mocking enabled. color:orangered;font-weight:bold;
+[00:04:31.741] Browser LOG     %cDocumentation: %chttps://mswjs.io/docs font-weight:bold font-weight:normal
+[00:04:31.741] Browser LOG     Found an issue? https://github.com/mswjs/msw/issues
+[00:04:31.741] Browser LOG     Worker script URL: http://localhost:3001/mockServiceWorker.js
+[00:04:31.741] Browser LOG     Worker scope: http://localhost:3001/
+[00:04:31.741] Browser LOG     Client ID: %s (%s) d9c00f03-f2e9-4423-9bd2-4e3fa80f79aa top-level
+[00:04:31.741] Browser GROUPEND 
+[00:04:31.741] Browser LOG     [AuthProvider] Browser cookie check: {"hasSBCookie":true}
+[00:04:31.741] Browser LOG     [AuthProvider] Browser cookie check: {"hasSBCookie":true}
+[00:04:31.741] Browser LOG     useChat: hook rendering with identity: {"hasToken":false}
+[00:04:31.741] Browser LOG     useChat: hook rendering with identity: {"hasToken":false}
+[00:04:31.741] Browser LOG     [AuthProvider] State change: SIGNED_IN {"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:04:31.741] Browser LOG     useChat: hook rendering with identity: {"hasToken":true,"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:04:31.741] Browser LOG     useChat: hook rendering with identity: {"hasToken":true,"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:04:33.373] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:04:33.722] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:33.722] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:34.069] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:34.069] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:34.293] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-client] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:34.294] Browser ERROR   ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx:3:1
+Export OperatorBookings doesn't exist in target module
+  1 | "use client";
+  2 |
+> 3 | import { OperatorBookings } from "@/components/dashboard/OperatorBookings";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  4 |
+  5 | export default function BookingsPage() {
+  6 |   return <OperatorBookings />;
+
+The export OperatorBookings was not found in module [project]/Documents/GitHub/micro-hack-front/src/components/dashboard/OperatorBookings.tsx [app-ssr] (ecmascript).
+Did you mean to import default?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component Browser]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Client Component SSR]
+    ./Documents/GitHub/micro-hack-front/src/app/[locale]/(dashboard)/bookings/page.tsx [Server Component]
+[00:04:34.571] Browser GROUPCOLLAPSED %c[MSW] Mocking enabled. color:orangered;font-weight:bold;
+[00:04:34.571] Browser LOG     %cDocumentation: %chttps://mswjs.io/docs font-weight:bold font-weight:normal
+[00:04:34.571] Browser LOG     Found an issue? https://github.com/mswjs/msw/issues
+[00:04:34.571] Browser LOG     Worker script URL: http://localhost:3001/mockServiceWorker.js
+[00:04:34.571] Browser LOG     Worker scope: http://localhost:3001/
+[00:04:34.571] Browser LOG     Client ID: %s (%s) b9e46579-c8d2-4118-8bb5-ed25c5a8244a top-level
+[00:04:34.571] Browser GROUPEND 
+[00:04:34.571] Browser LOG     [AuthProvider] Browser cookie check: {"hasSBCookie":true}
+[00:04:34.571] Browser LOG     [AuthProvider] Browser cookie check: {"hasSBCookie":true}
+[00:04:34.571] Browser LOG     useChat: hook rendering with identity: {"hasToken":false}
+[00:04:34.571] Browser LOG     useChat: hook rendering with identity: {"hasToken":false}
+[00:04:35.141] Browser LOG     [AuthProvider] State change: SIGNED_IN {"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:04:35.141] Browser LOG     useChat: hook rendering with identity: {"hasToken":true,"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:04:35.141] Browser LOG     useChat: hook rendering with identity: {"hasToken":true,"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:04:41.145] Browser WARN    [AuthProvider] Auth initialization timed out - forcing loading to false
+[00:04:41.145] Browser WARN    [AuthProvider] Auth initialization timed out - forcing loading to false
+[00:04:41.145] Browser LOG     useChat: hook rendering with identity: {"hasToken":true,"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}
+[00:04:41.145] Browser LOG     useChat: hook rendering with identity: {"hasToken":true,"userId":"9bc107f6-6eaf-4ea2-ae57-5c0cedcc9a48"}

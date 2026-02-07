@@ -8,9 +8,9 @@ import { Calendar, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   AdminDashboard,
-  TerminalOpDashboard,
   CarrierDashboard,
 } from "@/components/dashboard/RoleDashboards";
+import { TerminalOpDashboard } from "@/components/dashboard/TerminalOpDashboard";
 
 // ---------------------------------------------------------------------------
 // Helper: generate a tile grid from a pattern description
