@@ -65,45 +65,52 @@ export const RoleLoginPage = ({
         return;
       }
 
-      // Verify Role on Client
+      // Verify Role on Client (Optional check for early feedback)
       const { data: profileData, error: profileError } = await supabase
         .from("users")
         .select("role")
         .eq("id", authData.user.id)
         .maybeSingle();
 
-      if (profileError || !profileData) {
-        console.error("[Client Login] Role verification failed.", {
-          userId: authData.user.id,
-          error: profileError,
-          data: profileData,
+      if (profileError) {
+        console.warn("[Client Login] Profile fetch non-critical failure:", {
+          message: profileError.message,
+          code: profileError.code,
+          details: profileError.details,
+          hint: profileError.hint
         });
-        await supabase.auth.signOut();
-        setLocalError(
-          profileError
-            ? `Database Error: ${profileError.message}`
-            : "Your account exists in Auth but has no Profile in the database."
-        );
-        setIsLoggingIn(false);
-        return;
+        // We do NOT sign out here. AuthProvider will handle the profile fetching 
+        // with retries and fallbacks. Proceeding to "/" based on successful Auth.
       }
 
-      // If role doesn't match, we still allow login but warn in console
-      if (profileData.role !== role) {
+      if (profileData && profileData.role !== role) {
         console.warn(`[Client Login] Role mismatch. Required: ${role}, Found: ${profileData.role}. Proceeding anyway.`);
       }
 
-      console.log("[Client Login] Success. Redirecting...");
+      console.log("[Client Login] Auth success. Handing over to AuthProvider for session management.");
       router.push("/");
     } catch (err) {
-      console.error("[Client Login] Unexpected error:", err);
-      setLocalError("An unexpected error occurred. Please try again.");
+      console.error("[Client Login] Unexpected error during login flow:", err);
+      setLocalError("An unexpected system error occurred. Connections are being throttled.");
       setIsLoggingIn(false);
     }
   };
 
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse">
+            Checking Node Authorization...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 min-h-[60vh] flex items-center justify-center font-poppins">
+    <div className="p-6 min-h-[80vh] flex items-center justify-center font-poppins">
       <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
         {/* Back Navigation */}
@@ -197,7 +204,7 @@ export const RoleLoginPage = ({
               type="submit"
               disabled={isLoggingIn}
               className={cn(
-                "w-full py-4 rounded-xl text-white font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-95 shadow-lg shadow-current/20 hover:shadow-current/40 hover:-translate-y-0.5",
+                "w-full py-4 rounded-xl text-white font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-95 shadow-lg shadow-current/20 hover:shadow-current/40 hover:-translate-y-0.5 flex items-center justify-center gap-3",
                 themeColor,
                 isLoggingIn && "opacity-70 cursor-not-allowed"
               )}

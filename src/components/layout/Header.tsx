@@ -24,7 +24,7 @@ const getNavItems = (role?: string) => {
   if (r === "ADMIN") {
     return [
       ...baseItems,
-      { label: "Analytics", href: "/analytics" },
+      // { label: "Analytics", href: "/analytics" },
       { label: "Manage", href: "/manage" },
       { label: "Logs", href: "/loggings" },
     ];

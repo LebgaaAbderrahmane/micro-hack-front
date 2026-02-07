@@ -37,7 +37,7 @@ export const Navbar = () => {
 
     const navItems = [
         { label: t('overview'), href: "/", icon: LayoutDashboard, roles: ["ADMIN", "OPERATOR", "DISPATCHER"] },
-        { label: t('analytics'), href: "/analytics", icon: BarChart3, roles: ["ADMIN", "OPERATOR"] },
+        // { label: t('analytics'), href: "/analytics", icon: BarChart3, roles: ["ADMIN", "OPERATOR"] },
         { label: "Bookings", href: "/bookings", icon: Calendar, roles: ["DISPATCHER"] },
         { label: t('manageBookings'), href: "/bookings", icon: Calendar, roles: ["OPERATOR"] },
         { label: "Fleet", href: "/fleet", icon: Truck, roles: ["DISPATCHER"] },
@@ -49,7 +49,7 @@ export const Navbar = () => {
         if (!user || !user.role) return [];
 
         const roleOrder: Record<string, string[]> = {
-            ADMIN: ["/", "/analytics", "/manage", "/loggings"],
+            ADMIN: ["/", "/manage", "/loggings"],
             OPERATOR: ["/", "/analytics", "/bookings", "/loggings"],
             DISPATCHER: ["/", "/bookings", "/fleet"],
         };
