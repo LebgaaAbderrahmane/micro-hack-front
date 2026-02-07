@@ -49,7 +49,7 @@ export const Navbar = () => {
         if (!user || !user.role) return [];
 
         const roleOrder: Record<string, string[]> = {
-            ADMIN: ["/", "/analytics", "/manage", "/loggings"],
+            ADMIN: ["/", "/manage", "/loggings"],
             OPERATOR: ["/", "/analytics", "/bookings", "/loggings"],
             DISPATCHER: ["/", "/bookings", "/fleet"],
         };
