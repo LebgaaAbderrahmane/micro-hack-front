@@ -12,7 +12,13 @@ import { TerminalOpDashboard } from "@/components/dashboard/TerminalOpDashboard"
 // Page — delegates entirely to role-specific dashboards
 // ---------------------------------------------------------------------------
 export default function Home() {
-  const { profile, isLoading } = useAuth();
+  const { profile, isLoading, session } = useAuth();
+
+  React.useEffect(() => {
+    if (session?.access_token) {
+      console.log("Dashboard Loaded - Access Token:", session.access_token);
+    }
+  }, [session]);
 
   if (isLoading) {
     return (

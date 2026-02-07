@@ -18,25 +18,40 @@ export default function LoginPage() {
   }, [profile, isLoading, router]);
 
   return (
-    <div className="p-6">
-      <div className="w-full max-w-4xl mx-auto space-y-12">
-        <div className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="w-16 h-16 bg-primary rounded-3xl flex items-center justify-center font-black text-3xl text-primary-foreground shadow-2xl shadow-primary/20">
+    <div className="p-6" suppressHydrationWarning>
+      <div
+        className="w-full max-w-4xl mx-auto space-y-12"
+        suppressHydrationWarning
+      >
+        <div className="text-center space-y-4" suppressHydrationWarning>
+          <div className="flex justify-center" suppressHydrationWarning>
+            <div
+              className="w-16 h-16 bg-primary rounded-3xl flex items-center justify-center font-black text-3xl text-primary-foreground shadow-2xl shadow-primary/20"
+              suppressHydrationWarning
+            >
               I
             </div>
           </div>
-          <div className="space-y-2">
-            <h1 className="text-5xl font-black tracking-tighter uppercase italic text-foreground">
+          <div className="space-y-2" suppressHydrationWarning>
+            <h1
+              className="text-5xl font-black tracking-tighter uppercase italic text-foreground"
+              suppressHydrationWarning
+            >
               {t("title")}
             </h1>
-            <p className="text-foreground/40 font-bold uppercase tracking-widest text-xs">
+            <p
+              className="text-foreground/40 font-bold uppercase tracking-widest text-xs"
+              suppressHydrationWarning
+            >
               {t("subtitle")}
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          suppressHydrationWarning
+        >
           <Link
             href="/login/admin"
             className="glass-card p-10 flex flex-col items-center gap-6 hover:border-primary/50 hover:bg-primary/5 group transition-all duration-500 border border-foreground/5 bg-foreground/5 rounded-[2rem] text-center"
