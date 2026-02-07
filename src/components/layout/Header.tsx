@@ -89,7 +89,7 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
           gap: 4,
         }}
       >
-        {filteredItems.map((item) => {
+        {navItems.map((item) => {
           const active = isActive(item.href);
           return (
             <Link
@@ -185,14 +185,12 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
                 </div>
               </div>
 
-              <DropdownMenuItem asChild>
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-error/10 text-error hover:text-error transition-colors text-sm font-medium border border-transparent hover:border-error/20 outline-none"
-                >
-                  <LogOut size={16} />
-                  Sign Out
-                </button>
+              <DropdownMenuItem
+                onSelect={handleSignOut}
+                className="flex items-center gap-2 p-2 rounded-lg hover:bg-error/10 text-error hover:text-error transition-colors text-sm font-medium border border-transparent hover:border-error/20 cursor-pointer"
+              >
+                <LogOut size={16} />
+                Sign Out
               </DropdownMenuItem>
             </div>
           </DropdownMenuContent>

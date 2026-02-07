@@ -77,6 +77,7 @@ export default function OperatorBookings() {
     const [searchQuery, setSearchQuery] = useState("");
     const [showQRModal, setShowQRModal] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [isCreatingSlot, setIsCreatingSlot] = useState(false);
     const [slots, setSlots] = useState<any[]>([]);
     const [terminals, setTerminals] = useState<any[]>([]);
     const [newSlot, setNewSlot] = useState({
@@ -135,9 +136,14 @@ export default function OperatorBookings() {
                 gateId = newGate.id;
             }
 
-            // 3. Ensure Terminal
-            const { data: existingTerminals } = await supabase.from('terminals').select('id').eq('port_id', portId).limit(1);
-            if (!existingTerminals || existingTerminals.length === 0) {
+            // 3. Ensure Terminals (at least 2)
+            const { data: existingTerminals } = await supabase.from('terminals').select('zone_code').eq('port_id', portId);
+            const existingCodes = existingTerminals?.map(t => t.zone_code) || [];
+
+            let created = 0;
+
+            // Create Zone A if missing
+            if (!existingCodes.includes('Z-A')) {
                 const { error: termError } = await supabase.from('terminals').insert({
                     port_id: portId,
                     gate_id: gateId,
@@ -146,9 +152,26 @@ export default function OperatorBookings() {
                     total_capacity: 100
                 });
                 if (termError) throw termError;
-                toast.success("Seed data created (Port, Gate, Terminal)");
+                created++;
+            }
+
+            // Create Zone B if missing
+            if (!existingCodes.includes('Z-B')) {
+                const { error: termError } = await supabase.from('terminals').insert({
+                    port_id: portId,
+                    gate_id: gateId,
+                    zone_name: 'Zone B',
+                    zone_code: 'Z-B',
+                    total_capacity: 150
+                });
+                if (termError) throw termError;
+                created++;
+            }
+
+            if (created > 0) {
+                toast.success(`Created ${created} default terminals (Zone A & B)`);
             } else {
-                toast.info("Terminals already exist");
+                toast.info("Default terminals (Zone A & B) already exist");
             }
 
             await fetchTerminals();
@@ -176,6 +199,25 @@ export default function OperatorBookings() {
     };
 
     const handleCreateSlot = async () => {
+        // Validation
+        if (!newSlot.terminal_id) {
+            toast.error("Please select a terminal. Click 'Seed Data' if no terminals exist.");
+            return;
+        }
+        if (!newSlot.slot_date || !newSlot.start_time || !newSlot.end_time) {
+            toast.error("Please fill in all required fields.");
+            return;
+        }
+        if (newSlot.start_time >= newSlot.end_time) {
+            toast.error("End time must be after start time.");
+            return;
+        }
+        if (newSlot.max_capacity < 1) {
+            toast.error("Capacity must be at least 1.");
+            return;
+        }
+
+        setIsCreatingSlot(true);
         const { error } = await supabase.from("active_slots").insert([
             {
                 ...newSlot,
@@ -186,11 +228,18 @@ export default function OperatorBookings() {
             }
         ]);
 
+        setIsCreatingSlot(false);
         if (error) {
             toast.error("Failed to create slot: " + error.message);
         } else {
-            toast.success("Slot created successfully");
+            toast.success("Slot created successfully!");
             fetchSlots();
+            // Reset form times
+            setNewSlot(prev => ({
+                ...prev,
+                start_time: "08:00",
+                end_time: "09:00"
+            }));
         }
     };
 
@@ -359,7 +408,7 @@ export default function OperatorBookings() {
 
                 <TabsContent value="bookings" className="space-y-6">
                     {/* Filters */}
-                    <div className="flex items-center gap-4 bg-white p-4 rounded-lg border shadow-sm">
+                    <div className="flex items-center gap-4 glass-card-geo p-4 rounded-xl border border-foreground/5">
                         <div className="relative flex-1 max-w-sm">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -485,20 +534,27 @@ export default function OperatorBookings() {
                             <CardDescription>Manually add available booking slots for carriers</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Terminal / Gate</label>
-                                    <select
-                                        className="w-full text-sm border rounded p-2 bg-transparent"
-                                        value={newSlot.terminal_id}
-                                        onChange={(e) => setNewSlot(prev => ({ ...prev, terminal_id: e.target.value }))}
-                                    >
-                                        {terminals.map(t => (
-                                            <option key={t.id} value={t.id}>
-                                                {t.zone_name} (Gate {t.gate?.gate_number || "?"})
-                                            </option>
-                                        ))}
-                                    </select>
+                                    {terminals.length === 0 ? (
+                                        <div className="text-sm text-muted-foreground p-2 border rounded bg-warning/10 border-warning/30">
+                                            No terminals found. Click "Seed Data" below to create one.
+                                        </div>
+                                    ) : (
+                                        <select
+                                            className="w-full text-sm border rounded p-2 bg-background"
+                                            value={newSlot.terminal_id}
+                                            onChange={(e) => setNewSlot(prev => ({ ...prev, terminal_id: e.target.value }))}
+                                        >
+                                            <option value="">Select a terminal...</option>
+                                            {terminals.map(t => (
+                                                <option key={t.id} value={t.id}>
+                                                    {t.zone_name} (Gate {t.gate?.gate_number || "?"})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Date</label>
@@ -524,10 +580,48 @@ export default function OperatorBookings() {
                                         onChange={(e) => setNewSlot(prev => ({ ...prev, end_time: e.target.value }))}
                                     />
                                 </div>
-                                <Button onClick={handleCreateSlot} className="w-full">
-                                    <Plus className="w-4 h-4 mr-2" /> Create Slot
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Capacity</label>
+                                    <Input
+                                        type="number"
+                                        min={1}
+                                        max={100}
+                                        value={newSlot.max_capacity}
+                                        onChange={(e) => setNewSlot(prev => ({ ...prev, max_capacity: parseInt(e.target.value) || 10 }))}
+                                        placeholder="10"
+                                    />
+                                </div>
+                                <Button
+                                    onClick={handleCreateSlot}
+                                    className="w-full"
+                                    disabled={isCreatingSlot || terminals.length === 0 || !newSlot.terminal_id}
+                                >
+                                    {isCreatingSlot ? (
+                                        <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
+                                    ) : (
+                                        <><Plus className="w-4 h-4 mr-2" /> Create Slot</>
+                                    )}
                                 </Button>
                             </div>
+                            {/* Seed Data button for empty terminals */}
+                            {terminals.length === 0 && (
+                                <div className="mt-4 p-4 border border-dashed border-primary/30 rounded-lg bg-primary/5">
+                                    <p className="text-sm text-muted-foreground mb-3">
+                                        No terminals found. Create initial port/gate/terminal data to get started.
+                                    </p>
+                                    <Button
+                                        onClick={handleSeedData}
+                                        variant="outline"
+                                        disabled={loading}
+                                    >
+                                        {loading ? (
+                                            <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
+                                        ) : (
+                                            <>Create Seed Data</>
+                                        )}
+                                    </Button>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 

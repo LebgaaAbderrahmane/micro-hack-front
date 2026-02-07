@@ -28,7 +28,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   session: null,
   isLoading: true,
-  signOut: async () => {},
+  signOut: async () => { },
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -43,20 +43,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(
     async (userId: string) => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      // Increased timeout to 10 seconds for slower dev environments
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       try {
+        // Try to fetch with organisation details first
         const { data, error } = await supabase
           .from("users")
           .select("*, organisation:organisations(*)")
           .eq("id", userId)
           .single();
 
-        if (error) {
-          console.error("[AuthProvider] Profile fetch error:", error);
+        if (!error && data) {
+          clearTimeout(timeoutId);
+          return data as Profile;
+        }
+
+        console.warn("[AuthProvider] Detailed profile fetch failed, trying basic fetch:", error);
+
+        // Fallback: Fetch just the user profile without organisation if the join fails
+        // This handles cases where RLS might block organisation access or relation is missing
+        const { data: basicData, error: basicError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", userId)
+          .single();
+
+        if (basicError) {
+          console.error("[AuthProvider] Basic profile fetch error:", basicError);
           return null;
         }
-        return data as Profile;
+
+        clearTimeout(timeoutId);
+        return basicData as Profile;
       } catch (err) {
         console.error("[AuthProvider] Profile fetch exception:", err);
         return null;
@@ -82,31 +101,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }, 5000);
 
       try {
-        // Log all cookies to see if the session cookie is present
-        if (typeof document !== "undefined") {
-          const hasSBCookie =
-            document.cookie.includes("sb-") ||
-            document.cookie.includes("supabase.auth.token");
-          console.log("[AuthProvider] Browser cookie check:", { hasSBCookie });
-        }
-
         const {
           data: { session: currentSession },
         } = await supabase.auth.getSession();
 
         if (!mounted) return;
 
-        console.log("[AuthProvider] Boot session:", {
-          hasSession: !!currentSession,
-          userId: currentSession?.user?.id,
-        });
-
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
+          // 1. Optimistic Profile from Metadata (Backup)
+          const metadata = currentSession.user.user_metadata;
+          if (metadata?.role) {
+            console.log("[AuthProvider] Using optimistic profile from metadata");
+            const optimisticProfile = {
+              id: currentSession.user.id,
+              role: metadata.role,
+              username: metadata.username || currentSession.user.email?.split("@")[0],
+              email: currentSession.user.email,
+              org_id: metadata.org_id,
+              created_at: new Date().toISOString()
+            } as Profile;
+            setProfile(optimisticProfile);
+          }
+
+          // 2. Fetch Real Profile from DB
           const profileData = await fetchProfile(currentSession.user.id);
-          if (mounted) setProfile(profileData);
+
+          // 3. Confirm Profile (DB takes precedence, keep optimistic if DB fails)
+          if (mounted) {
+            if (profileData) {
+              setProfile(profileData);
+            } else if (!metadata?.role) {
+              // Only clear if we didn't have an optimistic profile
+              setProfile(null);
+            }
+          }
         }
       } catch (error) {
         console.error("[AuthProvider] Initialization error:", error);
@@ -131,8 +162,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(newSession?.user ?? null);
 
       if (newSession?.user) {
+        // 1. Optimistic Profile
+        const metadata = newSession.user.user_metadata;
+        if (metadata?.role) {
+          const optimisticProfile = {
+            id: newSession.user.id,
+            role: metadata.role,
+            username: metadata.username || newSession.user.email?.split("@")[0],
+            email: newSession.user.email,
+            org_id: metadata.org_id,
+            created_at: new Date().toISOString()
+          } as Profile;
+          setProfile(optimisticProfile);
+        }
+
+        // 2. Fetch Real Profile
         const profileData = await fetchProfile(newSession.user.id);
-        if (mounted) setProfile(profileData);
+
+        if (mounted) {
+          if (profileData) {
+            setProfile(profileData);
+          } else if (!metadata?.role) {
+            setProfile(null);
+          }
+        }
       } else {
         if (mounted) setProfile(null);
       }
