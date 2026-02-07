@@ -124,7 +124,7 @@ export default function RegisterPage() {
               <Ship className="w-10 h-10 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl font-black tracking-tight bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-black tracking-tight bg-linear-to-b from-white to-white/60 bg-clip-text text-transparent">
             Carrier Registration
           </h1>
           <p className="text-foreground/60 font-medium">
