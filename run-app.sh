@@ -12,10 +12,11 @@ show_help() {
     echo "  dev     - Run in development mode (default)"
     echo "  build   - Build for production"
     echo "  start   - Start production server (must build first)"
+    echo "  docker  - Build and run in Docker"
     echo ""
     echo "Examples:"
     echo "  ./run-app.sh local dev"
-    echo "  ./run-app.sh remote build"
+    echo "  ./run-app.sh remote docker"
 }
 
 # Default values
@@ -53,8 +54,12 @@ case $CMD in
     "start")
         npm run start
         ;;
+    "docker")
+        echo "🐳 Building and starting Docker container with $MODE environment..."
+        docker compose --env-file $ENV_FILE up --build
+        ;;
     *)
-        echo "Error: Invalid command '$CMD'. Use 'dev', 'build', or 'start'."
+        echo "Error: Invalid command '$CMD'. Use 'dev', 'build', 'start' or 'docker'."
         show_help
         exit 1
         ;;

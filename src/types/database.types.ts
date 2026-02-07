@@ -41,6 +41,7 @@ export type Database = {
           end_time: string
           id: string
           max_capacity: number
+          override_id: string | null
           slot_date: string
           start_time: string
           status: Database["public"]["Enums"]["slot_status_enum"]
@@ -53,6 +54,7 @@ export type Database = {
           end_time: string
           id?: string
           max_capacity: number
+          override_id?: string | null
           slot_date: string
           start_time: string
           status?: Database["public"]["Enums"]["slot_status_enum"]
@@ -65,6 +67,7 @@ export type Database = {
           end_time?: string
           id?: string
           max_capacity?: number
+          override_id?: string | null
           slot_date?: string
           start_time?: string
           status?: Database["public"]["Enums"]["slot_status_enum"]
@@ -72,6 +75,13 @@ export type Database = {
           terminal_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "active_slots_override_id_fkey"
+            columns: ["override_id"]
+            isOneToOne: false
+            referencedRelation: "slot_overrides"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "active_slots_template_id_fkey"
             columns: ["template_id"]
@@ -840,38 +850,38 @@ export type Database = {
       slot_overrides: {
         Row: {
           created_at: string | null
-          days_of_week: number[] | null
-          end_date: string
+          end_time: string | null
           id: string
           is_active: boolean | null
           new_max_capacity: number | null
           override_type: Database["public"]["Enums"]["slot_override_type_enum"]
           reason: string | null
-          start_date: string
+          slot_date: string
+          start_time: string | null
           terminal_id: string
         }
         Insert: {
           created_at?: string | null
-          days_of_week?: number[] | null
-          end_date: string
+          end_time?: string | null
           id?: string
           is_active?: boolean | null
           new_max_capacity?: number | null
           override_type: Database["public"]["Enums"]["slot_override_type_enum"]
           reason?: string | null
-          start_date: string
+          slot_date: string
+          start_time?: string | null
           terminal_id: string
         }
         Update: {
           created_at?: string | null
-          days_of_week?: number[] | null
-          end_date?: string
+          end_time?: string | null
           id?: string
           is_active?: boolean | null
           new_max_capacity?: number | null
           override_type?: Database["public"]["Enums"]["slot_override_type_enum"]
           reason?: string | null
-          start_date?: string
+          slot_date?: string
+          start_time?: string | null
           terminal_id?: string
         }
         Relationships: [
@@ -1029,6 +1039,7 @@ export type Database = {
           created_at: string | null
           id: string
           org_id: string
+          port_id: string | null
           role: Database["public"]["Enums"]["user_role_enum"]
           username: string
         }
@@ -1036,6 +1047,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           org_id: string
+          port_id?: string | null
           role: Database["public"]["Enums"]["user_role_enum"]
           username: string
         }
@@ -1043,6 +1055,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           org_id?: string
+          port_id?: string | null
           role?: Database["public"]["Enums"]["user_role_enum"]
           username?: string
         }
@@ -1052,6 +1065,13 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_port_id_fkey"
+            columns: ["port_id"]
+            isOneToOne: false
+            referencedRelation: "ports"
             referencedColumns: ["id"]
           },
         ]
@@ -1096,16 +1116,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cascade_cancel_and_regenerate: {
+        Args: {
+          p_change_reason?: string
+          p_end_date: string
+          p_start_date: string
+          p_terminal_id: string
+        }
+        Returns: Json
+      }
       generate_active_slots: { Args: { target_date?: string }; Returns: number }
+      generate_monthly_slots: {
+        Args: { target_month: string }
+        Returns: number
+      }
+      maybe_generate_next_month_slots: { Args: never; Returns: number }
     }
     Enums: {
-      action_source_enum: "WEB" | "MOBILE" | "WHATSAPP" | "API"
+      action_source_enum: "WEB" | "MOBILE" | "WHATSAPP" | "API" | "SYSTEM"
       booking_log_action_enum:
         | "CREATED"
         | "UPDATED"
         | "CONFIRMED"
         | "CANCELLED"
         | "STATUS_CHANGED"
+        | "SYSTEM_CANCELLED"
       booking_priority_enum: "LOW" | "NORMAL" | "HIGH" | "URGENT"
       booking_status_enum:
         | "PENDING"
@@ -1149,6 +1184,7 @@ export type Database = {
         | "GATE_READY"
         | "PAYMENT_DUE"
         | "SYSTEM_ALERT"
+        | "BOOKING_CANCELLED"
       organisation_type_enum: "ADMIN" | "TERMINAL_OPERATOR" | "CARRIER"
       payment_status_enum: "UNPAID" | "PAID" | "WAIVED"
       slot_override_type_enum: "CLOSE" | "CAPACITY_CHANGE" | "HOURS_CHANGE"
@@ -1285,13 +1321,14 @@ export const Constants = {
   },
   public: {
     Enums: {
-      action_source_enum: ["WEB", "MOBILE", "WHATSAPP", "API"],
+      action_source_enum: ["WEB", "MOBILE", "WHATSAPP", "API", "SYSTEM"],
       booking_log_action_enum: [
         "CREATED",
         "UPDATED",
         "CONFIRMED",
         "CANCELLED",
         "STATUS_CHANGED",
+        "SYSTEM_CANCELLED",
       ],
       booking_priority_enum: ["LOW", "NORMAL", "HIGH", "URGENT"],
       booking_status_enum: [
@@ -1340,6 +1377,7 @@ export const Constants = {
         "GATE_READY",
         "PAYMENT_DUE",
         "SYSTEM_ALERT",
+        "BOOKING_CANCELLED",
       ],
       organisation_type_enum: ["ADMIN", "TERMINAL_OPERATOR", "CARRIER"],
       payment_status_enum: ["UNPAID", "PAID", "WAIVED"],
