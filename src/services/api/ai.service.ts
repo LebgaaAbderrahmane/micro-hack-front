@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/client";
+import type { UIComponent } from "@/types/ai-components";
 
 const AI_API_URL = (
   process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000"
@@ -21,6 +22,7 @@ export interface ChatResponse {
   confidence: number | null;
   agent_type: string | null;
   data: Record<string, unknown>[] | null;
+  ui_components?: UIComponent[] | null;
 }
 
 // ── Auth helper ──

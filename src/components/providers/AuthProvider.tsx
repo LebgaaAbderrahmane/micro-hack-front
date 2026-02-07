@@ -10,6 +10,7 @@ import {
 import { User, Session } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { Database } from "@/types/database.types";
+import { signOutAction } from "@/app/[locale]/(auth)/actions";
 
 type Profile = Database["public"]["Tables"]["users"]["Row"] & {
   organisation?: Database["public"]["Tables"]["organisations"]["Row"];
@@ -41,39 +42,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [supabase] = useState(() => createClient());
 
   const fetchProfile = useCallback(
-    async (userId: string) => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased to 10s for remote dev
-
+    async (userId: string, retryCount = 0): Promise<Profile | null> => {
       try {
+        // Try to fetch with organisation details first
         const { data, error } = await supabase
           .from("users")
           .select("*, organisation:organisations(*)")
           .eq("id", userId)
           .single();
 
-        if (error) {
-          // Ignore the error if it was a manual abort
-          if (error.message?.includes("aborted")) return null;
+        if (!error && data) {
+          return data as Profile;
+        }
 
-          console.error("[AuthProvider] Profile fetch error:", {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code
+        // If we get an empty error in dev, it might be MSW still booting
+        if (process.env.NODE_ENV === "development" && retryCount < 2) {
+          console.log(`[AuthProvider] Potential race with MSW, retrying... (${retryCount + 1})`);
+          await new Promise(resolve => setTimeout(resolve, 500));
+          return fetchProfile(userId, retryCount + 1);
+        }
+
+        console.warn("[AuthProvider] Detailed profile fetch failed, trying basic fetch:", error);
+
+        // Fallback: Fetch just the user profile without organisation if the join fails
+        const { data: basicData, error: basicError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", userId)
+          .single();
+
+        if (basicError) {
+          console.error("[AuthProvider] Basic profile fetch error:", {
+            message: basicError.message,
+            details: basicError.details,
+            hint: basicError.hint,
+            code: basicError.code
           });
           return null;
         }
-        return data as Profile;
-      } catch (err: any) {
-        if (err.name === 'AbortError') {
-          console.warn("[AuthProvider] Profile fetch timed out or was aborted");
-        } else {
-          console.error("[AuthProvider] Profile fetch exception:", err);
-        }
+
+        return basicData as Profile;
+      } catch (err) {
+        console.error("[AuthProvider] Profile fetch exception:", err);
         return null;
-      } finally {
-        clearTimeout(timeoutId);
       }
     },
     [supabase],
@@ -94,37 +105,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }, 5000);
 
       try {
-        // Log all cookies to see if the session cookie is present
-        if (typeof document !== "undefined") {
-          const hasSBCookie =
-            document.cookie.includes("sb-") ||
-            document.cookie.includes("supabase.auth.token");
-          console.log("[AuthProvider] Browser cookie check:", { hasSBCookie });
-        }
-
         const {
           data: { session: currentSession },
         } = await supabase.auth.getSession();
 
         if (!mounted) return;
 
-        console.log("[AuthProvider] Boot session:", {
-          hasSession: !!currentSession,
-          userId: currentSession?.user?.id,
-        });
-
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
+          // 1. Optimistic Profile from Metadata (Backup)
+          const metadata = currentSession.user.user_metadata;
+          if (metadata?.role) {
+            console.log("[AuthProvider] Using optimistic profile from metadata");
+            const optimisticProfile = {
+              id: currentSession.user.id,
+              role: metadata.role,
+              username: metadata.username || currentSession.user.email?.split("@")[0],
+              email: currentSession.user.email,
+              org_id: metadata.org_id,
+              created_at: new Date().toISOString()
+            } as Profile;
+            setProfile(optimisticProfile);
+          }
+
+          // 2. Fetch Real Profile from DB
           const profileData = await fetchProfile(currentSession.user.id);
-          if (mounted) setProfile(profileData);
+
+          // 3. Confirm Profile (DB takes precedence, keep optimistic if DB fails)
+          if (mounted) {
+            if (profileData) {
+              setProfile(profileData);
+            } else if (!metadata?.role) {
+              // Only clear if we didn't have an optimistic profile
+              setProfile(null);
+            }
+          }
         }
       } catch (error) {
         console.error("[AuthProvider] Initialization error:", error);
       } finally {
+        if (mounted) setIsLoading(false);
         clearTimeout(timeoutId);
-        setIsLoading(false);
       }
     };
 
@@ -143,8 +166,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(newSession?.user ?? null);
 
       if (newSession?.user) {
+        // 1. Optimistic Profile
+        const metadata = newSession.user.user_metadata;
+        if (metadata?.role) {
+          const optimisticProfile = {
+            id: newSession.user.id,
+            role: metadata.role,
+            username: metadata.username || newSession.user.email?.split("@")[0],
+            email: newSession.user.email,
+            org_id: metadata.org_id,
+            created_at: new Date().toISOString()
+          } as Profile;
+          setProfile(optimisticProfile);
+        }
+
+        // 2. Fetch Real Profile
         const profileData = await fetchProfile(newSession.user.id);
-        if (mounted) setProfile(profileData);
+
+        if (mounted) {
+          if (profileData) {
+            setProfile(profileData);
+          } else if (!metadata?.role) {
+            setProfile(null);
+          }
+        }
       } else {
         if (mounted) setProfile(null);
       }
@@ -157,17 +202,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase, fetchProfile]);
 
   const signOut = async () => {
-    console.log("[AuthProvider] Signing out...");
-    try {
-      await supabase.auth.signOut();
-      console.log("[AuthProvider] Sign out complete");
-    } catch (err) {
-      console.error("[AuthProvider] Sign out error:", err);
-    } finally {
-      setProfile(null);
-      setUser(null);
-      setSession(null);
-    }
+    // 1. Clear local state for immediate feedback
+    setProfile(null);
+    setUser(null);
+    setSession(null);
+
+    // 2. Call server action to clear cookies and redirect
+    // This will trigger a redirect to /login
+    await signOutAction();
   };
 
   return (

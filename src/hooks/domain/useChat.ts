@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { aiService, ChatResponse } from "@/services/api/ai.service";
 import { useAuth } from "@/hooks/useAuth";
+import type { UIComponent } from "@/types/ai-components";
 
 // ── Types ────────────────────────────────────────────────
 
@@ -15,6 +16,7 @@ export interface ChatMessage {
   agentType?: string | null;
   confidence?: number | null;
   data?: Record<string, unknown>[] | null;
+  uiComponents?: UIComponent[] | null;
   hasProposal?: boolean;
   isLoading?: boolean;
 }
@@ -119,10 +121,13 @@ export function useChat(options: UseChatOptions = {}) {
       // Persist session for multi-turn conversation
       sessionIdRef.current = data.session_id;
 
+      const uiComponents = data.ui_components ?? null;
+
       const hasProposal = Boolean(
-        data.agent_type &&
-        data.agent_type !== "ORCHESTRATOR" &&
-        data.data?.length,
+        uiComponents?.some((c) => c.type === "approval") ||
+        (data.agent_type &&
+          data.agent_type !== "ORCHESTRATOR" &&
+          data.data?.length),
       );
 
       // Replace the loading placeholder with the real response
@@ -141,13 +146,14 @@ export function useChat(options: UseChatOptions = {}) {
             agentType: data.agent_type,
             confidence: data.confidence,
             data: data.data,
+            uiComponents,
             hasProposal,
           },
         ];
       });
 
-      // Auto-expand to large when the response contains structured data
-      if (hasProposal) {
+      // Auto-expand to large when the response contains rich UI components or structured data
+      if (hasProposal || (uiComponents && uiComponents.length > 0)) {
         onAutoExpand?.();
       }
     },
