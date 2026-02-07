@@ -7,7 +7,7 @@
     "profile": "Profil"
   },
   "Auth": {
-    "loginTitle": "Connexion à PortFlow",
+    "loginTitle": "Connexion à APCS",
     "email": "Email",
     "password": "Mot de passe",
     "submit": "Se connecter"
@@ -21,7 +21,7 @@
     "users": "Utilisateurs",
     "analytics": "Analyses",
     "accessRestricted": "Accès restreint",
-    "pleaseLogin": "Veuillez vous connecter pour accéder au système de contrôle d'accès logistique intelligent.",
+    "pleaseLogin": "Veuillez vous connecter pour accéder au système APCS (Advanced Port Control System).",
     "goToLogin": "Aller à la connexion",
     "liveTerminalMatrix": "Matrice de terminaux en direct",
     "geospatialOrchestration": "Orchestration des nœuds géospatiaux en temps réel",
@@ -79,9 +79,9 @@
     "switchLocale": "Passer à l'{language}"
   },
   "AI": {
-    "welcome": "Bonjour ! Je suis votre assistant IA ILACS. Comment puis-je vous aider à gérer vos accès au terminal ou votre flotte aujourd'hui ?",
+    "welcome": "Bonjour ! Je suis votre assistant IA APCS. Comment puis-je vous aider à gérer vos accès au terminal ou votre flotte aujourd'hui ?",
     "placeholder": "Posez une question...",
-    "title": "Assistant ILACS",
+    "title": "Assistant APCS",
     "online": "IA en ligne",
     "promptCapacity": "Capacité Nord ?",
     "promptMaintenance": "Maintenance Camions",
@@ -99,7 +99,7 @@
     "operatorDesc": "Gestion de cour et de quai",
     "carrier": "Portail Carrier",
     "carrierDesc": "Synchro flotte et réservation de créneaux",
-    "footer": "Protégé par le nœud de cryptage quantique ILACS A-14"
+    "footer": "Protégé par le nœud de cryptage avancé APCS A-14"
   },
   "Sidebar": {
     "dashboard": "Tableau de bord",

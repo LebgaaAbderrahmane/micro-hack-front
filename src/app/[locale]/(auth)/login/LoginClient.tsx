@@ -26,10 +26,14 @@ export default function LoginPage() {
         <div className="text-center space-y-4" suppressHydrationWarning>
           <div className="flex justify-center" suppressHydrationWarning>
             <div
-              className="w-16 h-16 bg-primary rounded-3xl flex items-center justify-center font-black text-3xl text-primary-foreground shadow-2xl shadow-primary/20"
+              className="w-20 h-20 bg-foreground/5 rounded-3xl flex items-center justify-center p-4 shadow-2xl shadow-primary/10 transition-transform duration-500 hover:scale-105"
               suppressHydrationWarning
             >
-              I
+              <img
+                src="/APCS_New_Logo.svg"
+                alt="APCS Logo"
+                className="w-full h-full object-contain filter dark:invert dark:brightness-200"
+              />
             </div>
           </div>
           <div className="space-y-2" suppressHydrationWarning>

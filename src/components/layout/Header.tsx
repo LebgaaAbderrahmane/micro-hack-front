@@ -17,7 +17,6 @@ import {
 const getNavItems = (role?: string) => {
   const baseItems = [
     { label: "Dashboard", href: "/" },
-    { label: "Analytics", href: "/analytics" },
   ];
 
   if (!role) return baseItems;
@@ -27,6 +26,7 @@ const getNavItems = (role?: string) => {
   if (r === "ADMIN") {
     return [
       ...baseItems,
+      { label: "Analytics", href: "/analytics" },
       { label: "Manage", href: "/manage" },
       { label: "Logs", href: "/loggings" },
     ];
@@ -35,6 +35,7 @@ const getNavItems = (role?: string) => {
   if (r === "OPERATOR") {
     return [
       ...baseItems,
+      { label: "Analytics", href: "/analytics" },
       { label: "Manage", href: "/bookings" },
       { label: "Logs", href: "/loggings" },
     ];
@@ -43,8 +44,8 @@ const getNavItems = (role?: string) => {
   if (r === "DISPATCHER" || r === "CARRIER") {
     return [
       ...baseItems,
-      { label: "New Booking", href: "/bookings/new" },
       { label: "Bookings", href: "/bookings" },
+      { label: "Fleet", href: "/fleet" },
     ];
   }
 
@@ -84,7 +85,11 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
       style={{ padding: "22px 64px" }}
     >
       {/* Logo */}
+<<<<<<< HEAD
       <Link href="/">
+=======
+      <Link href="/" className="flex items-center group transition-all duration-300">
+>>>>>>> origin/features/carrier-pages
         <Logo />
       </Link>
 

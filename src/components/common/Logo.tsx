@@ -9,7 +9,7 @@ interface LogoProps {
     iconOnly?: boolean;
 }
 
-export const Logo = ({ className, iconOnly = false }: LogoProps) => {
+export const Logo = ({ className }: LogoProps) => {
     return (
         <div className={cn("flex items-center gap-3 select-none group cursor-pointer", className)}>
             <div className="relative">

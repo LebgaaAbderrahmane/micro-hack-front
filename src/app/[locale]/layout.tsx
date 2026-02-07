@@ -30,8 +30,8 @@ export function generateStaticParams() {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "ILACS | Intelligent Logistics Access Control System",
-    description: "Advanced port access and terminal management system",
+    title: "APCS | Advanced Port Control System",
+    description: "Next-generation intelligent port access and terminal management interface",
   };
 }
 

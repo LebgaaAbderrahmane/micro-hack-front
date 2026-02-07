@@ -7,7 +7,7 @@
     "profile": "Profile"
   },
   "Auth": {
-    "loginTitle": "Login to PortFlow",
+    "loginTitle": "Login to APCS",
     "email": "Email",
     "password": "Password",
     "submit": "Sign In"
@@ -21,7 +21,7 @@
     "users": "Users",
     "analytics": "Analytics",
     "accessRestricted": "Access Restricted",
-    "pleaseLogin": "Please log in to access the Intelligent Logistics Access Control System.",
+    "pleaseLogin": "Please log in to access the Advanced Port Control System.",
     "goToLogin": "Go to Login",
     "liveTerminalMatrix": "Live Terminal Matrix",
     "geospatialOrchestration": "Real-time geospatial node orchestration",
@@ -79,9 +79,9 @@
     "switchLocale": "Switch to {language}"
   },
   "AI": {
-    "welcome": "Hello! I'm your ILACS AI assistant. How can I help you manage your terminal access or fleet today?",
+    "welcome": "Hello! I'm your APCS AI assistant. How can I help you manage your terminal access or fleet today?",
     "placeholder": "Ask the assistant...",
-    "title": "ILACS Assistant",
+    "title": "APCS Assistant",
     "online": "AI Online",
     "promptCapacity": "Capacity North?",
     "promptMaintenance": "Truck Maintenance",
@@ -99,7 +99,7 @@
     "operatorDesc": "Yard & berth management",
     "carrier": "Carrier Portal",
     "carrierDesc": "Fleet sync & slot reservation",
-    "footer": "Protected by ILACS Quantum Encryption Node A-14"
+    "footer": "Protected by APCS Advanced Encryption Node A-14"
   },
   "Sidebar": {
     "dashboard": "Dashboard",
