@@ -204,10 +204,10 @@ export const AdminDashboard = () => {
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Today's Bookings" value={kpis.todayBookings} icon={<Package size={18} />} color="primary" trend={{ value: 12, label: "vs yesterday" }} delay={0} />
-        <StatCard label="Active Terminals" value={`${kpis.activeTerminals}/${kpis.totalTerminals}`} icon={<Anchor size={18} />} color="secondary" delay={1} />
-        <StatCard label="Port Utilization" value={`${kpis.utilizationPct}%`} icon={<Activity size={18} />} color={kpis.utilizationPct > 85 ? "error" : kpis.utilizationPct > 60 ? "warning" : "success"} trend={{ value: kpis.utilizationPct > 70 ? -3 : 5 }} delay={2} />
-        <StatCard label="Trucks In-Port" value={`${kpis.inUseTrucks}/${kpis.totalTrucks}`} icon={<TruckIcon size={18} />} color="accent" trend={{ value: 8, label: "active now" }} delay={3} />
+        <StatCard label="Port Congestion" value={`${kpis.utilizationPct}%`} icon={<Activity size={18} />} color={kpis.utilizationPct > 85 ? "error" : kpis.utilizationPct > 60 ? "warning" : "success"} trend={{ value: kpis.utilizationPct > 70 ? 5 : -3 }} delay={0} />
+        <StatCard label="Total Daily Flow" value={kpis.todayBookings} icon={<Package size={18} />} color="primary" trend={{ value: 12, label: "vs yesterday" }} delay={1} />
+        <StatCard label="Active Terminals" value={`${kpis.activeTerminals}/${kpis.totalTerminals}`} icon={<Anchor size={18} />} color="secondary" delay={2} />
+        <StatCard label="On-Site Trucks" value={`${kpis.inUseTrucks}/${kpis.totalTrucks}`} icon={<TruckIcon size={18} />} color="accent" trend={{ value: 8, label: "active now" }} delay={3} />
       </div>
 
       {/* Warnings */}
@@ -317,12 +317,12 @@ export const AdminDashboard = () => {
 
         <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <QuickActionsGrid
-            title="Quick Actions"
+            title="Admin Quick Actions"
             actions={[
-              { label: "Manage Users", icon: <Users size={14} />, onClick: () => router.push("/users"), color: "primary" },
-              { label: "View Audit Logs", icon: <FileText size={14} />, onClick: () => router.push("/loggings"), color: "secondary" },
-              { label: "Terminal Settings", icon: <Settings size={14} />, onClick: () => router.push("/settings"), color: "accent" },
-              { label: "View All Bookings", icon: <Package size={14} />, onClick: () => router.push("/bookings"), color: "success" },
+              { label: "Manage Users", icon: <Users size={14} />, onClick: () => router.push("/users"), color: "primary", variant: "filled" },
+              { label: "Analytics", icon: <BarChart3 size={14} />, onClick: () => router.push("/analytics"), color: "secondary" },
+              { label: "All Logs", icon: <FileText size={14} />, onClick: () => router.push("/loggings"), color: "accent" },
+              { label: "Terminal Settings", icon: <Settings size={14} />, onClick: () => router.push("/settings"), color: "success" },
             ]}
           />
         </div>
@@ -431,10 +431,10 @@ export const TerminalOpDashboard = () => {
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Pending Approvals" value={kpis.pending} icon={<Clock size={18} />} color="warning" trend={{ value: kpis.pending > 5 ? -8 : 12 }} delay={0} />
-        <StatCard label="Slot Utilization" value={`${kpis.slotUtilization}%`} icon={<BarChart3 size={18} />} color={kpis.slotUtilization > 85 ? "error" : "success"} delay={1} />
-        <StatCard label="Terminal Occupancy" value={`${kpis.terminalPct}%`} icon={<Box size={18} />} color={kpis.terminalPct > 80 ? "warning" : "primary"} delay={2} />
-        <StatCard label="Gate Queue" value={kpis.totalQueue} icon={<ChevronsUp size={18} />} color={kpis.totalQueue > 10 ? "error" : "secondary"} delay={3} />
+        <StatCard label="Pending Validations" value={kpis.pending} icon={<Clock size={18} />} color="warning" trend={{ value: kpis.pending > 5 ? -8 : 12 }} delay={0} />
+        <StatCard label="Terminal Saturation" value={`${kpis.terminalPct}%`} icon={<Box size={18} />} color={kpis.terminalPct > 80 ? "warning" : "primary"} delay={1} />
+        <StatCard label="Slot Usage" value={`${kpis.slotUtilization}%`} icon={<BarChart3 size={18} />} color={kpis.slotUtilization > 85 ? "error" : "success"} delay={2} />
+        <StatCard label="Gate Congestion" value={kpis.totalQueue} icon={<ChevronsUp size={18} />} color={kpis.totalQueue > 10 ? "error" : "secondary"} delay={3} />
       </div>
 
       {/* Warnings */}
@@ -540,11 +540,12 @@ export const TerminalOpDashboard = () => {
 
         <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <QuickActionsGrid
-            title="Quick Actions"
+            title="Operator Quick Actions"
             actions={[
-              { label: "Review Bookings", icon: <Package size={14} />, onClick: () => router.push("/bookings"), color: "secondary" },
-              { label: "View Gate Logs", icon: <FileText size={14} />, onClick: () => router.push("/loggings"), color: "primary" },
-              { label: "Terminal Settings", icon: <Settings size={14} />, onClick: () => router.push("/settings"), color: "accent" },
+              { label: "Manage Bookings", icon: <Package size={14} />, onClick: () => router.push("/bookings"), color: "secondary", variant: "filled" },
+              { label: "Analytics", icon: <Activity size={14} />, onClick: () => router.push("/analytics"), color: "primary" },
+              { label: "My Logs", icon: <FileText size={14} />, onClick: () => router.push("/loggings"), color: "accent" },
+              { label: "Yard Settings", icon: <Settings size={14} />, onClick: () => router.push("/settings"), color: "success" },
             ]}
           />
         </div>
@@ -574,13 +575,14 @@ export const CarrierDashboard = () => {
     const activeBookings = myBookings.filter((b) => ["PENDING", "CONFIRMED", "CHECKED_IN", "AT_GATE", "IN_PROGRESS"].includes(b.status)).length;
     const completedToday = todayBookings.filter((b) => b.status === "COMPLETED").length;
 
-    const trucks = fleet?.trucks ?? [];
+    const trucks = fleet?.trucks ?? []; // Ensure fleet is defined before accessing properties
     const drivers = fleet?.drivers ?? [];
     const availableTrucks = trucks.filter((t) => t.status === "AVAILABLE").length;
     const availableDrivers = drivers.filter((d) => d.status === "ACTIVE").length;
 
     return {
       activeBookings,
+      pendingBookings: myBookings.filter(b => b.status === "PENDING").length, // Added pending count
       completedToday,
       totalTodayBookings: todayBookings.length,
       availableTrucks,
@@ -657,10 +659,10 @@ export const CarrierDashboard = () => {
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Active Bookings" value={kpis.activeBookings} icon={<Package size={18} />} color="primary" delay={0} />
-        <StatCard label="Completed Today" value={kpis.completedToday} icon={<CheckCircle2 size={18} />} color="success" trend={{ value: 15, label: "on track" }} delay={1} />
-        <StatCard label="Fleet Available" value={`${kpis.availableTrucks}/${kpis.totalTrucks}`} icon={<TruckIcon size={18} />} color="accent" delay={2} />
-        <StatCard label="Active Drivers" value={`${kpis.availableDrivers}/${kpis.totalDrivers}`} icon={<Users size={18} />} color="secondary" delay={3} />
+        <StatCard label="Confirmed Bookings" value={kpis.activeBookings} icon={<CheckCircle2 size={18} />} color="success" delay={0} />
+        <StatCard label="Pending Requests" value={kpis.pendingBookings} icon={<Clock size={18} />} color="warning" delay={1} />
+        <StatCard label="Fleet Status" value={`${kpis.availableTrucks}/${kpis.totalTrucks}`} icon={<TruckIcon size={18} />} color="primary" delay={2} />
+        <StatCard label="Completed Trips" value={kpis.completedToday} icon={<Package size={18} />} color="secondary" trend={{ value: 15, label: "on track" }} delay={3} />
       </div>
 
       {/* Warnings */}
@@ -819,11 +821,11 @@ export const CarrierDashboard = () => {
         <div className="space-y-3">
           <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
             <QuickActionsGrid
-              title="Quick Actions"
+              title="Carrier Quick Actions"
               actions={[
-                { label: "Book New Slot", icon: <Zap size={14} />, onClick: () => router.push("/carrier"), color: "accent", variant: "filled" },
-                { label: "My Bookings", icon: <Package size={14} />, onClick: () => router.push("/bookings"), color: "primary" },
-                { label: "Manage Fleet", icon: <TruckIcon size={14} />, onClick: () => router.push("/fleet"), color: "secondary" },
+                { label: "Book Slot", icon: <Zap size={14} />, onClick: () => router.push("/bookings/new"), color: "accent", variant: "filled" },
+                { label: "Manage Bookings", icon: <Package size={14} />, onClick: () => router.push("/bookings"), color: "primary" },
+                { label: "Analytics", icon: <BarChart3 size={14} />, onClick: () => router.push("/analytics"), color: "secondary" },
               ]}
             />
           </div>

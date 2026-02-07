@@ -78,10 +78,11 @@
 }
 
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.3);
+  --geo-gradient: radial-gradient(circle at center, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
+  --glass-border: rgba(59, 130, 246, 0.15);
   --nav-pill-bg: rgba(238, 238, 238, 0.6);
-  --primary-glow: rgba(59, 130, 246, 0.1);
+  --primary-glow: rgba(59, 130, 246, 0.3);
   --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
   --shadow-card-hover: 0 20px 40px -12px rgba(0, 0, 0, 0.12);
   --border-div: #e5e7eb;
@@ -124,6 +125,7 @@
   --background: oklch(0.20 0 0); /* Lighter gray, not black */
   --foreground: oklch(0.985 0 0);
   --glass-bg: rgba(30, 41, 59, 0.15); /* More transparent grayish glass */
+  --geo-gradient: radial-gradient(circle at center, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
   --glass-border: rgba(255, 255, 255, 0.08);
   --nav-pill-bg: rgba(40, 40, 40, 0.6);
   --primary-glow: rgba(59, 130, 246, 0.25);
@@ -268,8 +270,34 @@ body {
 
 /* Glass card with triangle corner cut */
 .glass-card-geo {
-  @apply bg-glass-bg backdrop-blur-2xl border border-glass-border shadow-card transition-all duration-300;
+  @apply bg-glass-bg backdrop-blur-3xl border border-primary/10 shadow-lg shadow-primary/10 transition-all duration-300 relative overflow-hidden;
   border-radius: var(--radius-card);
+}
+
+.glass-card-geo::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  left: -30%;
+  width: 160%;
+  height: 160%;
+  background: var(--geo-gradient);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.glass-card-geo:hover {
+  @apply border-primary/30;
+  box-shadow: 0 0 30px -5px var(--primary-glow), 0 10px 40px -10px rgba(59, 130, 246, 0.2);
+}
+
+.dark .glass-card-geo:hover {
+  box-shadow: 0 15px 40px -5px rgba(59, 130, 246, 0.2), 0 0 20px -3px rgba(59, 130, 246, 0.1);
+}
+
+/* Light mode specific hover shadow */
+:not(.dark) .glass-card-geo:hover {
+  box-shadow: 0 15px 40px -5px rgba(59, 130, 246, 0.15), 0 0 25px -5px rgba(59, 130, 246, 0.25);
 }
 
 /* Recharts responsive container fixes for dark/light */

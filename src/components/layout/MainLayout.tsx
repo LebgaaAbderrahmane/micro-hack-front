@@ -25,9 +25,16 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div
-      className="min-h-screen flex flex-col"
+      className="min-h-screen flex flex-col relative"
       style={{ background: "var(--background)" }}
     >
+      {/* Dynamic Background Accents */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] opacity-20" />
+        <div className="absolute bottom-[20%] right-[-5%] w-[30%] h-[30%] bg-secondary/5 rounded-full blur-[100px] opacity-20" />
+        <div className="absolute top-[40%] right-[10%] w-[20%] h-[20%] bg-accent/5 rounded-full blur-[80px] opacity-10" />
+      </div>
+
       {/* Swatch background overlay */}
       <div
         className="fixed inset-0 pointer-events-none z-0"

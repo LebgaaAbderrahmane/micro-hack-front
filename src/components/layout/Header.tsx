@@ -6,6 +6,12 @@ import { Settings, User, LogOut, Building2, Mail, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navItems = [
   { label: "Dashboard", href: "/" },
@@ -22,7 +28,6 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const { profile, signOut } = useAuth();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/" || pathname === "";
@@ -126,77 +131,72 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
           <Settings size={22} />
         </button>
         
-        <div className="relative">
-            <button
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="p-1 rounded-xl hover:bg-foreground/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-tile-blue"
-            title="User menu"
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button
+                    className="p-1 rounded-xl hover:bg-foreground/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-tile-blue"
+                    title="User menu"
+                >
+                    <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center overflow-hidden border border-foreground/10">
+                        {profile?.username ? (
+                            <span className="font-bold text-xs">{profile.username[0].toUpperCase()}</span>
+                        ) : (
+                            <User size={18} className="text-foreground/60" />
+                        )}
+                    </div>
+                </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+                align="end"
+                sideOffset={12}
+                className="w-64 glass-card-geo p-4 z-50 flex flex-col gap-4 border-none animate-in fade-in zoom-in-95 duration-200"
             >
-            <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center overflow-hidden border border-foreground/10">
-                {profile?.username ? ( 
-                    <span className="font-bold text-xs">{profile.username[0].toUpperCase()}</span>
-                ) : (
-                    <User size={18} className="text-foreground/60" />
-                )}
-            </div>
-            </button>
+                <div className="flex items-center gap-3 pb-3 border-b border-foreground/5">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
+                        {profile?.username?.[0]?.toUpperCase() ?? <User size={20} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm truncate text-foreground">{profile?.username || "User"}</p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                            <Shield size={10} className="text-primary/60" />
+                            <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">{profile?.role?.replace("_", " ")}</p>
+                        </div>
+                    </div>
+                </div>
 
-            <AnimatePresence>
-                {showProfileMenu && (
-                    <>
-                        <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                            className="absolute right-0 top-full mt-2 w-64 glass-card-geo p-4 z-50 flex flex-col gap-4"
-                        >
-                            <div className="flex items-center gap-3 pb-3 border-b border-foreground/5">
-                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                                    {profile?.username?.[0]?.toUpperCase() ?? <User size={20} />}
-                                </div>
+                <div className="space-y-3">
+                    <div className="space-y-2">
+                        {profile?.organisation && (
+                            <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-foreground/[0.02] border border-foreground/5">
+                                <Building2 size={14} className="text-foreground/30" />
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-sm truncate text-foreground">{profile?.username || "User"}</p>
-                                    <div className="flex items-center gap-1 mt-0.5">
-                                        <Shield size={10} className="text-primary/60" />
-                                        <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">{profile?.role?.replace("_", " ")}</p>
-                                    </div>
+                                    <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest leading-none mb-1">Organization</p>
+                                    <p className="text-xs font-semibold text-foreground/70 truncate">{profile.organisation.name}</p>
                                 </div>
                             </div>
-                            
-                            <div className="space-y-3">
-                                <div className="space-y-2">
-                                    {profile?.organisation && (
-                                        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-foreground/[0.02] border border-foreground/5">
-                                            <Building2 size={14} className="text-foreground/30" />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest leading-none mb-1">Organization</p>
-                                                <p className="text-xs font-semibold text-foreground/70 truncate">{profile.organisation.name}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-foreground/[0.02] border border-foreground/5">
-                                        <Mail size={14} className="text-foreground/30" />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest leading-none mb-1">Email (Internal)</p>
-                                            <p className="text-xs font-semibold text-foreground/70 truncate">{profile?.username}@portflow.com</p>
-                                        </div>
-                                    </div>
-                                </div>
+                        )}
+                        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-foreground/[0.02] border border-foreground/5">
+                            <Mail size={14} className="text-foreground/30" />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest leading-none mb-1">Email (Internal)</p>
+                                <p className="text-xs font-semibold text-foreground/70 truncate">{profile?.username}@portflow.com</p>
+                            </div>
+                        </div>
+                    </div>
 
-                                <button
-                                    onClick={handleSignOut}
-                                    className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-error/10 text-error hover:text-error transition-colors text-sm font-medium border border-transparent hover:border-error/20"
-                                >
-                                    <LogOut size={16} />
-                                    Sign Out
-                                </button>
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-        </div>
+                    <DropdownMenuItem asChild>
+                        <button
+                            onClick={handleSignOut}
+                            className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-error/10 text-error hover:text-error transition-colors text-sm font-medium border border-transparent hover:border-error/20 outline-none"
+                        >
+                            <LogOut size={16} />
+                            Sign Out
+                        </button>
+                    </DropdownMenuItem>
+                </div>
+            </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

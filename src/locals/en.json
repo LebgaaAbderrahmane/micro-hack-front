@@ -101,10 +101,13 @@
   },
   "Sidebar": {
     "dashboard": "Dashboard",
-    "bookings": "Bookings",
+    "bookings": "Manage Bookings",
+    "new_booking": "Booking",
     "fleet": "Fleet Status",
     "terminals": "Terminal Yards",
-    "users": "User Identity",
+    "users": "Management",
+    "analytics": "Analytics",
+    "loggings": "Logs",
     "profile": "My Profile",
     "settings": "System Settings",
     "logout": "Logout"

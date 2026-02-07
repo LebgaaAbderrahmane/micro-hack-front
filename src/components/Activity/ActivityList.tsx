@@ -13,6 +13,7 @@ interface ActivityListProps {
         toDate: string;
         users: string[];
         activities: string[];
+        actorId?: string;
     };
 }
 
