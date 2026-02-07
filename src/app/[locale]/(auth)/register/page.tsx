@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Shield,
   Ship,
@@ -19,7 +20,27 @@ import { toast } from "sonner";
 export default function RegisterPage() {
   const router = useRouter();
   const locale = useLocale();
+  const { profile, isLoading: isAuthLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthLoading && profile) {
+      router.push("/");
+    }
+  }, [profile, isAuthLoading, router]);
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse">
+            Checking Node Authorization...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -103,7 +124,7 @@ export default function RegisterPage() {
               <Ship className="w-10 h-10 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl font-black tracking-tight bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-black tracking-tight bg-linear-to-b from-white to-white/60 bg-clip-text text-transparent">
             Carrier Registration
           </h1>
           <p className="text-foreground/60 font-medium">

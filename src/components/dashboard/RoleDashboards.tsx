@@ -422,7 +422,7 @@ export const AdminDashboard = () => {
             title="Admin Quick Actions"
             actions={[
               { label: "Manage Users", icon: <Users size={14} />, onClick: () => router.push("/users"), color: "primary", variant: "filled" },
-              { label: "Analytics", icon: <BarChart3 size={14} />, onClick: () => router.push("/analytics"), color: "secondary" },
+              // { label: "Analytics", icon: <BarChart3 size={14} />, onClick: () => router.push("/analytics"), color: "secondary" },
               { label: "All Logs", icon: <FileText size={14} />, onClick: () => router.push("/loggings"), color: "accent" },
               { label: "Terminal Settings", icon: <Settings size={14} />, onClick: () => router.push("/settings"), color: "success" },
             ]}
@@ -652,7 +652,7 @@ export const TerminalOpDashboard = () => {
             title="Operator Quick Actions"
             actions={[
               { label: "Manage Bookings", icon: <Package size={14} />, onClick: () => router.push("/bookings"), color: "secondary", variant: "filled" },
-              { label: "Analytics", icon: <Activity size={14} />, onClick: () => router.push("/analytics"), color: "primary" },
+              // { label: "Analytics", icon: <Activity size={14} />, onClick: () => router.push("/analytics"), color: "primary" },
               { label: "My Logs", icon: <FileText size={14} />, onClick: () => router.push("/loggings"), color: "accent" },
               { label: "Yard Settings", icon: <Settings size={14} />, onClick: () => router.push("/settings"), color: "success" },
             ]}

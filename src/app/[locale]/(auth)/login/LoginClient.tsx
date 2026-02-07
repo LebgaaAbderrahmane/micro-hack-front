@@ -17,6 +17,19 @@ export default function LoginPage() {
     }
   }, [profile, isLoading, router]);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse">
+            Establishing Secure Session...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6" suppressHydrationWarning>
       <div

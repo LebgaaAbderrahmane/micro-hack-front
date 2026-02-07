@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { format, addHours, isBefore, startOfWeek, addDays, eachDayOfInterval, endOfWeek } from "date-fns";
+import { format, addHours, isBefore, startOfWeek, addDays, eachDayOfInterval, endOfWeek, startOfMonth, endOfMonth, isSameDay, addMonths, subMonths, isSameMonth } from "date-fns";
 import {
     Calendar,
     Clock,
@@ -14,7 +14,10 @@ import {
     FileUp,
     CheckCircle2,
     XCircle,
-    Plus
+    Plus,
+    ChevronLeft,
+    ChevronRight,
+    RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -225,6 +228,7 @@ export default function CarrierBookingPage() {
     const [cargoPool, setCargoPool] = useState<any[]>([]);
     const [cargoInput, setCargoInput] = useState("");
     const [isSearchingCargo, setIsSearchingCargo] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Booking Wizard State
     const [bookingStep, setBookingStep] = useState(1);
@@ -237,6 +241,8 @@ export default function CarrierBookingPage() {
 
     // Filters state
     const [dateFilter, setDateFilter] = useState<string>("");
+    const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week");
+    const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [dbSlots, setDbSlots] = useState<any[]>([]);
     const [terminals, setTerminals] = useState<any[]>([]);
     const [selectedTerminal, setSelectedTerminal] = useState<string>("");
@@ -255,34 +261,62 @@ export default function CarrierBookingPage() {
             return;
         }
 
+        setIsSubmitting(true);
         try {
             const bookingRefBase = `BK-${format(new Date(), "yyyyMMdd")}`;
+
+            // Validation: Ensure we are not using static/demo data for real DB insertions
+            if (selectedSlot.id.includes("static") ||
+                selectedTruck.startsWith("T-") ||
+                selectedDriver.startsWith("D-") ||
+                cargoPool.some(c => c.id.startsWith("C-"))) {
+                toast.error("You are selecting demo/static data. Please ensure you have real Trucks, Drivers, and Slots configured in the database before booking.");
+                return;
+            }
+
             const promises = cargoPool.map((cargo, idx) => {
                 const bookingRef = `${bookingRefBase}-${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}-${idx}`;
-                return supabase.from("bookings").insert([{
+                const payload = {
                     booking_reference: bookingRef,
                     scheduled_date: selectedSlot.startTime.toISOString().split("T")[0],
                     scheduled_start: selectedSlot.startTime.toISOString(),
                     scheduled_end: addHours(selectedSlot.startTime, selectedSlot.durationHours).toISOString(),
                     truck_id: selectedTruck,
                     driver_id: selectedDriver,
-                    container_id: cargo.id,
+                    loaded_container_id: cargo.id,
+                    slot_id: selectedSlot.id,
+                    booking_type: "EXPORT_DELIVERY" as any,
                     carrier_org_id: user?.org_id,
-                    status: "PENDING",
+                    status: "PENDING" as any,
                     qr_code: bookingRef
-                }]);
+                };
+
+                console.log(`[CarrierBooking] Submitting booking ${idx + 1}/${cargoPool.length}:`, payload);
+                return supabase.from("bookings").insert([payload]);
             });
 
-            await Promise.all(promises);
+            const results = await Promise.all(promises);
+            const errors = results.filter(r => r.error);
+
+            if (errors.length > 0) {
+                console.error("[CarrierBooking] Some bookings failed:", errors.map(e => e.error));
+                const firstError = errors[0].error;
+                toast.error(`Database Error: ${firstError?.message || 'Unknown error'}`);
+                return;
+            }
+
+            console.log("[CarrierBooking] All bookings inserted successfully:", results);
             toast.success(`Batch for ${cargoPool.length} units finalized!`);
 
             setIsBookingDialogOpen(false);
             setBookingStep(1);
             setCargoPool([]); // Clear pool
-            loadMainData();
+            await loadMainData(); // Force immediate refresh
         } catch (err) {
             console.error("Batch failed:", err);
             toast.error("Internal processing error. Please contact port authority.");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -414,6 +448,7 @@ export default function CarrierBookingPage() {
             .order("created_at", { ascending: false });
 
         if (bookingsData && bookingsData.length > 0) {
+            console.log(`[CarrierBooking] Found ${bookingsData.length} bookings in DB`);
             const mappedBookings: Booking[] = bookingsData.map((b: any) => ({
                 id: b.id,
                 bookingCode: b.booking_reference,
@@ -429,19 +464,26 @@ export default function CarrierBookingPage() {
             }));
             setBookings(mappedBookings);
         } else {
+            console.log("[CarrierBooking] No bookings found in DB, using fallback");
             setBookings(STATIC_BOOKINGS);
         }
     }, [user?.org_id, supabase]);
 
     const loadSlotData = React.useCallback(async () => {
-        const today = new Date();
         let query = supabase.from("active_slots").select("*");
 
-        if (dateFilter) {
-            query = query.eq("slot_date", dateFilter);
+        let start, end;
+        if (viewMode === "day") {
+            start = format(currentDate, "yyyy-MM-dd");
+            end = start;
+            query = query.eq("slot_date", start);
+        } else if (viewMode === "week") {
+            start = format(startOfWeek(currentDate, { weekStartsOn: 1 }), "yyyy-MM-dd");
+            end = format(endOfWeek(currentDate, { weekStartsOn: 1 }), "yyyy-MM-dd");
+            query = query.gte("slot_date", start).lte("slot_date", end);
         } else {
-            const start = format(startOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd");
-            const end = format(endOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd");
+            start = format(startOfMonth(currentDate), "yyyy-MM-dd");
+            end = format(endOfMonth(currentDate), "yyyy-MM-dd");
             query = query.gte("slot_date", start).lte("slot_date", end);
         }
 
@@ -452,26 +494,40 @@ export default function CarrierBookingPage() {
         if (data && data.length > 0) {
             setDbSlots(data);
         } else {
-            if (dateFilter) {
-                setDbSlots(getStaticSlots(dateFilter));
-            } else {
-                const weekDays = eachDayOfInterval({
-                    start: startOfWeek(today, { weekStartsOn: 1 }),
-                    end: endOfWeek(today, { weekStartsOn: 1 })
-                });
-                const allStaticSlots = weekDays.flatMap(day => getStaticSlots(format(day, "yyyy-MM-dd")));
-                setDbSlots(allStaticSlots);
-            }
+            const rangeDays = eachDayOfInterval({
+                start: new Date(start),
+                end: new Date(end)
+            });
+            const allStaticSlots = rangeDays.flatMap(day => getStaticSlots(format(day, "yyyy-MM-dd")));
+            setDbSlots(allStaticSlots);
         }
-    }, [dateFilter, selectedTerminal, supabase]);
+    }, [viewMode, currentDate, selectedTerminal, supabase]);
 
     useEffect(() => {
+        if (!user?.org_id) return;
+
         loadMainData();
+
         const channel = supabase
-            .channel("carrier-bookings")
-            .on("postgres_changes", { event: "*", schema: "public", table: "bookings", filter: `carrier_org_id=eq.${user?.org_id}` }, loadMainData)
+            .channel(`carrier-bookings-${user.org_id}`)
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "bookings",
+                    filter: `carrier_org_id=eq.${user.org_id}`
+                },
+                () => {
+                    console.log("Realtime update received for bookings");
+                    loadMainData();
+                }
+            )
             .subscribe();
-        return () => { supabase.removeChannel(channel); };
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [loadMainData, user?.org_id, supabase]);
 
     useEffect(() => {
@@ -496,23 +552,34 @@ export default function CarrierBookingPage() {
             });
         });
 
-        const today = new Date();
-        const start = startOfWeek(today, { weekStartsOn: 1 });
-        const end = endOfWeek(today, { weekStartsOn: 1 });
-        const weekDays = eachDayOfInterval({ start, end });
-
-        // Logic: if dateFilter is set AND that specific day has entries in dbSlots for that date, show one day.
-        // Else, show the whole week.
-        const filteredByDay = dateFilter ? dateMap[dateFilter] || [] : [];
-        if (dateFilter && filteredByDay.length > 0) {
-            return [{ date: new Date(dateFilter), slots: filteredByDay }];
+        if (viewMode === "day") {
+            const dStr = format(currentDate, "yyyy-MM-dd");
+            return [{ date: currentDate, slots: dateMap[dStr] || [] }];
         }
 
-        return weekDays.map(day => {
+        if (viewMode === "week") {
+            const start = startOfWeek(currentDate, { weekStartsOn: 1 });
+            const end = endOfWeek(currentDate, { weekStartsOn: 1 });
+            const weekDays = eachDayOfInterval({ start, end });
+            return weekDays.map(day => {
+                const dStr = format(day, "yyyy-MM-dd");
+                return { date: day, slots: dateMap[dStr] || [] };
+            });
+        }
+
+        // MONTH VIEW
+        // To make a proper calendar grid, we need to start from the beginning of the week of the 1st of the month
+        const monthStart = startOfMonth(currentDate);
+        const monthEnd = endOfMonth(currentDate);
+        const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+        const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+        const monthDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+        return monthDays.map(day => {
             const dStr = format(day, "yyyy-MM-dd");
             return { date: day, slots: dateMap[dStr] || [] };
         });
-    }, [dbSlots, dateFilter]);
+    }, [dbSlots, viewMode, currentDate]);
 
     const filteredBookings = useMemo(() => {
         return bookings.filter((b) => {
@@ -604,25 +671,69 @@ export default function CarrierBookingPage() {
                                         </Button>
                                     </div>
 
-                                    {/* Date Selection Control */}
-                                    <div
-                                        onClick={() => dateInputRef.current?.showPicker()}
-                                        className="flex items-center gap-4 px-4 h-12 bg-white/40 dark:bg-slate-900/40 rounded-lg border border-foreground/10 hover:border-primary/50 transition-all cursor-pointer group relative"
-                                    >
-                                        <Calendar size={18} className="text-primary group-hover:scale-110 transition-transform" />
-                                        <div className="flex flex-col">
-                                            <span className="text-[8px] font-black uppercase tracking-widest text-foreground/30">Schedule Date</span>
-                                            <span className="text-xs font-bold text-foreground">
-                                                {formatDisplayDate(dateFilter)}
+                                    {/* View Selection & Navigation */}
+                                    <div className="flex flex-wrap items-center gap-4 flex-1">
+                                        <div className="flex bg-white/40 dark:bg-slate-900/40 p-1 rounded-xl border border-foreground/10">
+                                            {(["day", "week", "month"] as const).map((mode) => (
+                                                <button
+                                                    key={mode}
+                                                    onClick={() => setViewMode(mode)}
+                                                    className={cn(
+                                                        "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                                                        viewMode === mode
+                                                            ? "bg-primary text-white shadow-lg shadow-primary/20"
+                                                            : "text-foreground/40 hover:text-foreground"
+                                                    )}
+                                                >
+                                                    {mode}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex items-center gap-2 bg-white/40 dark:bg-slate-900/40 p-1 rounded-xl border border-foreground/10">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 rounded-lg"
+                                                onClick={() => {
+                                                    if (viewMode === "day") setCurrentDate(prev => addDays(prev, -1));
+                                                    else if (viewMode === "week") setCurrentDate(prev => addDays(prev, -7));
+                                                    else setCurrentDate(prev => subMonths(prev, 1));
+                                                }}
+                                            >
+                                                <ChevronLeft size={16} />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 px-3 text-[10px] font-black uppercase tracking-widest"
+                                                onClick={() => setCurrentDate(new Date())}
+                                            >
+                                                Today
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 rounded-lg"
+                                                onClick={() => {
+                                                    if (viewMode === "day") setCurrentDate(prev => addDays(prev, 1));
+                                                    else if (viewMode === "week") setCurrentDate(prev => addDays(prev, 7));
+                                                    else setCurrentDate(prev => addMonths(prev, 1));
+                                                }}
+                                            >
+                                                <ChevronRight size={16} />
+                                            </Button>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 px-4 h-10 bg-white/40 dark:bg-slate-900/40 rounded-xl border border-foreground/10">
+                                            <CalendarDays size={16} className="text-primary" />
+                                            <span className="text-xs font-black text-foreground">
+                                                {viewMode === "month"
+                                                    ? format(currentDate, "MMMM yyyy")
+                                                    : viewMode === "week"
+                                                        ? `Week of ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), "MMM d")}`
+                                                        : format(currentDate, "EEEE, MMM d")}
                                             </span>
                                         </div>
-                                        <input
-                                            ref={dateInputRef}
-                                            type="date"
-                                            className="absolute inset-0 opacity-0 cursor-pointer pointer-events-none"
-                                            value={dateFilter}
-                                            onChange={(e) => setDateFilter(e.target.value)}
-                                        />
                                     </div>
                                 </div>
 
@@ -657,6 +768,86 @@ export default function CarrierBookingPage() {
                                         <Search size={24} className="text-foreground/20" />
                                     </div>
                                     <p className="text-sm font-bold text-foreground/40 italic">Add containers to your batch to unlock schedule capacity</p>
+                                </div>
+                            ) : viewMode === "month" ? (
+                                <div className="p-1 bg-foreground/5 rounded-2xl border border-foreground/10">
+                                    <div className="grid grid-cols-7 gap-px bg-foreground/10 rounded-xl overflow-hidden shadow-inner">
+                                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                                            <div key={d} className="bg-white/80 dark:bg-slate-900/80 p-3 text-center">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">{d}</span>
+                                            </div>
+                                        ))}
+                                        {daySlots.map(({ date, slots }) => {
+                                            const totalCapacity = slots.reduce((acc, s) => acc + s.totalCapacity, 0);
+                                            const totalOccupancy = slots.reduce((acc, s) => acc + (s.occupancyRate * s.totalCapacity), 0);
+                                            const avgOccupancy = totalCapacity > 0 ? totalOccupancy / totalCapacity : 0;
+                                            const availableCount = slots.filter(s => s.status !== "full").length;
+                                            const isToday = isSameDay(date, new Date());
+                                            const isCurrMonth = isSameMonth(date, currentDate);
+
+                                            return (
+                                                <div
+                                                    key={date.toISOString()}
+                                                    onClick={() => {
+                                                        setCurrentDate(date);
+                                                        setViewMode("day");
+                                                    }}
+                                                    className={cn(
+                                                        "bg-white dark:bg-slate-900 p-2.5 min-h-[110px] transition-all cursor-pointer hover:bg-primary/5 flex flex-col gap-2 relative group",
+                                                        !isCurrMonth && "bg-foreground/2 opacity-30",
+                                                        isToday && "ring-2 ring-primary ring-inset z-10"
+                                                    )}
+                                                >
+                                                    <div className="flex justify-between items-center">
+                                                        <span className={cn(
+                                                            "text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-lg transition-colors",
+                                                            isToday ? "bg-primary text-white" : "text-foreground/30 group-hover:text-foreground"
+                                                        )}>
+                                                            {format(date, "d")}
+                                                        </span>
+                                                        {availableCount > 0 && (
+                                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                                                <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                                                                <span className="text-[7px] font-black text-emerald-600 uppercase tracking-tighter">Open</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {slots.length > 0 ? (
+                                                        <div className="flex-1 flex flex-col justify-end gap-2">
+                                                            <div className="space-y-1">
+                                                                <div className="flex justify-between items-center text-[7px] font-black uppercase text-foreground/20 tracking-widest">
+                                                                    <span>Loading</span>
+                                                                    <span className={cn(
+                                                                        avgOccupancy > 0.8 ? "text-red-500" : avgOccupancy > 0.5 ? "text-amber-500" : "text-emerald-500"
+                                                                    )}>{Math.round(avgOccupancy * 100)}%</span>
+                                                                </div>
+                                                                <div className="h-1 bg-foreground/5 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className={cn(
+                                                                            "h-full rounded-full transition-all duration-700",
+                                                                            avgOccupancy > 0.8 ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" :
+                                                                                avgOccupancy > 0.5 ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" :
+                                                                                    "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                                                                        )}
+                                                                        style={{ width: `${avgOccupancy * 100}%` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 text-[8px] font-black text-foreground/40 whitespace-nowrap bg-foreground/3 p-1 rounded-md border border-foreground/5">
+                                                                <Clock size={8} className="text-primary/40" />
+                                                                <span>{availableCount} / {slots.length} Slots</span>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex-1 flex items-center justify-center border border-dashed border-foreground/8 rounded-lg m-1">
+                                                            <span className="text-[7px] font-black uppercase tracking-widest text-foreground/10 italic">Empty</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             ) : (
                                 <ScrollArea className="w-full border border-foreground/10 rounded-xl bg-background overflow-hidden shadow-sm">
@@ -828,6 +1019,20 @@ export default function CarrierBookingPage() {
                                     />
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="rounded-xl border-foreground/10 h-10 w-10 text-foreground/60 hover:text-primary transition-all"
+                                        onClick={() => {
+                                            toast.promise(loadMainData(), {
+                                                loading: 'Refreshing log...',
+                                                success: 'Log updated',
+                                                error: 'Failed to refresh'
+                                            });
+                                        }}
+                                    >
+                                        <RefreshCw className="w-4 h-4" />
+                                    </Button>
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -1009,6 +1214,7 @@ export default function CarrierBookingPage() {
                             )}
                             <Button
                                 className="flex-2 rounded-lg h-12 font-bold uppercase text-[10px] tracking-widest bg-primary shadow-lg shadow-primary/20"
+                                disabled={isSubmitting}
                                 onClick={() => {
                                     if (bookingStep < 3) {
                                         if (bookingStep === 2 && (!selectedTruck || !selectedDriver)) {
@@ -1021,7 +1227,14 @@ export default function CarrierBookingPage() {
                                     }
                                 }}
                             >
-                                {bookingStep === 3 ? `Reserve ${cargoPool.length} Slots` : "Next Task"}
+                                {isSubmitting ? (
+                                    <span className="flex items-center gap-2">
+                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                        Processing...
+                                    </span>
+                                ) : (
+                                    bookingStep === 3 ? `Reserve ${cargoPool.length} Slots` : "Next Task"
+                                )}
                             </Button>
                         </div>
                     </DialogContent>
