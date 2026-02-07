@@ -9,14 +9,14 @@ interface LogoProps {
     iconOnly?: boolean;
 }
 
-export const Logo = ({ className, iconOnly }: LogoProps) => {
+export const Logo = ({ className, iconOnly = false  }: LogoProps) => {
     return (
         <div className={cn("flex items-center gap-3 select-none group cursor-pointer", className)}>
             <div className="relative">
                 <Image 
                     src="/logo.svg" 
                     alt="logistic" 
-                    width={iconOnly ?? false ? 40 : 130} 
+                    width={iconOnly  ? 40 : 130} 
                     height={40}
                     className="object-contain dark:brightness-0 dark:invert"
                     priority
