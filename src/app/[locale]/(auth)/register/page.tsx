@@ -43,8 +43,8 @@ export default function RegisterPage() {
           emailRedirectTo: `${window.location.origin}/${locale}/auth/callback`,
           data: {
             username,
-            role: "DISPATCHER"
-          }
+            role: "DISPATCHER",
+          },
         },
       });
 

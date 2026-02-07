@@ -9,7 +9,7 @@ export function generateStaticParams() {
 }
 
 export default async function AuthCallbackPage({
-  params
+  params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
@@ -17,12 +17,14 @@ export default async function AuthCallbackPage({
   setRequestLocale(locale);
 
   return (
-    <Suspense fallback={
-       <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground animate-pulse">Initializing...</p>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground animate-pulse">Initializing...</p>
+        </div>
+      }
+    >
       <AuthCallbackClient />
     </Suspense>
   );

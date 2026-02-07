@@ -38,7 +38,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       transition={{ duration: 0.4, delay: delay * 0.1 }}
       className="group"
     >
-      <div className="p-4 rounded-2xl bg-foreground/[0.02] border border-foreground/5 hover:border-foreground/10 hover:bg-foreground/[0.04] transition-all duration-300 cursor-pointer"
+      <div className="p-4 rounded-2xl bg-foreground/[0.02] border border-slate-200 dark:border-slate-800 hover:border-foreground/10 hover:bg-foreground/[0.04] transition-all duration-300 cursor-pointer"
         onClick={onAction}
       >
         <div className="flex items-start gap-3">

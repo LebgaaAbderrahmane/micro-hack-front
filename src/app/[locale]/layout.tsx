@@ -25,7 +25,7 @@ const montserrat = Montserrat({
 });
 
 export function generateStaticParams() {
-  return routing.locales.map((locale) => ({locale}));
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 export async function generateMetadata(): Promise<Metadata> {

@@ -56,19 +56,19 @@ export const StatCard: React.FC<StatCardProps> = ({
       className="relative h-full"
     >
       <div className={cn(
-        "glass-card-geo px-3 py-2.5 relative overflow-hidden group border h-full flex items-center gap-3",
+        "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm rounded-xl p-6 relative overflow-hidden group border h-full flex items-center gap-5",
         `border-${color}/20`
       )}>
-        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", 
-           `bg-${color}/10 text-${color}`)}>
+        <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0",
+          `bg-${color}/10 text-${color}`)}>
           {icon}
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-foreground/40 leading-tight truncate">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 leading-tight mb-1">
             {label}
           </p>
-          <p className={cn("text-lg font-black tracking-tight leading-tight", `text-${color}`)}>
+          <p className={cn("text-3xl font-black tracking-tight leading-none", `text-${color}`)}>
             {value}
           </p>
         </div>

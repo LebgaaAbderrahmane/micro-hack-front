@@ -10,7 +10,7 @@ export default function AdminLoginPage() {
       roleTitle="Port Admin"
       description="System-level node orchestration"
       icon={Shield}
-      themeColor="bg-error shadow-error/20"
+      themeColor="bg-blue-600 shadow-blue-500/20"
     />
   );
 }

@@ -12,10 +12,7 @@ export default async function AuthLayout({
   setRequestLocale(locale);
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-[#0a0a0b] relative overflow-hidden"
-      suppressHydrationWarning
-    >
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0a0a0b] relative overflow-hidden font-poppins">
       {/* Background elements specific to auth if needed */}
       <div
         className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_70%)]"

@@ -6,7 +6,22 @@ export class UsersService extends BaseService<'users'> {
     }
 
     async getWithAuth(): Promise<ServiceResponse<any[]>> {
-        return this.getAll();
+        try {
+            const { data, error, count } = await this.supabase
+                .from('users')
+                .select(`
+                    *,
+                    organisation:organisations(*)
+                `, { count: 'exact' });
+
+            console.log(`[UsersService] Query returned ${data?.length} rows. Total count in DB (filtered by RLS): ${count}`);
+
+            if (error) throw error;
+            return { data: data || [], error: null };
+        } catch (error: any) {
+            console.error("UsersService.getWithAuth error:", error);
+            return { data: [], error };
+        }
     }
 }
 

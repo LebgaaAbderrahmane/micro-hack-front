@@ -127,7 +127,10 @@ export const Sidebar = () => {
 
       <div className="p-4 border-t border-foreground/10">
         <button
-          onClick={() => signOut()}
+          onClick={async () => {
+            await signOut();
+            window.location.href = "/login";
+          }}
           className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-foreground/60 hover:bg-error/10 hover:text-error transition-all duration-200"
         >
           <LogOut size={20} />

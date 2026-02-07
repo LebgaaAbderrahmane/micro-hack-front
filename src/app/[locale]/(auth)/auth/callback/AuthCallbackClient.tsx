@@ -15,13 +15,13 @@ export default function AuthCallbackClient() {
 
   useEffect(() => {
     if (processed.current) return;
-    
+
     const handleCallback = async () => {
       // If code is present, exchange it
       if (code) {
         processed.current = true;
         const supabase = createClient();
-        
+
         try {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
@@ -31,7 +31,7 @@ export default function AuthCallbackClient() {
             router.push("/auth/auth-code-error"); // Or login
             return;
           }
-           
+
           toast.success("Verified successfully");
           router.push(next);
         } catch (error: any) {
@@ -40,9 +40,9 @@ export default function AuthCallbackClient() {
           router.push("/auth/auth-code-error");
         }
       } else {
-         // No code. Assume implicit flow or just redirect to home/next
-         console.log("No code in callback, redirecting to", next);
-         router.push(next);
+        // No code. Assume implicit flow or just redirect to home/next
+        console.log("No code in callback, redirecting to", next);
+        router.push(next);
       }
     };
 
@@ -52,7 +52,9 @@ export default function AuthCallbackClient() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <p className="text-muted-foreground animate-pulse">Verifying authentication...</p>
+      <p className="text-muted-foreground animate-pulse">
+        Verifying authentication...
+      </p>
     </div>
   );
 }

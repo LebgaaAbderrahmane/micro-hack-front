@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 export default async function DashboardLayout({
   children,
-  params
+  params,
 }: {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;

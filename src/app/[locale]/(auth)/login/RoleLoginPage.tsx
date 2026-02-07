@@ -98,12 +98,14 @@ export const RoleLoginPage = ({
   };
 
   return (
-    <div className="p-6 min-h-[60vh] flex items-center justify-center">
+    <div className="p-6 min-h-[60vh] flex items-center justify-center font-poppins">
       <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="space-y-4">
+
+        {/* Back Navigation */}
+        <div className="space-y-6">
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-foreground/40 hover:text-white transition-colors group"
+            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors group"
           >
             <ArrowLeft
               size={14}
@@ -111,30 +113,35 @@ export const RoleLoginPage = ({
             />
             Back to Selection
           </Link>
-          <div className="flex items-center gap-4">
+
+          {/* Header */}
+          <div className="flex items-center gap-6">
             <div
               className={cn(
-                "w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-2xl",
+                "w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-xl transform transition-transform hover:scale-105 duration-300",
                 themeColor,
               )}
             >
-              <Icon size={28} />
+              <Icon size={32} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-2xl font-black uppercase tracking-tight">
-                {roleTitle} Login
+              <h1 className="text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+                {roleTitle}
               </h1>
-              <p className="text-xs text-foreground/40 font-bold uppercase tracking-widest">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-1">
                 {description}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="glass-card p-8 space-y-6 bg-foreground/5 border border-foreground/10 rounded-[2rem] shadow-2xl relative overflow-hidden group">
+        {/* Login Card */}
+        <div className="relative overflow-hidden group bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-2xl p-8 space-y-6">
+
+          {/* Ambient Glow */}
           <div
             className={cn(
-              "absolute top-0 right-0 w-32 h-32 blur-[60px] opacity-10 group-hover:opacity-20 transition-opacity",
+              "absolute -top-20 -right-20 w-40 h-40 blur-[80px] opacity-20 group-hover:opacity-30 transition-opacity duration-700 pointer-events-none",
               themeColor,
             )}
           ></div>
@@ -148,7 +155,7 @@ export const RoleLoginPage = ({
 
           <form className="space-y-5" onSubmit={handleLogin}>
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 px-1">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 px-1">
                 Node Identity (Email)
               </label>
               <input
@@ -157,7 +164,7 @@ export const RoleLoginPage = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="identity@portflow.dz"
-                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-white/10 transition-all text-sm font-medium"
+                className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600"
                 required
                 disabled={isLoggingIn}
               />
@@ -165,7 +172,7 @@ export const RoleLoginPage = ({
 
             <div className="space-y-2">
               <div className="flex justify-between items-center px-1">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
                   Access Token (Password)
                 </label>
               </div>
@@ -175,7 +182,7 @@ export const RoleLoginPage = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-white/10 transition-all text-sm font-medium"
+                className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600"
                 required
                 disabled={isLoggingIn}
               />
@@ -185,7 +192,7 @@ export const RoleLoginPage = ({
               type="submit"
               disabled={isLoggingIn}
               className={cn(
-                "w-full py-4 rounded-xl text-white font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2",
+                "w-full py-4 rounded-xl text-white font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-95 shadow-lg shadow-current/20 hover:shadow-current/40 hover:-translate-y-0.5",
                 themeColor,
                 isLoggingIn && "opacity-70 cursor-not-allowed"
               )}
@@ -202,8 +209,8 @@ export const RoleLoginPage = ({
           </form>
 
           {role === "DISPATCHER" && (
-            <div className="pt-4 border-t border-foreground/5 text-center">
-              <p className="text-foreground/30 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+            <div className="pt-6 border-t border-slate-100 dark:border-slate-800 text-center relative z-10">
+              <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
                 Are you a new carrier? <br />
                 <Link
                   href="/register"
