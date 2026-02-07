@@ -4,21 +4,31 @@ import React from "react";
 import { usePathname, Link } from "@/i18n/routing";
 import { Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
-  { label: "Dashboard", href: "/" },
-  { label: "Logging", href: "/bookings" },
-  { label: "Manage", href: "/fleet" },
-  { label: "Analytics", href: "/settings" },
+  { label: "Dashboard", href: "/", roles: ["ADMIN", "DISPATCHER"] },
+  { label: "Dashboard", href: "/operator/dashboard", roles: ["OPERATOR"] },
+  { label: "Bookings", href: "/bookings", roles: ["DISPATCHER"] },
+  { label: "Bookings", href: "/operator/bookings", roles: ["OPERATOR"] },
+  { label: "Fleet", href: "/fleet", roles: ["DISPATCHER"] },
+  { label: "Users", href: "/users", roles: ["ADMIN"] },
 ];
 
 export const Header = () => {
   const pathname = usePathname();
+  const { profile: user } = useAuth();
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/" || pathname === "";
     return pathname?.startsWith(href);
   };
+
+  const filteredItems = navItems.filter(item => {
+    // Fallback to OPERATOR view if no user is logged in (for development/demo)
+    const userRole = user?.role || "OPERATOR";
+    return item.roles.includes(userRole);
+  });
 
   return (
     <header
@@ -70,7 +80,7 @@ export const Header = () => {
           gap: 8,
         }}
       >
-        {navItems.map((item) => {
+        {filteredItems.map((item) => {
           const active = isActive(item.href);
           return (
             <Link
@@ -89,10 +99,10 @@ export const Header = () => {
                 fontWeight: 500,
                 ...(active
                   ? {
-                      background:
-                        "linear-gradient(179.92deg, rgb(107,171,255) 0.2%, rgb(75,151,251) 99.8%)",
-                      borderRadius: 200,
-                    }
+                    background:
+                      "linear-gradient(179.92deg, rgb(107,171,255) 0.2%, rgb(75,151,251) 99.8%)",
+                    borderRadius: 200,
+                  }
                   : {}),
               }}
             >

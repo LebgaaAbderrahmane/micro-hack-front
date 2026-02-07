@@ -23,9 +23,11 @@ export const Navbar = () => {
     const t = useTranslations('Dashboard');
 
     const navItems = [
-        { label: t('overview'), href: "/", icon: LayoutDashboard, roles: ["ADMIN", "OPERATOR", "DISPATCHER"] },
-        { label: t('bookings'), href: "/bookings", icon: Calendar, roles: ["OPERATOR", "DISPATCHER"] },
-        { label: t('fleet'), href: "/fleet", icon: Truck, roles: ["DISPATCHER", "OPERATOR"] },
+        { label: t('overview'), href: "/", icon: LayoutDashboard, roles: ["ADMIN", "DISPATCHER"] },
+        { label: t('overview'), href: "/operator/dashboard", icon: LayoutDashboard, roles: ["OPERATOR"] },
+        { label: t('bookings'), href: "/bookings", icon: Calendar, roles: ["DISPATCHER"] },
+        { label: t('bookings'), href: "/operator/bookings", icon: Calendar, roles: ["OPERATOR"] },
+        { label: t('fleet'), href: "/fleet", icon: Truck, roles: ["DISPATCHER"] },
         { label: t('users'), href: "/users", icon: Users, roles: ["ADMIN"] },
     ];
 

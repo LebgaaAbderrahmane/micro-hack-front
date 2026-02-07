@@ -3,6 +3,7 @@
 import React from "react";
 import { Ship, Truck as TruckIcon, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/common/Toast";
 
 
 export const AdminDashboard = () => (
@@ -33,57 +34,7 @@ export const AdminDashboard = () => (
     </div>
 );
 
-import TerminalYard from "./TerminalYard";
-import { useToast } from "@/components/common/Toast";
-
-export const TerminalOpDashboard = () => {
-    const { show } = useToast();
-    return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
-                    <Ship size={28} />
-                </div>
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Terminal Control Center</h1>
-                    <p className="text-foreground/50">Managing Terminal North (T-001) operations.</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 glass-card p-6 min-h-[500px] flex flex-col border border-foreground/5">
-                    <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
-                        <span className="w-1.5 h-6 bg-secondary rounded-full"></span>
-                        Gate & Yard Visualization
-                    </h3>
-                    <div className="flex-1 w-full relative group">
-                        <TerminalYard />
-                    </div>
-                </div>
-
-                <div className="glass-card p-6 border border-foreground/5">
-                    <h3 className="font-bold text-lg mb-6">Booking Queue</h3>
-                    <div className="space-y-4">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div
-                                key={i}
-                                onClick={() => show(`Directing Truck ${i} to Lane B`, "info")}
-                                className="p-4 rounded-xl bg-foreground/5 border border-foreground/5 hover:border-secondary/30 transition-all cursor-pointer hover:bg-foreground/10"
-                            >
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest leading-none">Booked</span>
-                                    <span className="text-[10px] text-foreground/40 font-sans leading-none">In 12m</span>
-                                </div>
-                                <p className="font-semibold text-sm">TRUCK-AL-99{i}</p>
-                                <p className="text-xs text-foreground/50 mt-1">TransGlobal Logistics</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+// TerminalOpDashboard has been moved to src/components/dashboard/TerminalOpDashboard.tsx
 
 export const CarrierDashboard = () => {
     const { show } = useToast();
