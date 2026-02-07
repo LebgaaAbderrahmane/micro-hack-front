@@ -33,7 +33,9 @@ const COLOR_MAP: Record<string, string> = {
 const StatCard: React.FC<{ item: StatItem }> = ({ item }) => {
   const trend = item.trend ? TREND_CONFIG[item.trend] : null;
   const TrendIcon = trend?.icon;
-  const valueColor = item.color ? COLOR_MAP[item.color] ?? "text-foreground" : "text-foreground";
+  const valueColor = item.color
+    ? (COLOR_MAP[item.color] ?? "text-foreground")
+    : "text-foreground";
 
   return (
     <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 transition-colors hover:bg-white/[0.05]">
@@ -41,7 +43,12 @@ const StatCard: React.FC<{ item: StatItem }> = ({ item }) => {
         <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/60 truncate">
           {item.label}
         </p>
-        <p className={cn("text-lg font-black tracking-tight leading-tight", valueColor)}>
+        <p
+          className={cn(
+            "text-lg font-black tracking-tight leading-tight",
+            valueColor,
+          )}
+        >
           {typeof item.value === "number"
             ? item.value.toLocaleString()
             : item.value}

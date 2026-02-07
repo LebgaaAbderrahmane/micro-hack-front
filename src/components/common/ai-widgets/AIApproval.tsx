@@ -8,7 +8,11 @@ import type { ActionProposalComponent } from "@/types/ai-components";
 
 interface AIApprovalProps {
   component: ActionProposalComponent;
-  onRespond?: (action: "approve" | "reject", entityId: string, actionType: string) => void;
+  onRespond?: (
+    action: "approve" | "reject",
+    entityId: string,
+    actionType: string,
+  ) => void;
 }
 
 export const AIApproval: React.FC<AIApprovalProps> = ({
@@ -16,7 +20,9 @@ export const AIApproval: React.FC<AIApprovalProps> = ({
   onRespond,
 }) => {
   const { title, action_type, entity_id, description, data } = component;
-  const [state, setState] = useState<"pending" | "approving" | "rejecting" | "approved" | "rejected">("pending");
+  const [state, setState] = useState<
+    "pending" | "approving" | "rejecting" | "approved" | "rejected"
+  >("pending");
 
   const handleAction = (action: "approve" | "reject") => {
     setState(action === "approve" ? "approving" : "rejecting");
@@ -55,7 +61,10 @@ export const AIApproval: React.FC<AIApprovalProps> = ({
       {contextEntries.length > 0 && (
         <div className="px-4 py-2.5 space-y-1.5 border-b border-primary/10">
           {contextEntries.slice(0, 6).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between text-[11px]">
+            <div
+              key={key}
+              className="flex items-center justify-between text-[11px]"
+            >
               <span className="text-muted-foreground/60 font-medium capitalize">
                 {key.replace(/_/g, " ")}
               </span>
@@ -78,11 +87,7 @@ export const AIApproval: React.FC<AIApprovalProps> = ({
                 : "bg-red-500/10 text-red-500",
             )}
           >
-            {state === "approved" ? (
-              <ShieldCheck size={14} />
-            ) : (
-              <X size={14} />
-            )}
+            {state === "approved" ? <ShieldCheck size={14} /> : <X size={14} />}
             {state === "approved" ? "Approved" : "Rejected"}
           </div>
         ) : (

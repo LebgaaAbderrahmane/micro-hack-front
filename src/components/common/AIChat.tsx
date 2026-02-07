@@ -229,7 +229,9 @@ export const AIChat = () => {
   };
 
   return (
-    <>      <AnimatePresence>
+    <>
+      {" "}
+      <AnimatePresence>
         {chatState === "large" && (
           <motion.div
             initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
@@ -324,7 +326,6 @@ export const AIChat = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
       <motion.div
         layout
         variants={containerVariants}
@@ -488,7 +489,11 @@ export const AIChat = () => {
                               msg.uiComponents.length > 0 && (
                                 <UIComponentRenderer
                                   components={msg.uiComponents}
-                                  onApprovalRespond={(action, entityId, actionType) => {
+                                  onApprovalRespond={(
+                                    action,
+                                    entityId,
+                                    actionType,
+                                  ) => {
                                     sendMessage(
                                       action === "approve"
                                         ? `Approved ${actionType} for ${entityId}`
@@ -501,17 +506,22 @@ export const AIChat = () => {
                             {/* Legacy: fallback table for old-format data without ui_components */}
                             {msg.data &&
                               msg.data.length > 0 &&
-                              (!msg.uiComponents || msg.uiComponents.length === 0) && (
+                              (!msg.uiComponents ||
+                                msg.uiComponents.length === 0) && (
                                 <UIComponentRenderer
-                                  components={[{
-                                    type: "table" as const,
-                                    columns: Object.keys(msg.data[0]).slice(0, 6).map((k) => ({
-                                      key: k,
-                                      header: k.replace(/_/g, " "),
-                                      type: "text" as const,
-                                    })),
-                                    data: msg.data,
-                                  }]}
+                                  components={[
+                                    {
+                                      type: "table" as const,
+                                      columns: Object.keys(msg.data[0])
+                                        .slice(0, 6)
+                                        .map((k) => ({
+                                          key: k,
+                                          header: k.replace(/_/g, " "),
+                                          type: "text" as const,
+                                        })),
+                                      data: msg.data,
+                                    },
+                                  ]}
                                 />
                               )}
 
@@ -554,7 +564,8 @@ export const AIChat = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{
-                          delay: 0.4 + (RECOMMENDED_PROMPTS.length - 1 - i) * 0.1,
+                          delay:
+                            0.4 + (RECOMMENDED_PROMPTS.length - 1 - i) * 0.1,
                           duration: 0.4,
                           ease: "easeOut",
                         }}

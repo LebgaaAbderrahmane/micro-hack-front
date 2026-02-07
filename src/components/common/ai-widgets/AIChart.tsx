@@ -96,8 +96,33 @@ export const AIChart: React.FC<AIChartProps> = ({ component }) => {
               stroke="hsl(var(--border))"
               strokeOpacity={0.15}
             />
-            <XAxis dataKey="name" {...axisProps} label={x_axis_label ? { value: x_axis_label, position: "insideBottom", offset: -5, fontSize: 10 } : undefined} />
-            <YAxis {...axisProps} label={y_axis_label ? { value: y_axis_label, angle: -90, position: "insideLeft", fontSize: 10 } : undefined} />
+            <XAxis
+              dataKey="name"
+              {...axisProps}
+              label={
+                x_axis_label
+                  ? {
+                      value: x_axis_label,
+                      position: "insideBottom",
+                      offset: -5,
+                      fontSize: 10,
+                    }
+                  : undefined
+              }
+            />
+            <YAxis
+              {...axisProps}
+              label={
+                y_axis_label
+                  ? {
+                      value: y_axis_label,
+                      angle: -90,
+                      position: "insideLeft",
+                      fontSize: 10,
+                    }
+                  : undefined
+              }
+            />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={40}>
               {chartData.map((_, i) => (
@@ -188,10 +213,7 @@ export const AIChart: React.FC<AIChartProps> = ({ component }) => {
               labelLine={false}
             >
               {chartData.map((_, i) => (
-                <Cell
-                  key={i}
-                  fill={PIE_COLORS[i % PIE_COLORS.length]}
-                />
+                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
               ))}
             </Pie>
           </PieChart>

@@ -1,13 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  Package,
-  MapPin,
-  Clock,
-  Truck,
-  User,
-} from "lucide-react";
+import { Package, MapPin, Clock, Truck, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BookingCardComponent } from "@/types/ai-components";
 

@@ -59,7 +59,8 @@ function formatCell(value: unknown, type: string): React.ReactNode {
     case "status": {
       const key = str.toLowerCase().replace(/\s+/g, "_");
       const colorClass =
-        STATUS_COLORS[key] ?? "bg-foreground/5 text-foreground/60 border-foreground/10";
+        STATUS_COLORS[key] ??
+        "bg-foreground/5 text-foreground/60 border-foreground/10";
       return (
         <span
           className={cn(
