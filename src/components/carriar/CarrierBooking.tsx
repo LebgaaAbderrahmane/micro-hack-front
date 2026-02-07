@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
     format,
     addDays,
@@ -73,6 +73,9 @@ import {
 import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+// import { createClient } from "@/utils/supabase/client";
+// import { useAuth } from "@/hooks/useAuth";
+// import type { Database, Tables } from "@/types/database.types";
 
 // ---------- TYPES ----------
 
