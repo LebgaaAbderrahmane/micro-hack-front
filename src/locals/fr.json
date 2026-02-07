@@ -18,6 +18,7 @@
     "bookings": "Réservations",
     "terminals": "Terminaux",
     "users": "Utilisateurs",
+    "analytics": "Analyses",
     "accessRestricted": "Accès restreint",
     "pleaseLogin": "Veuillez vous connecter pour accéder au système de contrôle d'accès logistique intelligent.",
     "goToLogin": "Aller à la connexion",
@@ -70,11 +71,11 @@
     "error": "Erreur"
   },
   "Theme": {
-      "light": "Clair",
-      "dark": "Sombre",
-      "system": "Système",
-      "toggle": "Changer le Thème",
-      "switchLocale": "Passer à l'{language}"
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système",
+    "toggle": "Changer le Thème",
+    "switchLocale": "Passer à l'{language}"
   },
   "AI": {
     "welcome": "Bonjour ! Je suis votre assistant IA ILACS. Comment puis-je vous aider à gérer vos accès au terminal ou votre flotte aujourd'hui ?",

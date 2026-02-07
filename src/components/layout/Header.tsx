@@ -9,7 +9,7 @@ const navItems = [
   { label: "Dashboard", href: "/" },
   { label: "Logging", href: "/loggings" },
   { label: "Manage", href: "/fleet" },
-  { label: "Analytics", href: "/settings" },
+  { label: "Analytics", href: "/analytics" },
 ];
 
 export const Header = () => {

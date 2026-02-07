@@ -93,7 +93,7 @@ export const FiltersPanel = ({ onClose, isOpen, onApply }: FiltersPanelProps) =>
                     "top-[100px] sm:top-[calc(100%+12px)]",
                     "right-4 sm:right-0",
                     "w-[calc(100vw-32px)] sm:w-[400px]",
-                    "max-h-[calc(100vh-120px)] sm:max-h-[80vh]",
+                    "max-h-[calc(100vh-120px)] sm:max-h-[70vh]",
                     "bg-background border border-border-light rounded-xl shadow-2xl",
                     "flex flex-col animate-in fade-in slide-in-from-top-2 duration-200"
                 )}
