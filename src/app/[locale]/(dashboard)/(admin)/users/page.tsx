@@ -42,7 +42,7 @@ const UserRow = ({ user }: { user: any }) => {
     return (
         <tr className="group hover:bg-foreground/[0.02] transition-colors border-b border-foreground/5 last:border-0 text-foreground">
             <td className="py-5 px-8">
-                <Link href={`/users/${user.id}`} className="flex items-center gap-3 group/link">
+                <Link href={`/users/detail?id=${user.id}`} className="flex items-center gap-3 group/link">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary group-hover/link:scale-110 transition-transform">
                         {(user.username || "U").charAt(0).toUpperCase()}
                     </div>
@@ -65,7 +65,7 @@ const UserRow = ({ user }: { user: any }) => {
                 {user.organisation?.name || t("independent")}
             </td>
             <td className="py-5 px-8 text-right">
-                <Link href={`/users/${user.id}`} className="p-2 hover:bg-foreground/5 rounded-lg text-foreground/40 hover:text-foreground inline-block">
+                <Link href={`/users/detail?id=${user.id}`} className="p-2 hover:bg-foreground/5 rounded-lg text-foreground/40 hover:text-foreground inline-block">
                     <ArrowUpRight size={18} />
                 </Link>
             </td>

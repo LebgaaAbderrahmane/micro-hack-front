@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/utils/supabase/client";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
 import {
     Shield,
@@ -24,7 +24,8 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/components/common/Toast";
 
 export default function UserDetailPage() {
-    const { id } = useParams();
+    const searchParams = useSearchParams();
+    const id = searchParams.get("id");
     const router = useRouter();
     const { profile: adminProfile, isLoading: authLoading } = useAuth();
     const [user, setUser] = useState<any>(null);

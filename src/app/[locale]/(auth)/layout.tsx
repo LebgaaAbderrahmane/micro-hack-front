@@ -1,12 +1,16 @@
-"use client";
+import { setRequestLocale } from "next-intl/server";
+import React, { Suspense } from "react";
 
-import React from "react";
-
-export default function AuthLayout({
+export default async function AuthLayout({
   children,
+  params
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-[#0a0a0b] relative overflow-hidden"
@@ -18,7 +22,9 @@ export default function AuthLayout({
         suppressHydrationWarning
       ></div>
       <div className="relative z-10 w-full" suppressHydrationWarning>
-        {children}
+        <Suspense fallback={null}>
+          {children}
+        </Suspense>
       </div>
     </div>
   );

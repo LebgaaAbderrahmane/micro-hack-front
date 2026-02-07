@@ -80,12 +80,12 @@ export const RoleLoginPage = ({
         return;
       }
 
+      // If role doesn't match, we used to block login. 
+      // However, since all dashboards are accessible via /, we should just allow it 
+      // and let the main layout handle the role-based dashboard rendering.
       if (profileData.role !== role) {
-        console.warn(`[Client Login] Role mismatch. Required: ${role}, Found: ${profileData.role}`);
-        await supabase.auth.signOut();
-        setLocalError(`Unauthorized: This account is registered as ${profileData.role}`);
-        setIsLoggingIn(false);
-        return;
+        console.warn(`[Client Login] Role mismatch. Required: ${role}, Found: ${profileData.role}. Proceeding anyway.`);
+        // We do NOT sign out here to prevent login loops.
       }
 
       console.log("[Client Login] Success. Redirecting...");

@@ -13,10 +13,12 @@ import {
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter, Link } from "@/i18n/routing";
+import { useLocale } from "next-intl";
 import { toast } from "sonner";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const locale = useLocale();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -38,7 +40,7 @@ export default function RegisterPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/${locale}/auth/callback`,
           data: {
             username,
             role: "DISPATCHER"

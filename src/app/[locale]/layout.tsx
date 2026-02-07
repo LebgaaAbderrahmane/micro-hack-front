@@ -3,7 +3,7 @@ import { Inter, Poppins, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/layout/Providers";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 
@@ -24,6 +24,10 @@ const montserrat = Montserrat({
   variable: "--font-montserrat",
 });
 
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({locale}));
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "ILACS | Intelligent Logistics Access Control System",
@@ -39,6 +43,9 @@ export default async function RootLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+
+  // Enable static rendering
+  setRequestLocale(locale);
 
   if (!routing.locales.includes(locale as "en" | "fr")) {
     notFound();

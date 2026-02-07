@@ -4,14 +4,22 @@ export const handlers = [
   // Auth
   http.post("/api/auth/login", async ({ request }) => {
     const info = (await request.json()) as { email: string };
+    
+    let role = "DISPATCHER";
+    let id = "3";
+    
+    if (info.email.includes("admin")) {
+      role = "ADMIN";
+      id = "1";
+    } else if (info.email.includes("op")) {
+      role = "OPERATOR";
+      id = "2";
+    }
+
     return HttpResponse.json({
-      id: "1",
+      id,
       email: info.email,
-      role: info.email.includes("admin")
-        ? "ADMIN"
-        : info.email.includes("op")
-          ? "OPERATOR"
-          : "DISPATCHER",
+      role,
       firstName: "Mock",
       lastName: "User",
       token: "mock-jwt-token",
@@ -19,17 +27,38 @@ export const handlers = [
   }),
 
   // Supabase Mock (REST)
-  http.get("*/rest/v1/users*", () => {
+  http.get("*/rest/v1/users*", ({ request }) => {
+    const url = new URL(request.url);
+    const idParam = url.searchParams.get("id");
+    
+    // Default to generic ADMIN if no specific ID requested (or if logic fails)
+    let role = "ADMIN";
+    let id = "1";
+    let orgName = "System Admin Org";
+
+    // Parse "id=eq.X" format from Supabase
+    if (idParam) {
+      if (idParam.includes("eq.2")) {
+        role = "OPERATOR";
+        id = "2";
+        orgName = "Terminal Op Org";
+      } else if (idParam.includes("eq.3")) {
+        role = "DISPATCHER";
+        id = "3";
+        orgName = "Carrier Org";
+      }
+    }
+
     return HttpResponse.json({
-      id: "1",
-      role: "ADMIN",
-      username: "admin_user",
-      org_id: "org-1",
+      id,
+      role,
+      username: `user_${role.toLowerCase()}`,
+      org_id: `org-${id}`,
       organisation: {
-        id: "org-1",
-        name: "System Admin Org",
+        id: `org-${id}`,
+        name: orgName,
         nif: "123456789",
-        type: "ADMIN",
+        type: role,
       },
     });
   }),
