@@ -11,12 +11,14 @@ import * as XLSX from "xlsx";
 interface ExportModalProps {
     isOpen: boolean;
     onClose: () => void;
-    data: any; // Context/Filters
+    data: any; // Context/Filters or Raw Data
+    type?: "logs" | "bookings" | "fleet-vehicles" | "fleet-drivers";
+    title?: string;
 }
 
 type ExportFormat = "pdf" | "csv" | "excel";
 
-export const ExportModal = ({ isOpen, onClose, data }: ExportModalProps) => {
+export const ExportModal = ({ isOpen, onClose, data, type = "logs", title: customTitle }: ExportModalProps) => {
     const [format, setFormat] = useState<ExportFormat>("pdf");
     const [includeFilters, setIncludeFilters] = useState(true);
     const [includeDateRange, setIncludeDateRange] = useState(true);
@@ -46,24 +48,57 @@ export const ExportModal = ({ isOpen, onClose, data }: ExportModalProps) => {
     ];
 
     const today = new Date().toISOString().split('T')[0];
-    const previewFilename = `logs_export_${today}.${format === 'excel' ? 'xlsx' : format}`;
+    const prefix = type === "bookings" ? "bookings" : "logs";
+    const previewFilename = `${prefix}_export_${today}.${format === 'excel' ? 'xlsx' : format}`;
 
     const handleExport = async () => {
         setIsExporting(true);
         try {
-            // Fetch filtered data specifically for export
-            const { data: logs, error } = await bookingAuditLogsService.getLogsWithUsers(data);
+            let headers: string[] = [];
+            let rows: any[][] = [];
 
-            if (error) throw error;
-
-            const headers = ['ID', 'User', 'Action', 'Reason', 'Timestamp'];
-            const rows = logs?.map(log => [
-                log.id,
-                log.users?.username || 'System',
-                log.action_type,
-                log.change_reason || '',
-                log.timestamp ? new Date(log.timestamp).toLocaleString() : 'N/A'
-            ]);
+            if (type === "logs") {
+                const { data: logs, error } = await bookingAuditLogsService.getLogsWithUsers(data);
+                if (error) throw error;
+                headers = ['ID', 'User', 'Action', 'Reason', 'Timestamp', 'Is AI', 'Confidence'];
+                rows = (logs || []).map(log => [
+                    log.id,
+                    log.users?.username || 'System',
+                    log.action_type,
+                    log.change_reason || '',
+                    log.timestamp ? new Date(log.timestamp).toLocaleString() : 'N/A',
+                    log.is_made_by_ai ? 'Yes' : 'No',
+                    log.ai_confidence ? `${(log.ai_confidence * 100).toFixed(0)}%` : 'N/A'
+                ]);
+            } else if (type === "fleet-vehicles") {
+                headers = ["Plate Number", "Model", "Status", "Registered At"];
+                rows = (data || []).map((t: any) => [
+                    t.plate_number,
+                    t.model || "N/A",
+                    t.status,
+                    new Date(t.created_at || Date.now()).toLocaleDateString()
+                ]);
+            } else if (type === "fleet-drivers") {
+                headers = ["Name", "Phone", "Status", "License Expiry"];
+                rows = (data || []).map((d: any) => [
+                    d.full_name,
+                    d.phone_number,
+                    d.status,
+                    d.license_expiry
+                ]);
+            } else {
+                // For Bookings, we usually already have the data or can pass it
+                const bookings = Array.isArray(data) ? data : (data.bookings || []);
+                headers = ["Booking Code", "Container ID", "Terminal", "Destination/Gate", "Status", "Date"];
+                rows = bookings.map((b: any) => [
+                    b.bookingCode || b.id,
+                    b.containerNumber || b.cargo_id || 'N/A',
+                    b.terminal || b.origin || 'N/A',
+                    b.gate || b.destination || 'N/A',
+                    (b.status || 'N/A').toUpperCase(),
+                    new Date(b.date || b.created_at || Date.now()).toLocaleDateString()
+                ]);
+            }
 
             if (format === 'csv') {
                 const csvContent = [headers, ...(rows || [])].map(e => e.join(",")).join("\n");
@@ -81,7 +116,7 @@ export const ExportModal = ({ isOpen, onClose, data }: ExportModalProps) => {
 
                 // Add title
                 doc.setFontSize(18);
-                doc.text("Activity Logs Report", 14, 22);
+                doc.text(customTitle || (type === "bookings" ? "Bookings Report" : "Activity Logs Report"), 14, 22);
                 doc.setFontSize(11);
                 doc.setTextColor(100);
 
@@ -132,10 +167,12 @@ export const ExportModal = ({ isOpen, onClose, data }: ExportModalProps) => {
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="px-8 py-6 flex items-start justify-between border-b border-gray-50">
+                <div className="px-8 py-6 flex items-start justify-between border-b border-gray-50 bg-foreground/2">
                     <div>
-                        <h2 className="text-2xl font-bold font-poppins text-[#1a1c21]">Export Logs</h2>
-                        <p className="text-content-title text-sm mt-1">Choose your export format and options</p>
+                        <h2 className="text-2xl font-black font-poppins text-[#1a1c21] uppercase tracking-tight">
+                            {customTitle || (type === "bookings" ? "Export Bookings" : "Export Logs")}
+                        </h2>
+                        <p className="text-content-title text-sm mt-1 font-medium opacity-60">Choose your export format and options</p>
                     </div>
                     <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                         <X size={24} className="text-content-title" />

@@ -37,9 +37,10 @@ export const Navbar = () => {
 
     const navItems = [
         { label: t('overview'), href: "/", icon: LayoutDashboard, roles: ["ADMIN", "OPERATOR", "DISPATCHER"] },
-        { label: t('analytics'), href: "/analytics", icon: BarChart3, roles: ["ADMIN", "OPERATOR", "DISPATCHER"] },
-        { label: "Booking", href: "/bookings/new", icon: Calendar, roles: ["DISPATCHER"] },
-        { label: t('manageBookings'), href: "/bookings", icon: Calendar, roles: ["OPERATOR", "DISPATCHER"] },
+        { label: t('analytics'), href: "/analytics", icon: BarChart3, roles: ["ADMIN", "OPERATOR"] },
+        { label: "Bookings", href: "/bookings", icon: Calendar, roles: ["DISPATCHER"] },
+        { label: t('manageBookings'), href: "/bookings", icon: Calendar, roles: ["OPERATOR"] },
+        { label: "Fleet", href: "/fleet", icon: Truck, roles: ["DISPATCHER"] },
         { label: t('manageUsers'), href: "/manage", icon: Users, roles: ["ADMIN"] },
         { label: t('logs'), href: "/loggings", icon: FileText, roles: ["ADMIN", "OPERATOR"] },
     ];
@@ -47,11 +48,10 @@ export const Navbar = () => {
     const filteredItems = (() => {
         if (!user || !user.role) return [];
 
-        // Define exact order for each role based on user request
         const roleOrder: Record<string, string[]> = {
             ADMIN: ["/", "/analytics", "/manage", "/loggings"],
             OPERATOR: ["/", "/analytics", "/bookings", "/loggings"],
-            DISPATCHER: ["/", "/analytics", "/bookings/new", "/bookings"],
+            DISPATCHER: ["/", "/bookings", "/fleet"],
         };
 
         const targetOrder = roleOrder[user.role] || [];
@@ -61,7 +61,6 @@ export const Navbar = () => {
             .sort((a, b) => {
                 const indexA = targetOrder.indexOf(a.href);
                 const indexB = targetOrder.indexOf(b.href);
-                // If not found in order list, put at the end
                 return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
             });
     })();

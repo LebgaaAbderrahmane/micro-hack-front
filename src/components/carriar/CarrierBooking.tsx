@@ -1,28 +1,22 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import { format, addDays, addHours, isBefore, startOfDay } from "date-fns";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { format, addHours, isBefore, startOfWeek, addDays, eachDayOfInterval, endOfWeek } from "date-fns";
 import {
-    Truck,
-    CheckCircle,
-    XCircle,
-    Download,
-    X,
-    Filter,
     Calendar,
     Clock,
-    MoreHorizontal,
     QrCode,
-    Mail
+    CalendarDays,
+    Search,
+    MapPin,
+    Filter,
+    Download,
+    FileUp,
+    CheckCircle2,
+    XCircle,
+    Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
     Dialog,
@@ -40,6 +34,9 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { FiltersPanel } from "@/components/Filters/FiltersPanel";
+import { ImportModal } from "@/components/ActionBar/ImportModal";
+import { ExportModal } from "@/components/ActionBar/ExportModal";
 import {
     Select,
     SelectContent,
@@ -48,7 +45,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
     Tooltip,
     TooltipContent,
@@ -60,16 +56,15 @@ import {
     DropdownMenuContent,
     DropdownMenuCheckboxItem,
     DropdownMenuTrigger,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { ChartCard } from "@/components/dashboard/widgets";
 
 // ---------- TYPES ----------
 
@@ -77,7 +72,7 @@ interface TimeSlot {
     id: string;
     startTime: Date;
     durationHours: number;
-    availableCapacity: number;
+    occupancyRate: number;
     totalCapacity: number;
     status: "available" | "limited" | "full";
 }
@@ -92,11 +87,116 @@ interface Booking {
     terminal: string;
     gate: string;
     createdAt: Date;
-    qrCode?: string; // Add QR code field
+    qrCode?: string;
+    containerNumber?: string;
 }
 
-// Full 24h range (or 06:00 to 23:00)
 const HOURS = Array.from({ length: 18 }, (_, i) => i + 6); // 06:00 -> 23:00
+
+// ─── Shared Section Header (Consistency with Admin) ──────────────────────
+const SectionHeader = ({ icon: Icon, title, subtitle, color = "primary", extra }: {
+    icon: React.FC<{ size?: number }>;
+    title: string;
+    subtitle: string;
+    color?: string;
+    extra?: React.ReactNode;
+}) => (
+    <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex items-center justify-between mb-6"
+    >
+        <div className="flex items-center gap-3">
+            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", `bg-${color}/10 text-${color}`)}>
+                <Icon size={22} />
+            </div>
+            <div>
+                <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">{title}</h1>
+                <p className="text-foreground/50 text-xs">{subtitle}</p>
+            </div>
+        </div>
+        {extra && <div className="hidden sm:block">{extra}</div>}
+    </motion.div>
+);
+
+// ---------- STATIC DATA FALLBACKS ----------
+const STATIC_BOOKINGS: Booking[] = [
+    {
+        id: "BK-STATIC-001",
+        bookingCode: "BK-2024-001",
+        date: new Date(),
+        timeSlot: "10:00 - 11:00",
+        containerType: "20FT",
+        status: "confirmed",
+        terminal: "Terminal Alpha",
+        gate: "Gate 4 (South)",
+        createdAt: new Date(),
+        containerNumber: "CRGO-A92J"
+    },
+    {
+        id: "BK-STATIC-002",
+        bookingCode: "BK-2024-002",
+        date: new Date(),
+        timeSlot: "14:00 - 15:00",
+        containerType: "40FT",
+        status: "pending",
+        terminal: "Terminal Beta",
+        gate: "Gate 1 (North)",
+        createdAt: new Date(),
+        containerNumber: "CRGO-B11X"
+    },
+    {
+        id: "BK-STATIC-003",
+        bookingCode: "BK-2024-003",
+        date: new Date(),
+        timeSlot: "09:00 - 10:00",
+        containerType: "20FT",
+        status: "rejected",
+        terminal: "Terminal Alpha",
+        gate: "Gate 2 (East)",
+        createdAt: new Date(),
+        containerNumber: "CRGO-C55M"
+    }
+];
+
+const STATIC_TRUCKS = [
+    { id: "T-001", plate_number: "DEMO-001", status: "AVAILABLE" },
+    { id: "T-002", plate_number: "DEMO-002", status: "IN_USE" }
+];
+
+const STATIC_DRIVERS = [
+    { id: "D-001", full_name: "Demo Driver (Static)" },
+    { id: "D-002", full_name: "John Doe (Static)" }
+];
+
+const STATIC_CONTAINERS = [
+    { id: "C-001", container_number: "CRGO-A92J", terminal: { zone_name: "Demo Terminal Alpha" }, current_terminal_id: "demo-terminal" },
+    { id: "C-002", container_number: "CRGO-B11X", terminal: { zone_name: "Demo Terminal Beta" }, current_terminal_id: "demo-terminal" },
+    { id: "C-003", container_number: "CRGO-C55M", terminal: { zone_name: "Demo Terminal Alpha" }, current_terminal_id: "demo-terminal" },
+    { id: "C-004", container_number: "CRGO-D88P", terminal: { zone_name: "Demo Terminal Gamma" }, current_terminal_id: "demo-terminal" }
+];
+
+const getStaticSlots = (dateStr: string) => {
+    // Manually curated diverse slots to show different sizes and capacities
+    const configs = [
+        { h: 7, duration: 2, max: 100, occ: 82 },   // 82/100 (82%)
+        { h: 10, duration: 4, max: 250, occ: 212 }, // 212/250 (84.8%)
+        { h: 15, duration: 1, max: 40, occ: 5 },     // 5/40 (12.5%) 
+        { h: 17, duration: 3, max: 150, occ: 95 },   // 95/150 (63.3%)
+        { h: 21, duration: 1, max: 30, occ: 28 }    // 28/30 (93.3%)
+    ];
+
+    return configs.map((cfg, i) => ({
+        id: `slot-static-${dateStr}-${i}`,
+        slot_date: dateStr,
+        start_time: `${String(cfg.h).padStart(2, "0")}:00:00`,
+        end_time: `${String(cfg.h + cfg.duration).padStart(2, "0")}:00:00`,
+        max_capacity: cfg.max,
+        current_occupancy: cfg.occ,
+        terminal_id: "demo-terminal"
+    }));
+};
 
 export default function CarrierBookingPage() {
     const supabase = createClient();
@@ -104,7 +204,13 @@ export default function CarrierBookingPage() {
     const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
     const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
     const [containerType, setContainerType] = useState("20FT");
-    const [terminal, setTerminal] = useState<"terminal-a" | "terminal-b">("terminal-a");
+    const dateInputRef = useRef<HTMLInputElement>(null);
+
+    const formatDisplayDate = (dateStr: string) => {
+        if (!dateStr) return "Active Week";
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return format(new Date(y, m - 1, d), "MMMM dd, yyyy");
+    };
 
     // Real Data States
     const [bookings, setBookings] = useState<Booking[]>([]);
@@ -113,166 +219,314 @@ export default function CarrierBookingPage() {
     const [selectedTruck, setSelectedTruck] = useState<string>("");
     const [selectedDriver, setSelectedDriver] = useState<string>("");
 
-    const [selectedBookings, setSelectedBookings] = useState<Set<string>>(new Set());
     const [qrBooking, setQrBooking] = useState<Booking | null>(null);
 
+    // Container State
+    const [cargoPool, setCargoPool] = useState<any[]>([]);
+    const [cargoInput, setCargoInput] = useState("");
+    const [isSearchingCargo, setIsSearchingCargo] = useState(false);
+
+    // Booking Wizard State
+    const [bookingStep, setBookingStep] = useState(1);
+
+    // Import Modals State
+    const [isCargoImportOpen, setIsCargoImportOpen] = useState(false);
+    const [isFleetImportOpen, setIsFleetImportOpen] = useState(false);
+    const [importText, setImportText] = useState("");
+    const [isExportOpen, setIsExportOpen] = useState(false);
+
     // Filters state
-    const [statusFilter, setStatusFilter] = useState<string[]>([]);
-    const [typeFilter, setTypeFilter] = useState<string[]>([]);
-    const [dateFilter, setDateFilter] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+    const [dateFilter, setDateFilter] = useState<string>("");
     const [dbSlots, setDbSlots] = useState<any[]>([]);
     const [terminals, setTerminals] = useState<any[]>([]);
     const [selectedTerminal, setSelectedTerminal] = useState<string>("");
 
-    // Real-time Data Fetching
-    useEffect(() => {
-        if (!user?.org_id) return;
+    const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+    const [activeFilters, setActiveFilters] = useState({
+        status: [] as string[],
+        dateFrom: "",
+        dateTo: "",
+        searchRef: ""
+    });
 
-        const fetchData = async () => {
-            // Fetch Trucks
-            const { data: trucksData } = await supabase
-                .from("trucks")
-                .select("id, plate_number, status")
-                .eq("org_id", user.org_id);
-            if (trucksData) setTrucks(trucksData);
+    const handleFinalBatchBooking = async () => {
+        if (!selectedSlot || cargoPool.length === 0 || !selectedTruck || !selectedDriver) {
+            toast.error("Missing batch booking payload");
+            return;
+        }
 
-            // Fetch Drivers
-            const { data: driversData } = await supabase
-                .from("drivers")
-                .select("id, full_name")
-                .eq("org_id", user.org_id);
-            if (driversData) setDrivers(driversData);
+        try {
+            const bookingRefBase = `BK-${format(new Date(), "yyyyMMdd")}`;
+            const promises = cargoPool.map((cargo, idx) => {
+                const bookingRef = `${bookingRefBase}-${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}-${idx}`;
+                return supabase.from("bookings").insert([{
+                    booking_reference: bookingRef,
+                    scheduled_date: selectedSlot.startTime.toISOString().split("T")[0],
+                    scheduled_start: selectedSlot.startTime.toISOString(),
+                    scheduled_end: addHours(selectedSlot.startTime, selectedSlot.durationHours).toISOString(),
+                    truck_id: selectedTruck,
+                    driver_id: selectedDriver,
+                    container_id: cargo.id,
+                    carrier_org_id: user?.org_id,
+                    status: "PENDING",
+                    qr_code: bookingRef
+                }]);
+            });
 
-            // Fetch Terminals
-            const { data: termData } = await supabase.from("terminals").select(`
-                *,
-                gate:gates(gate_number)
-            `);
-            if (termData) {
-                setTerminals(termData);
-                if (termData.length > 0) setSelectedTerminal(termData[0].id);
+            await Promise.all(promises);
+            toast.success(`Batch for ${cargoPool.length} units finalized!`);
+
+            setIsBookingDialogOpen(false);
+            setBookingStep(1);
+            setCargoPool([]); // Clear pool
+            loadMainData();
+        } catch (err) {
+            console.error("Batch failed:", err);
+            toast.error("Internal processing error. Please contact port authority.");
+        }
+    };
+
+    const handleCargoSearch = async (val: string) => {
+        setCargoInput(val);
+        if (val.length < 4) return;
+
+        setIsSearchingCargo(true);
+        try {
+            let foundCargo = null;
+            // 1. Try DB
+            const { data, error } = await supabase
+                .from("containers")
+                .select("*, terminal:terminals(*)")
+                .ilike("container_number", `%${val}%`)
+                .limit(1);
+
+            if (data && data.length > 0) {
+                foundCargo = data[0];
+            } else {
+                // 2. Try Static Fallback
+                const searchVal = val.toUpperCase();
+                const matchingBooking = STATIC_BOOKINGS.find(b => b.bookingCode.toUpperCase().includes(searchVal));
+                const targetContainerNum = matchingBooking?.containerNumber || searchVal;
+                foundCargo = STATIC_CONTAINERS.find(c =>
+                    c.container_number.includes(targetContainerNum) ||
+                    (matchingBooking && c.container_number === matchingBooking.containerNumber)
+                );
             }
 
-            // Fetch Bookings
-            const { data: bookingsData } = await supabase
-                .from("bookings")
-                .select("*")
-                .eq("carrier_org_id", user.org_id)
-                .order("created_at", { ascending: false });
-
-            if (bookingsData) {
-                const mappedBookings: Booking[] = bookingsData.map((b: any) => ({
-                    id: b.id,
-                    bookingCode: b.booking_reference,
-                    date: new Date(b.scheduled_date),
-                    timeSlot: `${format(new Date(b.scheduled_start), "HH:mm")} - ${format(new Date(b.scheduled_end), "HH:mm")}`,
-                    containerType: "20FT", // Default or fetch relation if needed
-                    status: b.status.toLowerCase(),
-                    terminal: "Terminal A", // Map from terminal_id or relation
-                    gate: "Auto-assigned",
-                    createdAt: new Date(b.created_at),
-                    qrCode: b.qr_code
-                }));
-                setBookings(mappedBookings);
-            }
-        };
-
-        fetchData();
-
-        // Real-time Subscription for Bookings
-        const channel = supabase
-            .channel("carrier-bookings")
-            .on(
-                "postgres_changes",
-                {
-                    event: "*",
-                    schema: "public",
-                    table: "bookings",
-                    filter: `carrier_org_id=eq.${user.org_id}`,
-                },
-                (payload) => {
-                    console.log("Real-time update:", payload);
-                    fetchData(); // Simplest way to sync state is refetch or manually merge
+            if (foundCargo) {
+                if (cargoPool.find(c => c.id === foundCargo.id)) {
+                    toast.info(`Cargo ${foundCargo.container_number} is already in the pool`);
+                } else {
+                    setCargoPool(prev => [...prev, foundCargo]);
+                    setSelectedTerminal(foundCargo.current_terminal_id || "demo-terminal");
+                    toast.success(`Cargo ${foundCargo.container_number} added to pool`);
+                    setCargoInput(""); // Clear for next search
                 }
-            )
-            .subscribe();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        setIsSearchingCargo(false);
+    };
 
-        return () => {
-            supabase.removeChannel(channel);
+    const handleImportCargoList = () => {
+        if (!importText) return;
+
+        // Simple CSV parsing (split by newline and then by comma)
+        const lines = importText.split('\n')
+            .map(l => l.trim())
+            .filter(l => l.length > 0);
+
+        const cargoIds = lines.map(line => {
+            const parts = line.split(',');
+            return parts[0].trim(); // Take first column as ID
+        });
+
+        if (cargoIds.length > 0) {
+            handleCargoSearch(cargoIds[0]);
+            toast.success(`Imported ${cargoIds.length} cargo IDs. Filtering by first match: ${cargoIds[0]}`);
+            setIsCargoImportOpen(false);
+            setImportText("");
+        }
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
+            toast.error("Please upload a CSV file");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const content = event.target?.result as string;
+            setImportText(content);
+            toast.success("CSV content loaded. Review and click 'Process List'");
         };
+        reader.readAsText(file);
+    };
+
+    // Real-time Data Fetching
+    const loadMainData = React.useCallback(async () => {
+        if (!user?.org_id) return;
+        const { data: trucksData } = await supabase
+            .from("trucks")
+            .select("id, plate_number, status")
+            .eq("org_id", user.org_id);
+        if (trucksData && trucksData.length > 0) {
+            setTrucks(trucksData);
+        } else {
+            setTrucks(STATIC_TRUCKS);
+        }
+
+        const { data: driversData } = await supabase
+            .from("drivers")
+            .select("id, full_name")
+            .eq("org_id", user.org_id);
+        if (driversData && driversData.length > 0) {
+            setDrivers(driversData);
+        } else {
+            setDrivers(STATIC_DRIVERS);
+        }
+
+        const { data: termData } = await supabase.from("terminals").select(`
+            *,
+            gate:gates(gate_number)
+        `);
+        if (termData && termData.length > 0) {
+            setTerminals(termData);
+        } else {
+            setTerminals([{ id: "demo-terminal", zone_name: "Demo Terminal Alpha", gate: [] }]);
+        }
+
+        const { data: contData } = await supabase.from("containers").select("*");
+
+        const { data: bookingsData } = await supabase
+            .from("bookings")
+            .select(`
+                *,
+                loaded_container:containers!bookings_loaded_container_id_fkey(container_number),
+                unloaded_container:containers!bookings_unloaded_container_id_fkey(container_number)
+            `)
+            .eq("carrier_org_id", user.org_id)
+            .order("created_at", { ascending: false });
+
+        if (bookingsData && bookingsData.length > 0) {
+            const mappedBookings: Booking[] = bookingsData.map((b: any) => ({
+                id: b.id,
+                bookingCode: b.booking_reference,
+                date: new Date(b.scheduled_date),
+                timeSlot: `${format(new Date(b.scheduled_start), "HH:mm")} - ${format(new Date(b.scheduled_end), "HH:mm")}`,
+                containerType: "20FT",
+                status: b.status.toLowerCase() as any,
+                terminal: "Terminal A",
+                gate: "Auto-assigned",
+                createdAt: new Date(b.created_at),
+                qrCode: b.qr_code,
+                containerNumber: b.loaded_container?.container_number || b.unloaded_container?.container_number || "N/A"
+            }));
+            setBookings(mappedBookings);
+        } else {
+            setBookings(STATIC_BOOKINGS);
+        }
     }, [user?.org_id, supabase]);
 
-    // Fetch Real Slots
-    useEffect(() => {
-        const fetchSlots = async () => {
-            let query = supabase
-                .from("active_slots")
-                .select("*")
-                .eq("slot_date", dateFilter);
+    const loadSlotData = React.useCallback(async () => {
+        const today = new Date();
+        let query = supabase.from("active_slots").select("*");
 
-            if (selectedTerminal) {
-                query = query.eq("terminal_id", selectedTerminal);
+        if (dateFilter) {
+            query = query.eq("slot_date", dateFilter);
+        } else {
+            const start = format(startOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd");
+            const end = format(endOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd");
+            query = query.gte("slot_date", start).lte("slot_date", end);
+        }
+
+        if (selectedTerminal) query = query.eq("terminal_id", selectedTerminal);
+
+        const { data } = await query;
+
+        if (data && data.length > 0) {
+            setDbSlots(data);
+        } else {
+            if (dateFilter) {
+                setDbSlots(getStaticSlots(dateFilter));
+            } else {
+                const weekDays = eachDayOfInterval({
+                    start: startOfWeek(today, { weekStartsOn: 1 }),
+                    end: endOfWeek(today, { weekStartsOn: 1 })
+                });
+                const allStaticSlots = weekDays.flatMap(day => getStaticSlots(format(day, "yyyy-MM-dd")));
+                setDbSlots(allStaticSlots);
             }
-
-            const { data, error } = await query;
-            if (data) setDbSlots(data);
-        };
-
-        fetchSlots();
+        }
     }, [dateFilter, selectedTerminal, supabase]);
 
+    useEffect(() => {
+        loadMainData();
+        const channel = supabase
+            .channel("carrier-bookings")
+            .on("postgres_changes", { event: "*", schema: "public", table: "bookings", filter: `carrier_org_id=eq.${user?.org_id}` }, loadMainData)
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [loadMainData, user?.org_id, supabase]);
 
-    // Mock Slots (For demo, usually fetch active_slots from DB)
-    const days = useMemo(() => {
-        const today = new Date();
-        const firstDay = addDays(startOfDay(today), 1);
-        return Array.from({ length: 7 }, (_, i) => addDays(firstDay, i));
-    }, []);
+    useEffect(() => {
+        loadSlotData();
+    }, [loadSlotData]);
 
     const daySlots = useMemo(() => {
-        // Group dbSlots by date (though we filter by date, let's keep the structure for Gantt)
         const dateMap: Record<string, any[]> = {};
-
         dbSlots.forEach(s => {
             if (!dateMap[s.slot_date]) dateMap[s.slot_date] = [];
-
-            // Map DB slot to TimeSlot interface
             const startTime = new Date(`${s.slot_date}T${s.start_time}`);
             const endTime = new Date(`${s.slot_date}T${s.end_time}`);
             const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-
             dateMap[s.slot_date].push({
                 id: s.id,
                 startTime,
                 durationHours: Math.max(1, Math.round(duration)),
-                availableCapacity: s.max_capacity - (s.current_occupancy || 0),
+                occupancyRate: (s.current_occupancy || 0) / s.max_capacity,
                 totalCapacity: s.max_capacity,
-                status: (s.current_occupancy || 0) >= s.max_capacity ? "full" : "available",
+                status: (s.current_occupancy || 0) >= s.max_capacity ? "full" :
+                    (s.current_occupancy || 0) > (s.max_capacity * 0.7) ? "limited" : "available",
             });
         });
 
-        // Ensure we show at least the selected date or upcoming days
-        const targetDates = [dateFilter]; // For now focus on filtered date
+        const today = new Date();
+        const start = startOfWeek(today, { weekStartsOn: 1 });
+        const end = endOfWeek(today, { weekStartsOn: 1 });
+        const weekDays = eachDayOfInterval({ start, end });
 
-        return targetDates.map(d => ({
-            date: new Date(d),
-            slots: dateMap[d] || []
-        }));
+        // Logic: if dateFilter is set AND that specific day has entries in dbSlots for that date, show one day.
+        // Else, show the whole week.
+        const filteredByDay = dateFilter ? dateMap[dateFilter] || [] : [];
+        if (dateFilter && filteredByDay.length > 0) {
+            return [{ date: new Date(dateFilter), slots: filteredByDay }];
+        }
+
+        return weekDays.map(day => {
+            const dStr = format(day, "yyyy-MM-dd");
+            return { date: day, slots: dateMap[dStr] || [] };
+        });
     }, [dbSlots, dateFilter]);
 
-    // Filtered bookings
     const filteredBookings = useMemo(() => {
         return bookings.filter((b) => {
-            const statusMatch = statusFilter.length === 0 || statusFilter.includes(b.status);
-            const typeMatch = typeFilter.length === 0 || typeFilter.includes(b.containerType);
-            const dateMatch =
-                !dateFilter || format(b.date, "yyyy-MM-dd") === dateFilter;
+            const statusMatch = activeFilters.status.length === 0 || activeFilters.status.includes(b.status);
+            const refMatch = !activeFilters.searchRef || b.bookingCode.toLowerCase().includes(activeFilters.searchRef.toLowerCase()) || (b.containerNumber && b.containerNumber.toLowerCase().includes(activeFilters.searchRef.toLowerCase()));
 
-            return statusMatch && typeMatch && dateMatch;
+            const bDateStr = format(b.date, "yyyy-MM-dd");
+            const dateFromMatch = !activeFilters.dateFrom || bDateStr >= activeFilters.dateFrom;
+            const dateToMatch = !activeFilters.dateTo || bDateStr <= activeFilters.dateTo;
+
+            return statusMatch && refMatch && dateFromMatch && dateToMatch;
         });
-    }, [bookings, statusFilter, typeFilter, dateFilter]);
+    }, [bookings, activeFilters]);
 
-    // Actions
     const handleSlotClick = (slot: TimeSlot) => {
         if (isBefore(slot.startTime, new Date())) {
             toast.error("Slot is in the past.");
@@ -282,442 +536,542 @@ export default function CarrierBookingPage() {
         setIsBookingDialogOpen(true);
     };
 
-    const handleBooking = async () => {
-        if (!selectedSlot || !user?.org_id || !selectedTruck || !selectedDriver) {
-            toast.error("Please select a truck, driver, and slot.");
-            return;
-        }
-
-        const startTime = selectedSlot.startTime;
-        const endTime = addHours(selectedSlot.startTime, selectedSlot.durationHours);
-        const bookingRef = `BK-${Date.now().toString().slice(-6)}`;
-
-        try {
-            const { error } = await supabase.from("bookings").insert({
-                booking_reference: bookingRef,
-                carrier_org_id: user.org_id,
-                truck_id: selectedTruck,
-                driver_id: selectedDriver,
-                slot_id: selectedSlot.id,
-                scheduled_date: format(startTime, "yyyy-MM-dd"),
-                scheduled_start: format(startTime, "yyyy-MM-dd HH:mm:ss"),
-                scheduled_end: format(endTime, "yyyy-MM-dd HH:mm:ss"),
-                status: "PENDING",
-                booking_type: "EXPORT_DELIVERY", // Default
-                qr_code: "{}" // Placeholder until validated
-            });
-
-            if (error) throw error;
-
-            toast.success("Booking requested successfully!");
-            setIsBookingDialogOpen(false);
-        } catch (err: any) {
-            console.error(err);
-            toast.error("Booking failed: " + err.message);
-        }
-    };
-
-    const handleTruckStatusToggle = async (truckId: string, currentStatus: string) => {
-        const newStatus = currentStatus === "AVAILABLE" ? "IN_USE" : "AVAILABLE";
-
-        try {
-            const { error } = await supabase
-                .from("trucks")
-                .update({ status: newStatus })
-                .eq("id", truckId);
-
-            if (error) throw error;
-
-            setTrucks(prev => prev.map(t => t.id === truckId ? { ...t, status: newStatus } : t));
-            toast.success(`Truck ${newStatus === 'AVAILABLE' ? 'available' : 'set to in-use'}`);
-        } catch (err: any) {
-            console.error(err);
-            toast.error("Failed to update truck status");
-        }
-    };
-
-    const toggleSelectAll = () => {
-        if (selectedBookings.size === filteredBookings.length) {
-            setSelectedBookings(new Set());
-        } else {
-            setSelectedBookings(new Set(filteredBookings.map((b) => b.id)));
-        }
-    };
-
-    const toggleBookingSelection = (id: string) => {
-        const next = new Set(selectedBookings);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        setSelectedBookings(next);
-    };
-
-    const getStatusBadge = (status: string) => {
+    const getStatusStyle = (status: string) => {
         const styles: Record<string, string> = {
-            confirmed: "bg-green-100 text-green-700 hover:bg-green-100",
-            pending: "bg-orange-100 text-orange-700 hover:bg-orange-100",
-            rejected: "bg-red-100 text-red-700 hover:bg-red-100",
-            cancelled: "bg-slate-100 text-slate-700 hover:bg-slate-100",
+            confirmed: "bg-success/10 text-success border-success/20",
+            pending: "bg-warning/10 text-warning border-warning/20",
+            rejected: "bg-error/10 text-error border-error/20",
+            cancelled: "bg-foreground/5 text-foreground/40 border-foreground/10",
         };
-        return <Badge className={styles[status] || styles.pending}>{status}</Badge>;
-    };
-
-    const getSlotColor = (status: TimeSlot["status"]) => {
-        return status === "available"
-            ? "bg-green-500"
-            : status === "limited"
-                ? "bg-orange-500"
-                : "bg-red-500";
+        return cn("text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full", styles[status] || styles.pending);
     };
 
     return (
         <TooltipProvider>
-            <div className="min-h-screen bg-slate-50 p-6 space-y-6">
+            <div className="space-y-6 pb-12">
+                <SectionHeader
+                    icon={CalendarDays}
+                    title="Bookings & Scheduling"
+                    subtitle="Reserve time slots for cargo drop-off or pickup"
+                    color="primary"
+                />
 
-                {/* Header */}
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold flex items-center gap-2">
-                            <Truck className="w-6 h-6 text-blue-600" /> Carrier Portal
-                        </h1>
-                        <p className="text-slate-500">Manage bookings and check availability</p>
-                    </div>
-                </div>
+                {/* Main Content Area */}
+                <div className="space-y-6">
+                    <ChartCard
+                        title="Available Time Slots"
+                        subtitle="Select a block to start a booking"
+                        accentColor="bg-primary"
+                        delay={1}
+                        headerRight={
+                            <div className="flex items-center gap-4 px-4 py-2 bg-foreground/3 rounded-xl border border-foreground/10 backdrop-blur-md shadow-sm">
+                                <div className="p-2 rounded-lg bg-primary/10 text-primary shadow-inner">
+                                    <MapPin size={18} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[8px] font-black uppercase tracking-widest text-foreground/40 mb-0.5">Active Terminal</span>
+                                    <p className="text-xs font-black text-foreground">
+                                        {terminals.find(t => t.id === selectedTerminal)?.zone_name || "Region Alpha"}
+                                    </p>
+                                </div>
+                            </div>
+                        }
+                    >
+                        <div className="space-y-6 pt-4">
+                            {/* Controls */}
+                            <div className="flex flex-col gap-4 bg-foreground/5 p-4 rounded-xl border border-foreground/10 backdrop-blur-md shadow-inner">
+                                <div className="flex flex-wrap gap-4 items-center">
+                                    {/* Cargo Identification */}
+                                    <div className="flex-1 min-w-[300px] flex items-center gap-3 bg-white/40 dark:bg-slate-900/40 p-1 rounded-lg border border-foreground/10 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all group">
+                                        <div className="p-2.5 rounded-md bg-primary text-white shadow-lg shadow-primary/20">
+                                            <Plus size={16} />
+                                        </div>
+                                        <Input
+                                            placeholder="Add Cargo to Batch (ID or Ref)..."
+                                            className="bg-transparent border-none shadow-none focus-visible:ring-0 font-bold placeholder:text-foreground/20 text-md"
+                                            value={cargoInput}
+                                            onChange={(e) => setCargoInput(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleCargoSearch(cargoInput)}
+                                        />
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-[9px] font-black uppercase tracking-widest text-primary px-4 rounded-md flex items-center gap-2"
+                                            onClick={() => setIsCargoImportOpen(true)}
+                                        >
+                                            <FileUp size={12} />
+                                            <span>Bulk</span>
+                                        </Button>
+                                    </div>
 
-                {/* Content Tabs */}
-                <Tabs defaultValue="bookings" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-8">
-                        <TabsTrigger value="bookings">Booking Management</TabsTrigger>
-                        <TabsTrigger value="traffic">Traffic Tracking</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="bookings" className="space-y-6">
-                        {/* Gantt Chart with Horizontal Scroll */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex justify-between items-center">
-                                    <CardTitle>Availability Schedule (Next 7 Days)</CardTitle>
-                                    <div className="flex gap-4 text-sm">
-                                        <span className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 rounded" /> Available</span>
-                                        <span className="flex items-center gap-2"><div className="w-3 h-3 bg-orange-500 rounded" /> Limited</span>
-                                        <span className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded" /> Full</span>
+                                    {/* Date Selection Control */}
+                                    <div
+                                        onClick={() => dateInputRef.current?.showPicker()}
+                                        className="flex items-center gap-4 px-4 h-12 bg-white/40 dark:bg-slate-900/40 rounded-lg border border-foreground/10 hover:border-primary/50 transition-all cursor-pointer group relative"
+                                    >
+                                        <Calendar size={18} className="text-primary group-hover:scale-110 transition-transform" />
+                                        <div className="flex flex-col">
+                                            <span className="text-[8px] font-black uppercase tracking-widest text-foreground/30">Schedule Date</span>
+                                            <span className="text-xs font-bold text-foreground">
+                                                {formatDisplayDate(dateFilter)}
+                                            </span>
+                                        </div>
+                                        <input
+                                            ref={dateInputRef}
+                                            type="date"
+                                            className="absolute inset-0 opacity-0 cursor-pointer pointer-events-none"
+                                            value={dateFilter}
+                                            onChange={(e) => setDateFilter(e.target.value)}
+                                        />
                                     </div>
                                 </div>
-                                <CardDescription>Scroll horizontally to select a slot</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ScrollArea className="w-full border rounded-md">
-                                    <div className="min-w-[1600px]">
-                                        <div
-                                            className="grid"
-                                            style={{
-                                                gridTemplateColumns: `120px repeat(${HOURS.length}, 1fr)`,
-                                            }}
-                                        >
-                                            {/* Header Row */}
-                                            <div className="p-3 border-b border-r bg-slate-50 font-semibold text-center sticky left-0 z-10">Day</div>
-                                            {HOURS.map((h) => (
-                                                <div key={h} className="p-3 border-b border-r text-center text-sm font-medium bg-slate-50">
-                                                    {String(h).padStart(2, "0")}:00
+
+                                {/* Cargo Manifest Bar - NEW */}
+                                {cargoPool.length > 0 && (
+                                    <div className="flex items-center gap-3 pt-2 border-t border-foreground/5">
+                                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-foreground/30 min-w-fit">Manifest:</span>
+                                        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar flex-1">
+                                            {cargoPool.map(c => (
+                                                <div key={c.id} className="flex items-center gap-2 bg-primary/10 text-primary px-2 py-1 rounded border border-primary/20 animate-in fade-in zoom-in duration-300">
+                                                    <span className="text-[10px] font-bold font-mono">{c.container_number}</span>
+                                                    <button onClick={() => setCargoPool(prev => prev.filter(x => x.id !== c.id))} className="hover:text-error transition-colors">
+                                                        <XCircle size={10} />
+                                                    </button>
                                                 </div>
                                             ))}
+                                            <button
+                                                onClick={() => setCargoPool([])}
+                                                className="text-[8px] font-black uppercase text-foreground/20 hover:text-error transition-colors px-2"
+                                            >
+                                                Clear All
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
-                                            {/* Body Rows */}
+                            {/* Schedule Grid */}
+                            {cargoPool.length === 0 ? (
+                                <div className="py-16 flex flex-col items-center justify-center border border-dashed border-foreground/10 rounded-xl bg-foreground/2">
+                                    <div className="p-4 rounded-full bg-foreground/5 mb-4">
+                                        <Search size={24} className="text-foreground/20" />
+                                    </div>
+                                    <p className="text-sm font-bold text-foreground/40 italic">Add containers to your batch to unlock schedule capacity</p>
+                                </div>
+                            ) : (
+                                <ScrollArea className="w-full border border-foreground/10 rounded-xl bg-background overflow-hidden shadow-sm">
+                                    <div className="min-w-[1500px]">
+                                        {/* Time Header Overlay */}
+                                        <div className="grid grid-cols-[140px_1fr] bg-foreground/5 backdrop-blur-xl border-b border-foreground/10 sticky top-0 z-30">
+                                            <div className="p-6 border-r border-foreground/10 flex items-center justify-center bg-white/10">
+                                                <Clock size={16} className="text-primary animate-pulse" />
+                                            </div>
+                                            <div className="grid" style={{ gridTemplateColumns: `repeat(${HOURS.length}, 1fr)` }}>
+                                                {HOURS.map((h) => (
+                                                    <div key={h} className="p-6 text-center border-r border-foreground/5 last:border-r-0 relative group">
+                                                        <span className="text-[10px] font-black tracking-[0.2em] uppercase text-foreground/40 group-hover:text-primary transition-colors">{String(h).padStart(2, "0")}:00</span>
+                                                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary transition-all group-hover:w-full opacity-30" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Schedule Grid Rows */}
+                                        <div className="divide-y divide-foreground/10">
                                             {daySlots.map(({ date, slots }) => (
-                                                <React.Fragment key={date.toISOString()}>
-                                                    <div className="p-3 border-b border-r bg-white sticky left-0 z-10 flex flex-col justify-center items-center shadow-[1px_0_3px_rgba(0,0,0,0.05)]">
-                                                        <span className="text-xs text-slate-500">{format(date, "EEE")}</span>
-                                                        <span className="font-bold">{format(date, "d MMM")}</span>
+                                                <div key={date.toISOString()} className="grid grid-cols-[140px_1fr] group/row relative bg-white/2 hover:bg-white/5 transition-all duration-300">
+                                                    {/* Date Identity Sidebar */}
+                                                    <div className="p-4 border-r border-foreground/10 bg-white/40 dark:bg-black/20 flex flex-col items-center justify-center gap-0.5 sticky left-0 z-20 backdrop-blur-2xl group-hover/row:bg-white/60 dark:group-hover/row:bg-white/5 transition-all">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">{format(date, "EEEE")}</span>
+                                                        <span className="text-[9px] font-black uppercase text-foreground/40 tracking-widest">{format(date, "MMM dd")}</span>
                                                     </div>
 
-                                                    {slots.map((slot) => {
-                                                        const startHour = slot.startTime.getHours();
-                                                        const startIndex = HOURS.indexOf(startHour);
-                                                        if (startIndex === -1) return null;
+                                                    {/* Unified Grid Canvas */}
+                                                    <div className="relative h-20 w-full">
+                                                        {/* Precision Background Lines */}
+                                                        <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${HOURS.length}, 1fr)` }}>
+                                                            {HOURS.map((h) => (
+                                                                <div key={h} className="border-r border-foreground/5 last:border-r-0 h-full relative">
+                                                                    <div className="absolute top-0 right-0 w-px h-1.5 bg-foreground/10" />
+                                                                    <div className="absolute bottom-0 right-0 w-px h-1.5 bg-foreground/10" />
+                                                                </div>
+                                                            ))}
+                                                        </div>
 
-                                                        return (
-                                                            <Tooltip key={slot.id}>
-                                                                <TooltipTrigger asChild>
-                                                                    <div
-                                                                        onClick={() => handleSlotClick(slot)}
-                                                                        style={{
-                                                                            gridColumn: `${startIndex + 2} / span ${slot.durationHours}`,
-                                                                        }}
-                                                                        className={`h-16 border-b border-r p-1 transition-all ${slot.status === "full" ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-slate-50"
-                                                                            }`}
-                                                                    >
-                                                                        <div className={`h-full w-full rounded-md ${getSlotColor(slot.status)} flex flex-col items-center justify-center text-white text-xs shadow-sm`}>
-                                                                            <span className="font-bold">{slot.availableCapacity}/{slot.totalCapacity}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    <div className="text-xs">
-                                                                        <p><strong>{format(slot.startTime, "HH:mm")}</strong></p>
-                                                                        <p>Status: {slot.status}</p>
-                                                                    </div>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        );
-                                                    })}
-                                                </React.Fragment>
+                                                        {/* Interactive Slots Layer */}
+                                                        <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${HOURS.length}, 1fr)` }}>
+                                                            {slots.map((slot) => {
+                                                                const startHour = slot.startTime.getHours();
+                                                                const startIndex = HOURS.indexOf(startHour);
+                                                                if (startIndex === -1) return null;
+
+                                                                const isFull = slot.occupancyRate >= 1;
+                                                                const rate = slot.occupancyRate;
+
+                                                                const getSlotStyle = () => {
+                                                                    if (isFull) return "bg-slate-100 border-slate-200 text-slate-400 opacity-40 cursor-not-allowed";
+                                                                    if (rate > 0.8) return "bg-red-50 border-red-200 text-red-700 hover:bg-red-100";
+                                                                    if (rate > 0.5) return "bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100";
+                                                                    if (rate > 0.2) return "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100";
+                                                                    return "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-600 hover:text-white";
+                                                                };
+
+                                                                return (
+                                                                    <Tooltip key={slot.id}>
+                                                                        <TooltipTrigger asChild>
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    if (!isFull) {
+                                                                                        setSelectedSlot(slot);
+                                                                                        setBookingStep(1);
+                                                                                        setIsBookingDialogOpen(true);
+                                                                                    }
+                                                                                }}
+                                                                                style={{
+                                                                                    gridColumnStart: startIndex + 1,
+                                                                                    gridColumnEnd: `span ${slot.durationHours}`
+                                                                                }}
+                                                                                className={cn(
+                                                                                    "m-1 p-1 rounded-lg transition-all duration-200 border relative overflow-hidden flex flex-col items-center justify-center",
+                                                                                    getSlotStyle()
+                                                                                )}
+                                                                            >
+                                                                                <div className="flex items-baseline gap-0.5">
+                                                                                    <span className="text-lg font-bold tabular-nums">
+                                                                                        {slot.totalCapacity - Math.floor(slot.occupancyRate * slot.totalCapacity)}
+                                                                                    </span>
+                                                                                    <span className="text-[8px] font-bold opacity-30"> / {slot.totalCapacity}</span>
+                                                                                </div>
+                                                                                <span className="text-[6px] font-black uppercase tracking-tighter opacity-40">
+                                                                                    {Math.round(rate * 100)}% Full
+                                                                                </span>
+                                                                            </button>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent
+                                                                            className="p-5 border border-white/20 bg-transparent rounded-xl shadow-2xl backdrop-blur-3xl ring-1 ring-black/10 min-w-[220px] animate-in fade-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 duration-200"
+                                                                            sideOffset={10}
+                                                                        >
+                                                                            <div className="space-y-4">
+                                                                                <div className="flex items-center gap-4 mb-4">
+                                                                                    <div className={cn(
+                                                                                        "p-3 rounded-2xl shadow-inner",
+                                                                                        isFull ? "bg-slate-100 text-slate-500" :
+                                                                                            rate > 0.8 ? "bg-red-100 text-red-600" :
+                                                                                                rate > 0.5 ? "bg-orange-100 text-orange-600" :
+                                                                                                    rate > 0.2 ? "bg-amber-100 text-amber-600" :
+                                                                                                        "bg-emerald-100 text-emerald-600"
+                                                                                    )}>
+                                                                                        <Clock size={18} />
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/30 mb-0.5">Time Window</p>
+                                                                                        <p className="text-sm font-black text-foreground">{format(slot.startTime, "HH:mm")} — {format(addHours(slot.startTime, slot.durationHours), "HH:mm")}</p>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="space-y-2">
+                                                                                    <div className="p-3 bg-foreground/2 rounded-xl flex items-center justify-between">
+                                                                                        <span className="text-[9px] font-black uppercase text-foreground/40">Status</span>
+                                                                                        <Badge variant="outline" className={cn(
+                                                                                            "text-[8px] font-black uppercase tracking-widest px-2 py-0 border-0",
+                                                                                            isFull ? "bg-slate-100 text-slate-500" :
+                                                                                                rate > 0.8 ? "bg-red-500/10 text-red-600" :
+                                                                                                    rate > 0.5 ? "bg-orange-500/10 text-orange-600" :
+                                                                                                        rate > 0.2 ? "bg-amber-500/10 text-amber-600" :
+                                                                                                            "bg-emerald-500/10 text-emerald-600"
+                                                                                        )}>
+                                                                                            {isFull ? "Full" : Math.round(rate * 100) + "% Occupied"}
+                                                                                        </Badge>
+                                                                                    </div>
+                                                                                    <div className="p-3 bg-foreground/2 rounded-xl flex items-center justify-between">
+                                                                                        <span className="text-[9px] font-black uppercase text-foreground/40">Capacity</span>
+                                                                                        <span className="text-xs font-black text-foreground">{slot.totalCapacity - Math.floor(slot.occupancyRate * slot.totalCapacity)} / {slot.totalCapacity}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="mt-4 pt-4 border-t border-foreground/5">
+                                                                                    <p className="text-[9px] font-bold text-foreground/40 italic text-center">
+                                                                                        {isFull ? "Reservations closed for this window" : "Tap slot to proceed with booking confirmation"}
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
-                                    <ScrollBar orientation="horizontal" />
+                                    <ScrollBar orientation="horizontal" className="h-2 bg-foreground/5 hover:bg-foreground/10 transition-colors" />
                                 </ScrollArea>
-                            </CardContent>
-                        </Card>
-
-                        {/* Filter Bar */}
-                        <div className="flex flex-wrap gap-4 bg-white p-4 rounded-lg border shadow-sm items-center">
-                            <div className="flex items-center gap-2 text-slate-500">
-                                <Filter className="w-4 h-4" /> Port / Terminal:
-                            </div>
-
-                            <Select value={selectedTerminal} onValueChange={setSelectedTerminal}>
-                                <SelectTrigger className="w-[200px]"><SelectValue placeholder="Select Terminal" /></SelectTrigger>
-                                <SelectContent>
-                                    {terminals.map(t => (
-                                        <SelectItem key={t.id} value={t.id}>
-                                            {t.zone_name} (Gate {t.gate?.gate_number || "?"})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-
-                            <div className="flex items-center gap-2 text-slate-500 ml-4">
-                                <Calendar className="w-4 h-4" /> Date:
-                            </div>
-                            <Input
-                                type="date"
-                                className="w-[180px]"
-                                value={dateFilter}
-                                onChange={(e) => setDateFilter(e.target.value)}
-                            />
-
-                            <div className="flex-1" />
-
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild><Button variant="outline" size="sm">Status Filter</Button></DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuLabel>Filter Status</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {['confirmed', 'pending', 'rejected', 'cancelled'].map(s => (
-                                        <DropdownMenuCheckboxItem
-                                            key={s}
-                                            checked={statusFilter.includes(s)}
-                                            onCheckedChange={(checked) => {
-                                                setStatusFilter(prev => checked ? [...prev, s] : prev.filter(x => x !== s))
-                                            }}
-                                        >
-                                            {s}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => { setStatusFilter([]); setTypeFilter([]); setDateFilter(format(new Date(), "yyyy-MM-dd")); }}
-                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                            >
-                                Reset
-                            </Button>
-                        </div>
-
-                        {/* Bookings Table */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Booking Log</CardTitle>
-                                <CardDescription>Manage your requested slots</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-10">
-                                                <Checkbox
-                                                    checked={selectedBookings.size === filteredBookings.length && filteredBookings.length > 0}
-                                                    onCheckedChange={toggleSelectAll}
-                                                />
-                                            </TableHead>
-                                            <TableHead>Code</TableHead>
-                                            <TableHead>Date & Time</TableHead>
-                                            <TableHead>Type</TableHead>
-                                            <TableHead>Terminal</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredBookings.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={7} className="text-center py-8 text-slate-500">
-                                                    No bookings found.
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : (
-                                            filteredBookings.map(booking => (
-                                                <TableRow key={booking.id}>
-                                                    <TableCell>
-                                                        <Checkbox
-                                                            checked={selectedBookings.has(booking.id)}
-                                                            onCheckedChange={() => toggleBookingSelection(booking.id)}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell className="font-mono">{booking.bookingCode}</TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <span>{format(booking.date, "MMM dd, yyyy")}</span>
-                                                            <span className="text-xs text-slate-500">{booking.timeSlot}</span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell><Badge variant="outline">{booking.containerType}</Badge></TableCell>
-                                                    <TableCell>{booking.terminal}</TableCell>
-                                                    <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                                                    <TableCell className="text-right">
-                                                        {booking.status === 'confirmed' && booking.qrCode && (
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                onClick={() => setQrBooking(booking)}
-                                                            >
-                                                                <QrCode className="w-4 h-4 mr-2" /> View QR
-                                                            </Button>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="traffic">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Traffic Tracking & Fleet Availability</CardTitle>
-                                <CardDescription>Manage your truck fleet status for real-time tracking</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Truck Plate Number</TableHead>
-                                            <TableHead>Current Status</TableHead>
-                                            <TableHead className="text-right">Availability</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {trucks.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={3} className="text-center py-8">No trucks found.</TableCell>
-                                            </TableRow>
-                                        ) : (
-                                            trucks.map(truck => (
-                                                <TableRow key={truck.id}>
-                                                    <TableCell className="font-mono font-bold text-blue-600">{truck.plate_number}</TableCell>
-                                                    <TableCell>
-                                                        <Badge className={truck.status === 'AVAILABLE' ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}>
-                                                            {truck.status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            <span className="text-xs text-muted-foreground mr-2">
-                                                                {truck.status === 'AVAILABLE' ? 'Online' : 'In Transit'}
-                                                            </span>
-                                                            <Checkbox
-                                                                checked={truck.status === 'AVAILABLE'}
-                                                                onCheckedChange={() => handleTruckStatusToggle(truck.id, truck.status)}
-                                                            />
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
-
-                {/* QR Dialog */}
-                <Dialog open={!!qrBooking} onOpenChange={() => setQrBooking(null)}>
-                    <DialogContent className="sm:max-w-xs">
-                        <DialogHeader>
-                            <DialogTitle>Booking QR</DialogTitle>
-                        </DialogHeader>
-                        <div className="flex justify-center py-4 bg-white rounded border">
-                            {qrBooking && qrBooking.qrCode && (
-                                <QRCodeCanvas
-                                    value={qrBooking.qrCode}
-                                    size={180}
-                                    level="H"
-                                />
                             )}
                         </div>
-                        <div className="text-center space-y-1">
-                            <p className="font-bold">{qrBooking?.bookingCode}</p>
-                            <p className="text-sm text-slate-500">Scan at terminal gate</p>
-                        </div>
-                    </DialogContent>
-                </Dialog>
+                    </ChartCard>
 
-                {/* Booking Dialog */}
-                <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Confirm Booking</DialogTitle>
-                            <DialogDescription>
-                                {selectedSlot && format(selectedSlot.startTime, "EEEE, MMMM d 'at' HH:mm")}
-                            </DialogDescription>
+                    {/* Detailed Booking Log - Below Calendar */}
+                    <ChartCard
+                        title="Detailed Booking Log"
+                        subtitle="Management & verification"
+                        accentColor="bg-accent"
+                        delay={3}
+                    >
+                        <div className="space-y-4 pt-4">
+                            <div className="flex items-center gap-4 bg-foreground/2 p-4 rounded-xl border border-foreground/5 relative">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-foreground/20" />
+                                    <Input
+                                        placeholder="Search by reference or Cargo ID..."
+                                        className="pl-9 bg-transparent border-none outline-none focus-visible:ring-0 placeholder:text-foreground/20 font-medium"
+                                        value={activeFilters.searchRef}
+                                        onChange={(e) => setActiveFilters(prev => ({ ...prev, searchRef: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className={cn(
+                                            "rounded-xl border-foreground/10 flex items-center gap-2 h-10 px-4 transition-all hover:bg-accent hover:text-white hover:border-accent",
+                                            activeFilters.status.length > 0 || activeFilters.dateFrom || activeFilters.dateTo ? "bg-accent/10 border-accent/20 text-accent" : "text-foreground/60"
+                                        )}
+                                        onClick={() => setIsFiltersOpen(true)}
+                                    >
+                                        <Filter size={14} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Filters</span>
+                                        {(activeFilters.status.length > 0 || activeFilters.dateFrom || activeFilters.dateTo) && (
+                                            <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                                        )}
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="rounded-xl border-foreground/10 flex items-center gap-2 h-10 px-4 hover:bg-primary hover:text-white hover:border-primary transition-all text-foreground/60"
+                                        onClick={() => setIsExportOpen(true)}
+                                    >
+                                        <Download size={14} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Export</span>
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="rounded-xl border border-foreground/5 overflow-hidden">
+                                <Table>
+                                    <TableHeader className="bg-foreground/2">
+                                        <TableRow className="border-foreground/5">
+                                            <TableHead className="text-[10px] font-black uppercase tracking-widest opacity-40">Code</TableHead>
+                                            <TableHead className="text-[10px] font-black uppercase tracking-widest opacity-40">Cargo</TableHead>
+                                            <TableHead className="text-[10px] font-black uppercase tracking-widest opacity-40">Slot</TableHead>
+                                            <TableHead className="text-[10px] font-black uppercase tracking-widest opacity-40">Terminal</TableHead>
+                                            <TableHead className="text-[10px] font-black uppercase tracking-widest opacity-40">Status</TableHead>
+                                            <TableHead className="text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Verification</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredBookings.map(booking => (
+                                            <TableRow key={booking.id} className="border-foreground/5 transition-colors hover:bg-foreground/3">
+                                                <TableCell className="font-mono font-bold text-xs">{booking.bookingCode}</TableCell>
+                                                <TableCell className="font-bold text-xs text-accent">{booking.containerNumber}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold">{format(booking.date, "MMM dd, yyyy")}</span>
+                                                        <span className="text-[10px] text-foreground/40 font-bold">{booking.timeSlot}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-xs font-bold opacity-60">{booking.terminal}</TableCell>
+                                                <TableCell><span className={getStatusStyle(booking.status)}>{booking.status}</span></TableCell>
+                                                <TableCell className="text-right">
+                                                    {booking.status === 'confirmed' && booking.qrCode && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-8 rounded-lg hover:bg-secondary/20 hover:text-secondary-foreground transition-all active:scale-95"
+                                                            onClick={() => setQrBooking(booking)}
+                                                        >
+                                                            <QrCode className="w-4 h-4 mr-2" /> View QR
+                                                        </Button>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </div>
+                    </ChartCard>
+                </div>
+
+                {/* Modals */}
+                <Dialog open={!!qrBooking} onOpenChange={() => setQrBooking(null)}>
+                    <DialogContent className="fixed! top-1/2! left-1/2! -translate-x-1/2! -translate-y-1/2! z-50 max-w-xs w-[90vw] glass-card-geo border-foreground/10 rounded-xl p-8 shadow-2xl">
+                        <DialogHeader className="items-center">
+                            <DialogTitle className="font-black text-xl uppercase tracking-widest mb-1">Pass Validated</DialogTitle>
+                            <DialogDescription className="text-[10px] font-bold uppercase tracking-[0.2em] text-success">Scan at terminal gate</DialogDescription>
                         </DialogHeader>
-                        <div className="py-4 space-y-4">
-                            <div className="grid gap-2">
-                                <label className="text-sm font-medium">Select Truck</label>
-                                <Select onValueChange={setSelectedTruck} value={selectedTruck}>
-                                    <SelectTrigger><SelectValue placeholder="Select a truck" /></SelectTrigger>
-                                    <SelectContent>
-                                        {trucks.map(t => (
-                                            <SelectItem key={t.id} value={t.id}>{t.plate_number}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-2">
-                                <label className="text-sm font-medium">Select Driver</label>
-                                <Select onValueChange={setSelectedDriver} value={selectedDriver}>
-                                    <SelectTrigger><SelectValue placeholder="Select a driver" /></SelectTrigger>
-                                    <SelectContent>
-                                        {drivers.map(d => (
-                                            <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-2">
-                                <label className="text-sm font-medium">Container Type</label>
-                                <Select value={containerType} onValueChange={setContainerType}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="20FT">20FT Standard</SelectItem>
-                                        <SelectItem value="40FT">40FT Standard</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                        <div className="flex justify-center p-8 bg-white rounded-xl shadow-inner mt-4 border border-slate-100">
+                            {qrBooking?.qrCode && (
+                                <QRCodeCanvas value={qrBooking.qrCode} size={180} level="H" />
+                            )}
                         </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsBookingDialogOpen(false)}>Cancel</Button>
-                            <Button onClick={handleBooking}>Confirm Booking</Button>
-                        </DialogFooter>
+                        <div className="text-center mt-6">
+                            <p className="font-black text-lg tracking-widest text-primary">{qrBooking?.bookingCode}</p>
+                            <p className="text-[10px] font-bold text-foreground/30 mt-1">{qrBooking && format(qrBooking.date, "EEEE, MMMM dd")}</p>
+                        </div>
                     </DialogContent>
                 </Dialog>
 
+                <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+                    <DialogContent className="fixed! top-1/2! left-1/2! -translate-x-1/2! -translate-y-1/2! z-50 glass-card-geo border-foreground/10 rounded-xl max-w-[650px] w-[95vw] shadow-2xl p-0 overflow-hidden">
+                        <div className="p-6 border-b border-foreground/5 bg-foreground/2 flex items-center justify-between">
+                            <div>
+                                <DialogTitle className="text-xl font-bold">Batch Scheduling Session</DialogTitle>
+                                <DialogDescription className="text-xs font-bold text-primary italic">
+                                    {selectedSlot && format(selectedSlot.startTime, "EEEE, MMM d @ HH:mm")}
+                                </DialogDescription>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {[1, 2, 3].map((step) => (
+                                    <div key={step} className={cn("w-2.5 h-2.5 rounded-full", bookingStep >= step ? "bg-primary" : "bg-foreground/10")} />
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="p-6 min-h-[400px]">
+                            <AnimatePresence mode="wait">
+                                {bookingStep === 1 && (
+                                    <motion.div key="step1" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
+                                        <div className="grid gap-3">
+                                            <p className="text-[10px] font-black uppercase text-foreground/40 mb-1">Verify Payload ({cargoPool.length} Units)</p>
+                                            <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2">
+                                                {cargoPool.map(cargo => (
+                                                    <div key={cargo.id} className="p-3 rounded-lg bg-foreground/3 border border-foreground/5 flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 bg-accent/10 text-accent rounded-md"><QrCode size={14} /></div>
+                                                            <div>
+                                                                <p className="text-xs font-bold">{cargo.container_number}</p>
+                                                                <p className="text-[8px] font-bold text-foreground/30">{cargo.terminal?.zone_name || "Port Arrival"}</p>
+                                                            </div>
+                                                        </div>
+                                                        <Badge variant="outline" className="text-[8px] font-black uppercase border-foreground/10">{cargo.container_type || '20FT'}</Badge>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                {bookingStep === 2 && (
+                                    <motion.div key="step2" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6">
+                                        <div className="space-y-4">
+                                            <div className="grid gap-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Assign Bulk Fleet</label>
+                                                <Select onValueChange={setSelectedTruck} value={selectedTruck}>
+                                                    <SelectTrigger className="rounded-lg border-foreground/10 bg-white h-12 font-bold focus:ring-primary/20"><SelectValue placeholder="Select Prime Mover" /></SelectTrigger>
+                                                    <SelectContent className="glass-card-geo border-foreground/10">
+                                                        {trucks.map(t => <SelectItem key={t.id} value={t.id}>{t.plate_number}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Assign Primary Driver</label>
+                                                <Select onValueChange={setSelectedDriver} value={selectedDriver}>
+                                                    <SelectTrigger className="rounded-lg border-foreground/10 bg-white h-12 font-bold focus:ring-primary/20"><SelectValue placeholder="Assign Operator" /></SelectTrigger>
+                                                    <SelectContent className="glass-card-geo border-foreground/10">
+                                                        {drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                                <p className="text-[9px] text-foreground/40 italic font-medium ml-1">Assigned resources will apply to all {cargoPool.length} containers in this batch.</p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                {bookingStep === 3 && (
+                                    <motion.div key="step3" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6 flex flex-col items-center justify-center p-8 text-center text-foreground">
+                                        <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4"><CheckCircle2 size={32} /></div>
+                                        <h3 className="text-xl font-bold">Ready to Finalize?</h3>
+                                        <p className="text-sm text-foreground/50 max-w-[300px]">Book <strong>{cargoPool.length} units</strong> for window <strong>{selectedSlot && format(selectedSlot.startTime, "HH:mm")}</strong>.</p>
+                                        <div className="w-full h-px bg-foreground/5 my-2" />
+                                        <div className="flex gap-10">
+                                            <div className="text-center"><p className="text-[8px] font-black uppercase text-foreground/30">Truck</p><p className="text-sm font-bold">{trucks.find(t => t.id === selectedTruck)?.plate_number}</p></div>
+                                            <div className="text-center"><p className="text-[8px] font-black uppercase text-foreground/30">Driver</p><p className="text-sm font-bold">{drivers.find(d => d.id === selectedDriver)?.full_name}</p></div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        <div className="p-6 bg-foreground/2 border-t border-foreground/5 flex gap-3">
+                            {bookingStep > 1 ? (
+                                <Button variant="ghost" className="flex-1 rounded-lg h-12 font-bold uppercase text-[10px] tracking-widest" onClick={() => setBookingStep(prev => prev - 1)}>Back</Button>
+                            ) : (
+                                <Button variant="ghost" className="flex-1 rounded-lg h-12 font-bold uppercase text-[10px] tracking-widest text-error" onClick={() => setIsBookingDialogOpen(false)}>Cancel Session</Button>
+                            )}
+                            <Button
+                                className="flex-2 rounded-lg h-12 font-bold uppercase text-[10px] tracking-widest bg-primary shadow-lg shadow-primary/20"
+                                onClick={() => {
+                                    if (bookingStep < 3) {
+                                        if (bookingStep === 2 && (!selectedTruck || !selectedDriver)) {
+                                            toast.error("Assign both a vehicle and an operator");
+                                            return;
+                                        }
+                                        setBookingStep(prev => prev + 1);
+                                    } else {
+                                        handleFinalBatchBooking();
+                                    }
+                                }}
+                            >
+                                {bookingStep === 3 ? `Reserve ${cargoPool.length} Slots` : "Next Task"}
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Standardized Import Modals */}
+                <ImportModal
+                    isOpen={isCargoImportOpen}
+                    onClose={() => setIsCargoImportOpen(false)}
+                    onImport={(data) => {
+                        setImportText(data);
+                        handleImportCargoList();
+                    }}
+                    title="Import Cargo Manifest"
+                    description="Upload your logistics CSV or paste Container IDs to verify availability"
+                />
+
+                <ImportModal
+                    isOpen={isFleetImportOpen}
+                    onClose={() => setIsFleetImportOpen(false)}
+                    onImport={(data) => {
+                        toast.info("Fleet data received. Integration in progress...");
+                    }}
+                    title="Import Fleet Registry"
+                    description="Bulk assign Trucks and Drivers from your external fleet management system"
+                />
+
+                {/* Centered Filter Popup */}
+                <FiltersPanel
+                    isOpen={isFiltersOpen}
+                    onClose={() => setIsFiltersOpen(false)}
+                    onApply={(f) => {
+                        setActiveFilters(prev => ({
+                            ...prev,
+                            dateFrom: f.fromDate,
+                            dateTo: f.toDate,
+                            status: f.status
+                        }));
+                    }}
+                    type="booking"
+                    centered={true}
+                />
+
+                {/* Standardized Export Modal */}
+                <ExportModal
+                    isOpen={isExportOpen}
+                    onClose={() => setIsExportOpen(false)}
+                    data={bookings}
+                    type="bookings"
+                />
             </div>
         </TooltipProvider>
     );

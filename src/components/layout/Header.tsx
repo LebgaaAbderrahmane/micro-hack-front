@@ -6,6 +6,7 @@ import { Settings, User, LogOut, Building2, Mail, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { Logo } from "../common/Logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +17,6 @@ import {
 const getNavItems = (role?: string) => {
   const baseItems = [
     { label: "Dashboard", href: "/" },
-    { label: "Analytics", href: "/analytics" },
   ];
 
   if (!role) return baseItems;
@@ -26,6 +26,7 @@ const getNavItems = (role?: string) => {
   if (r === "ADMIN") {
     return [
       ...baseItems,
+      { label: "Analytics", href: "/analytics" },
       { label: "Manage", href: "/manage" },
       { label: "Logs", href: "/loggings" },
     ];
@@ -34,6 +35,7 @@ const getNavItems = (role?: string) => {
   if (r === "OPERATOR") {
     return [
       ...baseItems,
+      { label: "Analytics", href: "/analytics" },
       { label: "Manage", href: "/bookings" },
       { label: "Logs", href: "/loggings" },
     ];
@@ -42,8 +44,8 @@ const getNavItems = (role?: string) => {
   if (r === "DISPATCHER" || r === "CARRIER") {
     return [
       ...baseItems,
-      { label: "New Booking", href: "/bookings/new" },
       { label: "Bookings", href: "/bookings" },
+      { label: "Fleet", href: "/fleet" },
     ];
   }
 
@@ -83,38 +85,8 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
       style={{ padding: "22px 64px" }}
     >
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-3 group">
-        <div
-          className="flex items-center justify-center rounded-lg bg-brand-text"
-          style={{ width: 38, height: 38 }}
-        >
-          {/* Shipping icon placeholder */}
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect x="2" y="7" width="20" height="14" rx="2" />
-            <path d="M16 7V4a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3" />
-            <line x1="12" y1="11" x2="12" y2="17" />
-            <line x1="9" y1="14" x2="15" y2="14" />
-          </svg>
-        </div>
-        <span
-          className="font-[var(--font-montserrat)] text-brand-text dark:text-foreground"
-          style={{
-            fontFamily: "var(--font-montserrat), sans-serif",
-            fontWeight: 700,
-            fontSize: 24,
-          }}
-        >
-          Test
-        </span>
+      <Link href="/" className="flex items-center group transition-all duration-300">
+        <Logo />
       </Link>
 
       {/* Centered Pill Nav */}

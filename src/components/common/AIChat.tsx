@@ -55,7 +55,7 @@ export const AIChat = () => {
 
   // Load history after mount to avoid hydration mismatch
   useEffect(() => {
-    const saved = localStorage.getItem("portflow_chat_history");
+    const saved = localStorage.getItem("apcs_chat_history");
     if (saved) {
       try {
         setChatHistory(JSON.parse(saved));
@@ -82,7 +82,7 @@ export const AIChat = () => {
   useEffect(() => {
     if (chatHistory.length > 0) {
       localStorage.setItem(
-        "portflow_chat_history",
+        "apcs_chat_history",
         JSON.stringify(chatHistory),
       );
     }
@@ -110,7 +110,7 @@ export const AIChat = () => {
     setChatHistory((prev) => {
       const filtered = prev.filter((h) => h.id !== currentId);
       const newHistory = [newItem, ...filtered].slice(0, 20);
-      localStorage.setItem("portflow_chat_history", JSON.stringify(newHistory));
+      localStorage.setItem("apcs_chat_history", JSON.stringify(newHistory));
       return newHistory;
     });
   };
@@ -131,7 +131,7 @@ export const AIChat = () => {
 
   const clearHistory = () => {
     setChatHistory([]);
-    localStorage.removeItem("portflow_chat_history");
+    localStorage.removeItem("apcs_chat_history");
   };
 
   const toggleOpen = () => {
@@ -238,7 +238,7 @@ export const AIChat = () => {
             animate={{ opacity: 1, backdropFilter: "blur(8px)" }}
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
             onClick={() => setChatState("small")}
-            className="fixed inset-0 bg-background/20 z-[90]"
+            className="fixed inset-0 bg-background/20 z-90"
           />
         )}
 
@@ -247,7 +247,7 @@ export const AIChat = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[210] flex items-center justify-center bg-background/60 backdrop-blur-md p-6"
+            className="fixed inset-0 z-210 flex items-center justify-center bg-background/60 backdrop-blur-md p-6"
             onClick={() => setShowHistory(false)}
           >
             <motion.div
@@ -332,9 +332,9 @@ export const AIChat = () => {
         initial="closed"
         animate={chatState}
         className={cn(
-          "fixed z-[200] overflow-hidden flex flex-col",
+          "fixed z-200 overflow-hidden flex flex-col",
           "bg-background/30 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-2xl",
-          "before:absolute before:inset-0 before:bg-gradient-to-tr before:from-primary/5 before:to-transparent before:pointer-events-none",
+          "before:absolute before:inset-0 before:bg-linear-to-tr before:from-primary/5 before:to-transparent before:pointer-events-none",
           chatState === "closed"
             ? "cursor-pointer hover:scale-105 active:scale-95 transition-all duration-500 hover:shadow-primary/20"
             : "",
@@ -372,7 +372,7 @@ export const AIChat = () => {
               <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/5 backdrop-blur-xl">
                 <div className="flex items-center gap-4">
                   <div className="relative group">
-                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-primary/20 to-blue-500/20 flex items-center justify-center border border-white/20 shadow-inner">
+                    <div className="h-12 w-12 rounded-2xl bg-linear-to-tr from-primary/20 to-blue-500/20 flex items-center justify-center border border-white/20 shadow-inner">
                       <Cpu size={26} className="text-primary" />
                     </div>
                     <span
@@ -386,7 +386,7 @@ export const AIChat = () => {
                   </div>
                   <div>
                     <h3 className="font-bold text-base tracking-tight text-foreground/90 leading-tight">
-                      PortFlow Intelligence
+                      APCS Intelligence
                     </h3>
                     <p className="text-[10px] text-primary/80 font-bold uppercase tracking-[0.2em]">
                       {isLoading ? "Processing…" : "Neural Engine Active"}
