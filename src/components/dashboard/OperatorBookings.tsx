@@ -7,14 +7,9 @@ import {
     MoreHorizontal,
     CheckCircle,
     XCircle,
-    Clock,
     Truck,
-    FileText,
     QrCode,
     RefreshCw,
-    Plus,
-    Trash,
-    Calendar as CalendarIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,9 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import {
     Card,
     CardContent,
-    CardDescription,
     CardHeader,
-    CardTitle,
 } from "@/components/ui/card";
 import {
     Dialog,
@@ -52,9 +45,8 @@ import {
 import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
-import { format, addHours, startOfHour } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
+
 // Types matching DB relations
 interface Booking {
     id: string;
@@ -77,181 +69,6 @@ export default function OperatorBookings() {
     const [searchQuery, setSearchQuery] = useState("");
     const [showQRModal, setShowQRModal] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [isCreatingSlot, setIsCreatingSlot] = useState(false);
-    const [slots, setSlots] = useState<any[]>([]);
-    const [terminals, setTerminals] = useState<any[]>([]);
-    const [newSlot, setNewSlot] = useState({
-        terminal_id: "",
-        slot_date: format(new Date(), "yyyy-MM-dd"),
-        start_time: "08:00",
-        end_time: "09:00",
-        max_capacity: 10
-    });
-
-    const fetchTerminals = async () => {
-        const { data, error } = await supabase.from("terminals").select(`
-            *,
-            gate:gates(gate_number)
-        `);
-        if (error) {
-            console.error("Error fetching terminals:", error);
-            toast.error("Failed to load terminals");
-        }
-        if (data) {
-            setTerminals(data);
-            if (data.length > 0 && !newSlot.terminal_id) {
-                setNewSlot(prev => ({ ...prev, terminal_id: data[0].id }));
-            }
-        }
-    };
-
-    const handleSeedData = async () => {
-        try {
-            setLoading(true);
-            // 1. Ensure Port
-            let { data: ports } = await supabase.from('ports').select('id').limit(1);
-            let portId = ports?.[0]?.id;
-
-            if (!portId) {
-                const { data: newPort, error: portError } = await supabase.from('ports').insert({
-                    name: 'Main Port',
-                    code: 'MPT',
-                    wilaya: 'Algiers'
-                }).select().single();
-                if (portError) throw portError;
-                portId = newPort.id;
-            }
-
-            // 2. Ensure Gate
-            let { data: gates } = await supabase.from('gates').select('id').eq('port_id', portId).limit(1);
-            let gateId = gates?.[0]?.id;
-
-            if (!gateId) {
-                const { data: newGate, error: gateError } = await supabase.from('gates').insert({
-                    port_id: portId,
-                    gate_number: 'G1',
-                    gate_status: 'OPERATIONAL'
-                }).select().single();
-                if (gateError) throw gateError;
-                gateId = newGate.id;
-            }
-
-            // 3. Ensure Terminals (at least 2)
-            const { data: existingTerminals } = await supabase.from('terminals').select('zone_code').eq('port_id', portId);
-            const existingCodes = existingTerminals?.map(t => t.zone_code) || [];
-
-            let created = 0;
-
-            // Create Zone A if missing
-            if (!existingCodes.includes('Z-A')) {
-                const { error: termError } = await supabase.from('terminals').insert({
-                    port_id: portId,
-                    gate_id: gateId,
-                    zone_name: 'Zone A',
-                    zone_code: 'Z-A',
-                    total_capacity: 100
-                });
-                if (termError) throw termError;
-                created++;
-            }
-
-            // Create Zone B if missing
-            if (!existingCodes.includes('Z-B')) {
-                const { error: termError } = await supabase.from('terminals').insert({
-                    port_id: portId,
-                    gate_id: gateId,
-                    zone_name: 'Zone B',
-                    zone_code: 'Z-B',
-                    total_capacity: 150
-                });
-                if (termError) throw termError;
-                created++;
-            }
-
-            if (created > 0) {
-                toast.success(`Created ${created} default terminals (Zone A & B)`);
-            } else {
-                toast.info("Default terminals (Zone A & B) already exist");
-            }
-
-            await fetchTerminals();
-        } catch (err: any) {
-            console.error(err);
-            toast.error("Seed failed: " + err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchSlots = async () => {
-        const { data, error } = await supabase
-            .from("active_slots")
-            .select(`
-                *,
-                terminal:terminals(
-                    zone_name,
-                    gate:gates(gate_number)
-                )
-            `)
-            .order("slot_date", { ascending: false })
-            .order("start_time", { ascending: true });
-        if (data) setSlots(data);
-    };
-
-    const handleCreateSlot = async () => {
-        // Validation
-        if (!newSlot.terminal_id) {
-            toast.error("Please select a terminal. Click 'Seed Data' if no terminals exist.");
-            return;
-        }
-        if (!newSlot.slot_date || !newSlot.start_time || !newSlot.end_time) {
-            toast.error("Please fill in all required fields.");
-            return;
-        }
-        if (newSlot.start_time >= newSlot.end_time) {
-            toast.error("End time must be after start time.");
-            return;
-        }
-        if (newSlot.max_capacity < 1) {
-            toast.error("Capacity must be at least 1.");
-            return;
-        }
-
-        setIsCreatingSlot(true);
-        const { error } = await supabase.from("active_slots").insert([
-            {
-                ...newSlot,
-                start_time: newSlot.start_time + ":00",
-                end_time: newSlot.end_time + ":00",
-                current_occupancy: 0,
-                status: "AVAILABLE"
-            }
-        ]);
-
-        setIsCreatingSlot(false);
-        if (error) {
-            toast.error("Failed to create slot: " + error.message);
-        } else {
-            toast.success("Slot created successfully!");
-            fetchSlots();
-            // Reset form times
-            setNewSlot(prev => ({
-                ...prev,
-                start_time: "08:00",
-                end_time: "09:00"
-            }));
-        }
-    };
-
-    const handleDeleteSlot = async (id: string) => {
-        const { error } = await supabase.from("active_slots").delete().eq("id", id);
-        if (error) {
-            toast.error("Failed to delete slot");
-        } else {
-            toast.success("Slot deleted");
-            fetchSlots();
-        }
-    };
 
     const fetchBookings = async () => {
         setLoading(true);
@@ -270,9 +87,6 @@ export default function OperatorBookings() {
             console.error(error);
             toast.error("Failed to fetch bookings");
         } else if (data) {
-            // Transform if necessary or use as is (Supabase returns arrays for relations sometimes? No, single if FK is 1:1 or N:1)
-            // Actually carrier_org, truck, driver are N:1 so they return single object if correctly typed or using !inner hints
-            // Let's cast for now
             setBookings(data as any);
         }
         setLoading(false);
@@ -280,8 +94,6 @@ export default function OperatorBookings() {
 
     useEffect(() => {
         fetchBookings();
-        fetchTerminals();
-        fetchSlots();
 
         // Real-time listener for NEW bookings
         const channel = supabase
@@ -295,8 +107,6 @@ export default function OperatorBookings() {
                 },
                 (payload) => {
                     console.log("Change received!", payload);
-                    // For simplicity, refetch all to get relations
-                    // Optimization: Insert payload if we have relation data (we don't), so refetch is safer
                     fetchBookings();
                     if (payload.eventType === 'INSERT') {
                         toast("New Booking Request received", {
@@ -343,23 +153,14 @@ export default function OperatorBookings() {
     const handleReject = async (id: string) => {
         const { error } = await supabase
             .from("bookings")
-            .update({ status: "CANCELLED" }) // Enum value? 'REJECTED' isn't in enum list in my memory? 
-            // Let's check types. database.types says: CANCELLED, NO_SHOW. 
-            // Is there REJECTED? 
-            // Wait, I saw 'REJECTED' in gate_action_type?
-            // booking_status_enum: PENDING, CONFIRMED, CHECKED_IN, AT_GATE, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW.
-            // So 'REJECTED' is NOT a valid status. We should use 'CANCELLED' or we need to update enum.
-            // For now, I will use 'CANCELLED' as "Rejected by Operator".
+            .update({ status: "CANCELLED" }) 
             .eq("id", id);
 
         if (error) {
             toast.error("Action failed");
         } else {
             toast.info("Booking Rejected (Cancelled)");
-            // Optimistic update
             setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "CANCELLED" as any } : b));
-            // Note: Locally showing 'rejected' but DB is 'CANCELLED' ideally. 
-            // Actually let's use 'CANCELLED' to match enum.
         }
     };
 
@@ -393,284 +194,128 @@ export default function OperatorBookings() {
                     <Button variant="outline" onClick={() => fetchBookings()} disabled={loading}>
                         <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Refresh
                     </Button>
-                    <Button variant="secondary" onClick={handleSeedData} disabled={loading}>
-                        Seed Data
-                    </Button>
                     <Button>Export Data</Button>
                 </div>
             </div>
 
-            <Tabs defaultValue="bookings" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-8">
-                    <TabsTrigger value="bookings">Booking Requests</TabsTrigger>
-                    <TabsTrigger value="slots">Slot Control</TabsTrigger>
-                </TabsList>
+            {/* Filters */}
+            <div className="flex items-center gap-4 glass-card-geo p-4 rounded-xl border border-foreground/5 mb-6">
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search reference or carrier..."
+                        className="pl-8"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+                <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <select
+                        className="text-sm border rounded p-2 bg-transparent"
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                    >
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
 
-                <TabsContent value="bookings" className="space-y-6">
-                    {/* Filters */}
-                    <div className="flex items-center gap-4 glass-card-geo p-4 rounded-xl border border-foreground/5">
-                        <div className="relative flex-1 max-w-sm">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search reference or carrier..."
-                                className="pl-8"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Filter className="h-4 w-4 text-muted-foreground" />
-                            <select
-                                className="text-sm border rounded p-2 bg-transparent"
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                            >
-                                <option value="all">All Status</option>
-                                <option value="pending">Pending</option>
-                                <option value="confirmed">Confirmed</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* List */}
-                    <Card>
-                        <CardHeader className="p-0" />
-                        <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Reference</TableHead>
-                                        <TableHead>Carrier & Driver</TableHead>
-                                        <TableHead>Slot Detail</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredBookings.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">
-                                                No bookings found.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        filteredBookings.map((booking) => (
-                                            <TableRow key={booking.id}>
-                                                <TableCell className="font-mono font-medium">
-                                                    {booking.booking_reference}
-                                                    <div className="text-xs text-muted-foreground mt-1">
-                                                        {format(new Date(booking.created_at), "MMM d, HH:mm")}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="font-medium">{booking.carrier_org?.name || "Unknown Org"}</div>
-                                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                                        <Truck className="w-3 h-3" /> {booking.truck?.plate_number || "N/A"}
-                                                        <span className="mx-1">•</span>
-                                                        {booking.driver?.full_name || "N/A"}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="font-medium">
-                                                            {format(new Date(booking.scheduled_date), "MMM d")}
-                                                        </div>
-                                                        <Badge variant="outline" className="text-xs font-normal">
-                                                            {format(new Date(booking.scheduled_start), "HH:mm")} - {format(new Date(booking.scheduled_end), "HH:mm")}
-                                                        </Badge>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge className={`hover:bg-opacity-80 ${getStatusStyle(booking.status)}`}>
-                                                        {booking.status}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <span className="sr-only">Open menu</span>
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(booking.booking_reference)}>
-                                                                Copy Ref
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            {booking.status === 'PENDING' && (
-                                                                <>
-                                                                    <DropdownMenuItem onClick={() => handleValidate(booking.id, booking.booking_reference)} className="text-green-600">
-                                                                        <CheckCircle className="w-4 h-4 mr-2" /> Validate
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem onClick={() => handleReject(booking.id)} className="text-red-600">
-                                                                        <XCircle className="w-4 h-4 mr-2" /> Reject
-                                                                    </DropdownMenuItem>
-                                                                </>
-                                                            )}
-                                                            {booking.status === 'CONFIRMED' && (
-                                                                <DropdownMenuItem onClick={() => setShowQRModal(booking.id)}>
-                                                                    <QrCode className="w-4 h-4 mr-2" /> View QR
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="slots" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Create New Time Slot</CardTitle>
-                            <CardDescription>Manually add available booking slots for carriers</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Terminal / Gate</label>
-                                    {terminals.length === 0 ? (
-                                        <div className="text-sm text-muted-foreground p-2 border rounded bg-warning/10 border-warning/30">
-                                            No terminals found. Click "Seed Data" below to create one.
-                                        </div>
-                                    ) : (
-                                        <select
-                                            className="w-full text-sm border rounded p-2 bg-background"
-                                            value={newSlot.terminal_id}
-                                            onChange={(e) => setNewSlot(prev => ({ ...prev, terminal_id: e.target.value }))}
-                                        >
-                                            <option value="">Select a terminal...</option>
-                                            {terminals.map(t => (
-                                                <option key={t.id} value={t.id}>
-                                                    {t.zone_name} (Gate {t.gate?.gate_number || "?"})
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Date</label>
-                                    <Input
-                                        type="date"
-                                        value={newSlot.slot_date}
-                                        onChange={(e) => setNewSlot(prev => ({ ...prev, slot_date: e.target.value }))}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Start Time</label>
-                                    <Input
-                                        type="time"
-                                        value={newSlot.start_time}
-                                        onChange={(e) => setNewSlot(prev => ({ ...prev, start_time: e.target.value }))}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">End Time</label>
-                                    <Input
-                                        type="time"
-                                        value={newSlot.end_time}
-                                        onChange={(e) => setNewSlot(prev => ({ ...prev, end_time: e.target.value }))}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Capacity</label>
-                                    <Input
-                                        type="number"
-                                        min={1}
-                                        max={100}
-                                        value={newSlot.max_capacity}
-                                        onChange={(e) => setNewSlot(prev => ({ ...prev, max_capacity: parseInt(e.target.value) || 10 }))}
-                                        placeholder="10"
-                                    />
-                                </div>
-                                <Button
-                                    onClick={handleCreateSlot}
-                                    className="w-full"
-                                    disabled={isCreatingSlot || terminals.length === 0 || !newSlot.terminal_id}
-                                >
-                                    {isCreatingSlot ? (
-                                        <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
-                                    ) : (
-                                        <><Plus className="w-4 h-4 mr-2" /> Create Slot</>
-                                    )}
-                                </Button>
-                            </div>
-                            {/* Seed Data button for empty terminals */}
-                            {terminals.length === 0 && (
-                                <div className="mt-4 p-4 border border-dashed border-primary/30 rounded-lg bg-primary/5">
-                                    <p className="text-sm text-muted-foreground mb-3">
-                                        No terminals found. Create initial port/gate/terminal data to get started.
-                                    </p>
-                                    <Button
-                                        onClick={handleSeedData}
-                                        variant="outline"
-                                        disabled={loading}
-                                    >
-                                        {loading ? (
-                                            <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
-                                        ) : (
-                                            <>Create Seed Data</>
-                                        )}
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Manage Active Slots</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Gate</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Time Range</TableHead>
-                                        <TableHead>Capacity</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {slots.map((slot) => (
-                                        <TableRow key={slot.id}>
-                                            <TableCell>
-                                                {slot.terminal?.zone_name} (Gate {slot.terminal?.gate?.gate_number || "?"})
-                                            </TableCell>
-                                            <TableCell>{format(new Date(slot.slot_date), "MMM d, yyyy")}</TableCell>
-                                            <TableCell>{slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="secondary">
-                                                    {slot.current_occupancy} / {slot.max_capacity}
+            {/* List */}
+            <Card>
+                <CardHeader className="p-0" />
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Reference</TableHead>
+                                <TableHead>Carrier & Driver</TableHead>
+                                <TableHead>Slot Detail</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredBookings.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                                        No bookings found.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filteredBookings.map((booking) => (
+                                    <TableRow key={booking.id}>
+                                        <TableCell className="font-mono font-medium">
+                                            {booking.booking_reference}
+                                            <div className="text-xs text-muted-foreground mt-1">
+                                                {format(new Date(booking.created_at), "MMM d, HH:mm")}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="font-medium">{booking.carrier_org?.name || "Unknown Org"}</div>
+                                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                                <Truck className="w-3 h-3" /> {booking.truck?.plate_number || "N/A"}
+                                                <span className="mx-1">•</span>
+                                                {booking.driver?.full_name || "N/A"}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <div className="font-medium">
+                                                    {format(new Date(booking.scheduled_date), "MMM d")}
+                                                </div>
+                                                <Badge variant="outline" className="text-xs font-normal">
+                                                    {format(new Date(booking.scheduled_start), "HH:mm")} - {format(new Date(booking.scheduled_end), "HH:mm")}
                                                 </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-red-600"
-                                                    onClick={() => handleDeleteSlot(slot.id)}
-                                                >
-                                                    <Trash className="w-4 h-4" />
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge className={`hover:bg-opacity-80 ${getStatusStyle(booking.status)}`}>
+                                                {booking.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                        <span className="sr-only">Open menu</span>
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                    <DropdownMenuItem onClick={() => navigator.clipboard.writeText(booking.booking_reference)}>
+                                                        Copy Ref
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                    {booking.status === 'PENDING' && (
+                                                        <>
+                                                            <DropdownMenuItem onClick={() => handleValidate(booking.id, booking.booking_reference)} className="text-green-600">
+                                                                <CheckCircle className="w-4 h-4 mr-2" /> Validate
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => handleReject(booking.id)} className="text-red-600">
+                                                                <XCircle className="w-4 h-4 mr-2" /> Reject
+                                                            </DropdownMenuItem>
+                                                        </>
+                                                    )}
+                                                    {booking.status === 'CONFIRMED' && (
+                                                        <DropdownMenuItem onClick={() => setShowQRModal(booking.id)}>
+                                                            <QrCode className="w-4 h-4 mr-2" /> View QR
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
 
             {/* QR Preview Modal */}
             <Dialog open={!!showQRModal} onOpenChange={() => setShowQRModal(null)}>

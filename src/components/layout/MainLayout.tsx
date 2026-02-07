@@ -1,30 +1,17 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { usePathname, useRouter } from "@/i18n/routing";
+import { usePathname } from "@/i18n/routing";
 import { Header } from "./Header";
-import { OperatorHeader } from "./OperatorHeader";
 import { AIChat } from "../common/AIChat";
 import { SettingsModal } from "../common/SettingsModal";
 import { useAuth } from "@/hooks/useAuth";
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
-  const router = useRouter();
   const { profile, isLoading } = useAuth();
-  const [mounted, setMounted] = useState(false);
+  // const [mounted, setMounted] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Redirect operators to /bookings if they land on the dashboard homepage
-  useEffect(() => {
-    if (mounted && !isLoading && profile?.role === "OPERATOR" && pathname === "/") {
-      router.replace("/bookings");
-    }
-  }, [mounted, isLoading, profile?.role, pathname, router]);
 
   const isAuthPage = pathname?.includes("/login");
 
@@ -32,13 +19,13 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
     return <main className="min-h-screen bg-background">{children}</main>;
   }
 
-  // Role-based header rendering
-  const isOperator = profile?.role === "OPERATOR";
-
   // Show loading while waiting for auth to determine header type on client
-  if (mounted && isLoading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "var(--background)" }}
+      >
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
           <p className="text-xs font-black uppercase tracking-widest text-foreground/40 animate-pulse">
@@ -74,16 +61,8 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
       />
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Conditional Header based on role */}
-        {mounted ? (
-          isOperator ? (
-            <OperatorHeader />
-          ) : (
-            <Header onOpenSettings={() => setShowSettings(true)} />
-          )
-        ) : (
-          <div className="h-[82px] w-full" /> // Placeholder for header during hydration
-        )}
+        {/* Unified Header for all roles */}
+        <Header onOpenSettings={() => setShowSettings(true)} />
         <main className="flex-1">
           <div className="max-w-[1440px] mx-auto px-8 md:px-16 py-4">
             {children}
@@ -91,13 +70,11 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
         </main>
       </div>
 
-      {mounted && (
-        <>
-          <AIChat />
-          <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
-        </>
-      )}
+      <AIChat />
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
     </div>
   );
 };
-

@@ -5,8 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   AdminDashboard,
   CarrierDashboard,
+  TerminalOpDashboard
+
 } from "@/components/dashboard/RoleDashboards";
-import { TerminalOpDashboard } from "@/components/dashboard/TerminalOpDashboard";
 
 // ---------------------------------------------------------------------------
 // Page — delegates entirely to role-specific dashboards

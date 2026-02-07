@@ -15,9 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const getNavItems = (role?: string) => {
-  const baseItems = [
-    { label: "Dashboard", href: "/" },
-  ];
+  const baseItems = [{ label: "Dashboard", href: "/" }];
 
   if (!role) return baseItems;
 
@@ -35,9 +33,8 @@ const getNavItems = (role?: string) => {
   if (r === "OPERATOR") {
     return [
       ...baseItems,
-      { label: "Analytics", href: "/analytics" },
-      { label: "Manage", href: "/bookings" },
-      { label: "Logs", href: "/loggings" },
+      { label: "Bookings", href: "/operator/bookings" },
+      { label: "Slots", href: "/operator/slots" },
     ];
   }
 
@@ -61,7 +58,10 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
   const router = useRouter();
   const { profile, signOut } = useAuth();
 
-  const navItems = React.useMemo(() => getNavItems(profile?.role), [profile?.role]);
+  const navItems = React.useMemo(
+    () => getNavItems(profile?.role),
+    [profile?.role],
+  );
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/" || pathname === "";
@@ -75,7 +75,7 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
     } catch (error) {
       console.error("Sign out error:", error);
       // Fallback to hard reload if router fails
-      window.location.href = `/${pathname.split('/')[1] || 'en'}/login`;
+      window.location.href = `/${pathname.split("/")[1] || "en"}/login`;
     }
   };
 
@@ -85,7 +85,10 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
       style={{ padding: "22px 64px" }}
     >
       {/* Logo */}
-      <Link href="/" className="flex items-center group transition-all duration-300">
+      <Link
+        href="/"
+        className="flex items-center group transition-all duration-300"
+      >
         <Logo />
       </Link>
 
@@ -149,7 +152,9 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
             >
               <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center overflow-hidden border border-foreground/10">
                 {profile?.username ? (
-                  <span className="font-bold text-xs">{profile.username[0].toUpperCase()}</span>
+                  <span className="font-bold text-xs">
+                    {profile.username[0].toUpperCase()}
+                  </span>
                 ) : (
                   <User size={18} className="text-foreground/60" />
                 )}
@@ -167,10 +172,14 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
                 {profile?.username?.[0]?.toUpperCase() ?? <User size={20} />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm truncate text-foreground">{profile?.username || "User"}</p>
+                <p className="font-bold text-sm truncate text-foreground">
+                  {profile?.username || "User"}
+                </p>
                 <div className="flex items-center gap-1 mt-0.5">
                   <Shield size={10} className="text-primary/60" />
-                  <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">{profile?.role?.replace("_", " ") || "USER"}</p>
+                  <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">
+                    {profile?.role?.replace("_", " ") || "USER"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -181,16 +190,24 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
                   <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-foreground/[0.02] border border-foreground/5">
                     <Building2 size={14} className="text-foreground/30" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest leading-none mb-1">Organization</p>
-                      <p className="text-xs font-semibold text-foreground/70 truncate">{profile.organisation.name}</p>
+                      <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest leading-none mb-1">
+                        Organization
+                      </p>
+                      <p className="text-xs font-semibold text-foreground/70 truncate">
+                        {profile.organisation.name}
+                      </p>
                     </div>
                   </div>
                 )}
                 <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-foreground/[0.02] border border-foreground/5">
                   <Mail size={14} className="text-foreground/30" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest leading-none mb-1">Email</p>
-                    <p className="text-xs font-semibold text-foreground/70 truncate">{profile?.email || "No email"}</p>
+                    <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest leading-none mb-1">
+                      Email
+                    </p>
+                    <p className="text-xs font-semibold text-foreground/70 truncate">
+                      {profile?.email || "No email"}
+                    </p>
                   </div>
                 </div>
               </div>

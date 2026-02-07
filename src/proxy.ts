@@ -1,7 +1,7 @@
-import createMiddleware from 'next-intl/middleware';
-import { routing } from './i18n/routing';
-import { type NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import createMiddleware from "next-intl/middleware";
+import { routing } from "./i18n/routing";
+import { type NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -33,7 +33,7 @@ export async function proxy(request: NextRequest) {
           });
         },
       },
-    }
+    },
   );
 
   // 3. User session check removed to move to fully client-only auth
@@ -47,6 +47,6 @@ export const config = {
     // Match all pathnames except for
     // - … if they start with `/api`, `/_next` or `/_vercel`
     // - … the ones containing a dot (e.g. `favicon.ico`)
-    '/((?!api|_next|_vercel|.*\\..*).*)',
+    "/((?!api|_next|_vercel|.*\\..*).*)",
   ],
 };
