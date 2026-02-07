@@ -4,9 +4,9 @@ import React from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   AdminDashboard,
-  TerminalOpDashboard,
   CarrierDashboard,
 } from "@/components/dashboard/RoleDashboards";
+import { TerminalOpDashboard } from "@/components/dashboard/TerminalOpDashboard";
 
 // ---------------------------------------------------------------------------
 // Page — delegates entirely to role-specific dashboards

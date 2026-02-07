@@ -473,8 +473,8 @@ export const TerminalOpDashboard = () => {
                     <div className="flex items-center justify-between mb-1.5">
                       <span className={cn("text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full",
                         booking.status === "PENDING" ? "bg-warning/10 text-warning" :
-                        booking.status === "CONFIRMED" ? "bg-primary/10 text-primary" :
-                        "bg-secondary/10 text-secondary"
+                          booking.status === "CONFIRMED" ? "bg-primary/10 text-primary" :
+                            "bg-secondary/10 text-secondary"
                       )}>
                         {booking.status}
                       </span>
@@ -771,8 +771,8 @@ export const CarrierDashboard = () => {
               <div key={truck.id} className="flex items-center gap-3 p-2 rounded-lg bg-foreground/[0.02] border border-foreground/5">
                 <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center",
                   truck.status === "AVAILABLE" ? "bg-success/10 text-success" :
-                  truck.status === "IN_USE" ? "bg-primary/10 text-primary" :
-                  "bg-warning/10 text-warning"
+                    truck.status === "IN_USE" ? "bg-primary/10 text-primary" :
+                      "bg-warning/10 text-warning"
                 )}>
                   <TruckIcon size={12} />
                 </div>
@@ -781,8 +781,8 @@ export const CarrierDashboard = () => {
                 </div>
                 <span className={cn("text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full",
                   truck.status === "AVAILABLE" ? "bg-success/10 text-success" :
-                  truck.status === "IN_USE" ? "bg-primary/10 text-primary" :
-                  "bg-warning/10 text-warning"
+                    truck.status === "IN_USE" ? "bg-primary/10 text-primary" :
+                      "bg-warning/10 text-warning"
                 )}>
                   {truck.status}
                 </span>
@@ -859,8 +859,8 @@ export const CarrierDashboard = () => {
                 <div key={driver.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-foreground/[0.02] border border-foreground/5">
                   <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold",
                     driver.status === "ACTIVE" ? "bg-success/10 text-success" :
-                    driver.status === "SUSPENDED" ? "bg-error/10 text-error" :
-                    "bg-foreground/5 text-foreground/40"
+                      driver.status === "SUSPENDED" ? "bg-error/10 text-error" :
+                        "bg-foreground/5 text-foreground/40"
                   )}>
                     {driver.full_name.charAt(0)}
                   </div>
@@ -875,8 +875,8 @@ export const CarrierDashboard = () => {
                   )}
                   <span className={cn("text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full",
                     driver.status === "ACTIVE" ? "bg-success/10 text-success" :
-                    driver.status === "SUSPENDED" ? "bg-error/10 text-error" :
-                    "bg-foreground/5 text-foreground/40"
+                      driver.status === "SUSPENDED" ? "bg-error/10 text-error" :
+                        "bg-foreground/5 text-foreground/40"
                   )}>
                     {driver.status}
                   </span>

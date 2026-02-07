@@ -89,7 +89,7 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
           gap: 4,
         }}
       >
-        {navItems.map((item) => {
+        {filteredItems.map((item) => {
           const active = isActive(item.href);
           return (
             <Link
