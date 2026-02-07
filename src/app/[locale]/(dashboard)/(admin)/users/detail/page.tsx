@@ -41,10 +41,10 @@ export default function UserDetailPage() {
         .from("users")
         .select("*, organisation:organisations(*)")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        show("Could not fetch user details", "error");
+      if (error || !data) {
+        show("User profile not found", "error");
       } else {
         setUser(data);
       }

@@ -15,7 +15,6 @@ import { useRouter, usePathname } from "@/i18n/routing";
 
 export type Profile = User & {
   organisation?: Organisation;
-  email?: string | null;
 };
 
 interface AuthContextType {
@@ -62,48 +61,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .from("users")
           .select("*, organisation:organisations(*)")
           .eq("id", userId)
-          .single();
+          .maybeSingle();
 
-        if (!error && data) {
+        if (data) {
           console.log("[AuthProvider] Profile fetch success:", data.role);
           return data as Profile;
         }
 
-        // Handle specific "PGRST116" error (no rows found)
-        if (error?.code === "PGRST116") {
-          console.warn(`[AuthProvider] No profile found (PGRST116) for ${userId}. Session might be stale or RLS blocking.`);
-          return null;
+        if (error) {
+          console.error("[AuthProvider] Profile fetch error details:", {
+            code: error.code,
+            message: error.message,
+          });
         }
 
-        console.error("[AuthProvider] Profile fetch error details:", {
-          code: error?.code,
-          message: error?.message,
-          details: error?.details,
-          hint: error?.hint
-        });
-
-        // If we get an empty error in dev, it might be MSW still booting
-        if (process.env.NODE_ENV === "development" && retryCount < 2) {
-          console.log(`[AuthProvider] Potential race with MSW, retrying...`);
-          await new Promise(resolve => setTimeout(resolve, 500));
-          return fetchProfile(userId, retryCount + 1);
-        }
-
-        console.warn("[AuthProvider] Detailed profile fetch failed, trying basic fetch:", error);
-
-        // Fallback: Fetch just the user profile without organisation if the join fails
-        const { data: basicData, error: basicError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", userId)
-          .single();
-
-        if (basicError) {
-          console.error("[AuthProvider] Basic profile fetch error:", basicError);
-          return null;
-        }
-
-        return basicData as Profile;
+        return null;
       } catch (err) {
         console.error("[AuthProvider] Profile fetch exception:", err);
         return null;
@@ -154,32 +126,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(initialSession?.user ?? null);
 
         if (initialSession?.user) {
-          // 1. Prepare optimistic profile IMMEDIATELY from metadata
-          const metadata = initialSession.user.user_metadata || {};
-          const optimisticProfile = {
-            id: initialSession.user.id,
-            role: (metadata.role as UserRole) || "DISPATCHER",
-            username: metadata.username || initialSession.user.id.substring(0, 8),
-            org_id: metadata.org_id,
-            email: initialSession.user.email,
-            created_at: new Date().toISOString(),
-          } as Profile;
-
-          // 2. Set optimistic profile and UNBLOCK UI immediately
-          setProfile(optimisticProfile);
-          setIsLoading(false);
-
-          // 3. Background fetch "Real" Profile (enhancement) - silent success
+          // fetch "Real" Profile (enhancement)
           if (lastFetchedUserId.current !== initialSession.user.id) {
             lastFetchedUserId.current = initialSession.user.id;
-            fetchProfile(initialSession.user.id).then((profileData) => {
-              if (mounted && profileData) {
+            const profileData = await fetchProfile(initialSession.user.id);
+            if (mounted) {
+              if (profileData) {
                 setProfile(profileData);
-              } else if (mounted && !optimisticProfile.role) {
-                console.error("[AuthProvider] Strictly Enforced: Background check failed, no fallback. Signing out.");
-                signOut();
+                setIsLoading(false);
+              } else {
+                console.error("[AuthProvider] Strictly Enforced: Profile check failed, no fallback. Signing out.", {
+                  userId: initialSession.user.id,
+                });
+                await signOut();
               }
-            });
+            }
+          } else {
+            setIsLoading(false);
           }
         } else {
           setIsLoading(false);
@@ -216,32 +179,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(newSession?.user ?? null);
 
       if (newSession?.user) {
-        // 1. Prepare optimistic profile IMMEDIATELY from metadata
-        const metadata = newSession.user.user_metadata || {};
-        const optimisticProfile = {
-          id: newSession.user.id,
-          role: (metadata.role as UserRole) || "DISPATCHER",
-          username: metadata.username || newSession.user.email?.split("@")[0],
-          org_id: metadata.org_id,
-          email: newSession.user.email,
-          created_at: new Date().toISOString(),
-        } as Profile;
-
-        // 2. Set optimistic profile and UNBLOCK UI immediately
-        setProfile(optimisticProfile);
-        setIsLoading(false);
-
-        // 3. Background fetch "Real" Profile - ONLY if user changed or profile missing
+        // Background fetch "Real" Profile - ONLY if user changed or profile missing
         if (lastFetchedUserId.current !== newSession.user.id || !profile) {
           lastFetchedUserId.current = newSession.user.id;
-          fetchProfile(newSession.user.id).then((profileData) => {
-            if (mounted && profileData) {
+          const profileData = await fetchProfile(newSession.user.id);
+          if (mounted) {
+            if (profileData) {
               setProfile(profileData);
-            } else if (mounted && !optimisticProfile.role) {
-              console.error("[AuthProvider] Strictly Enforced: Background check failed on state change. Signing out.");
-              signOut();
+              setIsLoading(false);
+            } else {
+              console.error("[AuthProvider] Strictly Enforced: Profile check failed on state change. Signing out.", {
+                userId: newSession.user.id
+              });
+              await signOut();
             }
-          });
+          }
+        } else {
+          setIsLoading(false);
         }
       } else if (event === "SIGNED_OUT") {
         console.log("[AuthProvider] Handled SIGNED_OUT event");

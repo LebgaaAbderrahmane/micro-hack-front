@@ -70,22 +70,27 @@ export const RoleLoginPage = ({
         .from("users")
         .select("role")
         .eq("id", authData.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError || !profileData) {
-        console.error("[Client Login] Profile fetch failed:", profileError);
+        console.error("[Client Login] Role verification failed.", {
+          userId: authData.user.id,
+          error: profileError,
+          data: profileData,
+        });
         await supabase.auth.signOut();
-        setLocalError("Profile not found. Please contact support.");
+        setLocalError(
+          profileError
+            ? `Database Error: ${profileError.message}`
+            : "Your account exists in Auth but has no Profile in the database."
+        );
         setIsLoggingIn(false);
         return;
       }
 
-      // If role doesn't match, we used to block login. 
-      // However, since all dashboards are accessible via /, we should just allow it 
-      // and let the main layout handle the role-based dashboard rendering.
+      // If role doesn't match, we still allow login but warn in console
       if (profileData.role !== role) {
         console.warn(`[Client Login] Role mismatch. Required: ${role}, Found: ${profileData.role}. Proceeding anyway.`);
-        // We do NOT sign out here to prevent login loops.
       }
 
       console.log("[Client Login] Success. Redirecting...");
