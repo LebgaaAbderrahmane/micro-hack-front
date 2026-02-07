@@ -87,7 +87,7 @@ export const NotificationFeed: React.FC<NotificationFeedProps> = ({
                 className={cn(
                   "flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer",
                   notification.is_read
-                    ? "bg-foreground/[0.01] border-foreground/5 opacity-60"
+                    ? "bg-foreground/[0.01] border-slate-200 dark:border-slate-800 opacity-60"
                     : "bg-foreground/[0.03] border-foreground/10 hover:border-primary/20"
                 )}
               >

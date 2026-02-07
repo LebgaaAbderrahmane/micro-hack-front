@@ -33,11 +33,13 @@ export const ActivityList = ({ filters }: ActivityListProps) => {
     // Real-time subscription
     useEffect(() => {
         const channel = supabase
-            .channel("public:booking_audit_logs")
+            .channel(`booking_audit_logs-${filters.actorId || 'all'}`)
             .on(
                 "postgres_changes",
                 { event: "INSERT", schema: "public", table: "booking_audit_logs" },
-                () => {
+                (payload) => {
+                    // Optionally optimize by manually updating query cache here vs invalidating
+                    console.log("Realtime log received:", payload);
                     queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
                 }
             )
@@ -75,9 +77,17 @@ export const ActivityList = ({ filters }: ActivityListProps) => {
             id: log.id,
             username: log.users?.username || "System",
             badge: mapBadge(log.users?.role),
-            activityType: `${log.action_type}: ${log.change_reason || "No details"}`,
+            activityType: log.action_type.replace(/_/g, " "),
             date: new Date(log.timestamp).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
             time: new Date(log.timestamp).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
+            details: {
+                oldValue: log.old_value,
+                newValue: log.new_value,
+                fieldChanged: log.field_changed,
+                reason: log.change_reason,
+                aiConfidence: log.ai_confidence,
+                isAi: log.is_made_by_ai
+            }
         }));
     };
 

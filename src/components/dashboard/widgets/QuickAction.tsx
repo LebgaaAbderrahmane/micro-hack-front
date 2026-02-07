@@ -32,7 +32,7 @@ export const QuickAction: React.FC<QuickActionProps> = ({
         "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group w-full text-left",
         variant === "filled"
           ? `bg-${color}/10 hover:bg-${color}/20 text-${color} border border-${color}/10`
-          : `bg-foreground/[0.02] hover:bg-foreground/[0.05] text-foreground border border-foreground/5 hover:border-${color}/20`
+          : `bg-foreground/[0.02] hover:bg-foreground/[0.05] text-foreground border border-slate-200 dark:border-slate-800 hover:border-${color}/20`
       )}
     >
       <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", `bg-${color}/10 text-${color}`)}>

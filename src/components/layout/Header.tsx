@@ -13,12 +13,42 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const navItems = [
-  { label: "Dashboard", href: "/" },
-  { label: "Logging", href: "/loggings" },
-  { label: "Manage", href: "/manage" },
-  { label: "Analytics", href: "/analytics" },
-];
+const getNavItems = (role?: string) => {
+  const baseItems = [
+    { label: "Dashboard", href: "/" },
+    { label: "Analytics", href: "/analytics" },
+  ];
+
+  if (!role) return baseItems;
+
+  const r = role.toUpperCase();
+
+  if (r === "ADMIN") {
+    return [
+      ...baseItems,
+      { label: "Manage", href: "/manage" },
+      { label: "Logs", href: "/loggings" },
+    ];
+  }
+
+  if (r === "OPERATOR") {
+    return [
+      ...baseItems,
+      { label: "Manage", href: "/bookings" },
+      { label: "Logs", href: "/loggings" },
+    ];
+  }
+
+  if (r === "DISPATCHER" || r === "CARRIER") {
+    return [
+      ...baseItems,
+      { label: "New Booking", href: "/bookings/new" },
+      { label: "Bookings", href: "/bookings" },
+    ];
+  }
+
+  return baseItems;
+};
 
 interface HeaderProps {
   onOpenSettings?: () => void;
@@ -29,14 +59,22 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
   const router = useRouter();
   const { profile, signOut } = useAuth();
 
+  const navItems = React.useMemo(() => getNavItems(profile?.role), [profile?.role]);
+
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/" || pathname === "";
     return pathname?.startsWith(href);
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    router.push("/login");
+    try {
+      await signOut();
+      router.push("/login");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      // Fallback to hard reload if router fails
+      window.location.href = `/${pathname.split('/')[1] || 'en'}/login`;
+    }
   };
 
   return (
@@ -89,7 +127,7 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
           gap: 4,
         }}
       >
-        {filteredItems.map((item) => {
+        {navItems.map((item) => {
           const active = isActive(item.href);
           return (
             <Link
@@ -111,7 +149,7 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
               {active && (
                 <motion.div
                   layoutId="active-pill"
-                  className="absolute inset-0 rounded-full bg-gradient-to-b from-[rgb(107,171,255)] to-[rgb(75,151,251)] z-[-1]"
+                  className="absolute inset-0 rounded-full bg-linear-to-b from-[rgb(107,171,255)] to-[rgb(75,151,251)] z-[-1]"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
@@ -185,14 +223,15 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
                 </div>
               </div>
 
-              <DropdownMenuItem asChild>
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-error/10 text-error hover:text-error transition-colors text-sm font-medium border border-transparent hover:border-error/20 outline-none"
-                >
-                  <LogOut size={16} />
-                  Sign Out
-                </button>
+              <DropdownMenuItem
+                onSelect={async (e) => {
+                  e.preventDefault();
+                  await handleSignOut();
+                }}
+                className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-error/10 text-error hover:text-error transition-colors text-sm font-medium border border-transparent hover:border-error/20 outline-none cursor-pointer"
+              >
+                <LogOut size={16} />
+                Sign Out
               </DropdownMenuItem>
             </div>
           </DropdownMenuContent>

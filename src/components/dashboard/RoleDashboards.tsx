@@ -89,7 +89,7 @@ const SectionHeader = ({ icon: Icon, title, subtitle, color = "primary" }: {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="glass px-3 py-2 rounded-xl text-xs shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl px-3 py-2 rounded-xl text-xs">
       <p className="font-bold text-foreground/70 mb-1">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} className="text-foreground/50">
@@ -203,7 +203,7 @@ export const AdminDashboard = () => {
       <SectionHeader icon={ShieldCheck} title="Port Administration" subtitle="System-wide monitoring & terminal management" color="primary" />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         <StatCard label="Port Congestion" value={`${kpis.utilizationPct}%`} icon={<Activity size={18} />} color={kpis.utilizationPct > 85 ? "error" : kpis.utilizationPct > 60 ? "warning" : "success"} trend={{ value: kpis.utilizationPct > 70 ? 5 : -3 }} delay={0} />
         <StatCard label="Total Daily Flow" value={kpis.todayBookings} icon={<Package size={18} />} color="primary" trend={{ value: 12, label: "vs yesterday" }} delay={1} />
         <StatCard label="Active Terminals" value={`${kpis.activeTerminals}/${kpis.totalTerminals}`} icon={<Anchor size={18} />} color="secondary" delay={2} />
@@ -223,7 +223,7 @@ export const AdminDashboard = () => {
           <PortMap mode="ADMIN" />
         </ChartCard>
 
-        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
           <NotificationFeed userId={profile?.id} maxItems={6} />
         </div>
       </div>
@@ -289,7 +289,7 @@ export const AdminDashboard = () => {
           </div>
         </ChartCard>
 
-        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Recommendations</p>
           <div className="space-y-2">
             <RecommendationCard
@@ -315,7 +315,7 @@ export const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
           <QuickActionsGrid
             title="Admin Quick Actions"
             actions={[
@@ -430,7 +430,7 @@ export const TerminalOpDashboard = () => {
       <SectionHeader icon={Ship} title="Terminal Control Center" subtitle="Operations monitoring & booking management" color="secondary" />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         <StatCard label="Pending Validations" value={kpis.pending} icon={<Clock size={18} />} color="warning" trend={{ value: kpis.pending > 5 ? -8 : 12 }} delay={0} />
         <StatCard label="Terminal Saturation" value={`${kpis.terminalPct}%`} icon={<Box size={18} />} color={kpis.terminalPct > 80 ? "warning" : "primary"} delay={1} />
         <StatCard label="Slot Usage" value={`${kpis.slotUtilization}%`} icon={<BarChart3 size={18} />} color={kpis.slotUtilization > 85 ? "error" : "success"} delay={2} />
@@ -450,7 +450,7 @@ export const TerminalOpDashboard = () => {
           <PortMap mode="OPERATOR" />
         </ChartCard>
 
-        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Booking Queue</p>
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
@@ -468,7 +468,7 @@ export const TerminalOpDashboard = () => {
                     exit={{ opacity: 0, x: -10 }}
                     transition={{ delay: i * 0.05 }}
                     onClick={() => router.push("/bookings")}
-                    className="p-3 rounded-xl bg-foreground/[0.03] border border-foreground/5 hover:border-secondary/30 transition-all cursor-pointer group"
+                    className="p-3 rounded-xl bg-foreground/[0.03] border border-slate-200 dark:border-slate-800 hover:border-secondary/30 transition-all cursor-pointer group"
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <span className={cn("text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full",
@@ -526,11 +526,11 @@ export const TerminalOpDashboard = () => {
 
       {/* Notifications + Recommendations + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
           <div className="absolute -top-1 -right-1 w-14 h-14 opacity-10 bg-info" style={{ clipPath: "polygon(100% 0, 0 0, 100% 100%)" }} />
           <NotificationFeed userId={profile?.id} maxItems={5} />
         </div>
-        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Recommendations</p>
           <div className="space-y-2">
             <RecommendationCard title="Open Additional Lane" description={`Queue length is ${kpis.totalQueue}. Consider opening a bidirectional lane for faster processing.`} type="optimization" delay={0} />
@@ -538,7 +538,7 @@ export const TerminalOpDashboard = () => {
           </div>
         </div>
 
-        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
           <QuickActionsGrid
             title="Operator Quick Actions"
             actions={[
@@ -658,7 +658,7 @@ export const CarrierDashboard = () => {
       <SectionHeader icon={TruckIcon} title="Carrier Portal" subtitle="Fleet management & slot booking" color="accent" />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         <StatCard label="Confirmed Bookings" value={kpis.activeBookings} icon={<CheckCircle2 size={18} />} color="success" delay={0} />
         <StatCard label="Pending Requests" value={kpis.pendingBookings} icon={<Clock size={18} />} color="warning" delay={1} />
         <StatCard label="Fleet Status" value={`${kpis.availableTrucks}/${kpis.totalTrucks}`} icon={<TruckIcon size={18} />} color="primary" delay={2} />
@@ -700,7 +700,7 @@ export const CarrierDashboard = () => {
           </div>
         </ChartCard>
 
-        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
           <div className="absolute -top-1 -right-1 w-14 h-14 opacity-10 bg-accent" style={{ clipPath: "polygon(100% 0, 0 0, 100% 100%)" }} />
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3 flex items-center gap-2">
             <Calendar size={12} />
@@ -727,7 +727,7 @@ export const CarrierDashboard = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
                     onClick={() => router.push("/bookings")}
-                    className="p-3 rounded-xl bg-foreground/[0.03] border border-foreground/5 hover:border-accent/30 transition-all cursor-pointer group"
+                    className="p-3 rounded-xl bg-foreground/[0.03] border border-slate-200 dark:border-slate-800 hover:border-accent/30 transition-all cursor-pointer group"
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[9px] font-bold text-accent uppercase tracking-widest">{booking.booking_type.replace(/_/g, " ")}</span>
@@ -768,7 +768,7 @@ export const CarrierDashboard = () => {
           {/* Fleet cards */}
           <div className="space-y-2 mt-2">
             {kpis.trucks.slice(0, 3).map((truck) => (
-              <div key={truck.id} className="flex items-center gap-3 p-2 rounded-lg bg-foreground/[0.02] border border-foreground/5">
+              <div key={truck.id} className="flex items-center gap-3 p-2 rounded-lg bg-foreground/[0.02] border border-slate-200 dark:border-slate-800">
                 <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center",
                   truck.status === "AVAILABLE" ? "bg-success/10 text-success" :
                     truck.status === "IN_USE" ? "bg-primary/10 text-primary" :
@@ -819,7 +819,7 @@ export const CarrierDashboard = () => {
         </ChartCard>
 
         <div className="space-y-3">
-          <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
             <QuickActionsGrid
               title="Carrier Quick Actions"
               actions={[
@@ -830,7 +830,7 @@ export const CarrierDashboard = () => {
             />
           </div>
 
-          <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Suggestions</p>
             <RecommendationCard
               title="Optimal Booking Window"
@@ -846,17 +846,17 @@ export const CarrierDashboard = () => {
 
       {/* Notification Feed */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
           <NotificationFeed userId={profile?.id} maxItems={5} />
         </div>
 
-        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Driver Status</p>
           <div className="space-y-2">
             {kpis.drivers.slice(0, 4).map((driver) => {
               const daysToExpiry = Math.ceil((new Date(driver.license_expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
               return (
-                <div key={driver.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-foreground/[0.02] border border-foreground/5">
+                <div key={driver.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-foreground/[0.02] border border-slate-200 dark:border-slate-800">
                   <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold",
                     driver.status === "ACTIVE" ? "bg-success/10 text-success" :
                       driver.status === "SUSPENDED" ? "bg-error/10 text-error" :

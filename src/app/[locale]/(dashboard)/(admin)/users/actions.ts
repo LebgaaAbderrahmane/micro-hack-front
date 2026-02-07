@@ -25,16 +25,22 @@ export async function addOperator(formData: FormData) {
   const password = formData.get("password") as string; // Ideally you'd use inviteUserByEmail
 
   // 2. Create the operator user in Auth
-  // In a real app with service role, you'd use admin.createUser
-  // Here we use signUp as a placeholder if public signup is enabled, 
-  // but normally an admin would use a service client.
+  // NOTE: In development, Supabase limits sign-ups to 3 per hour.
+  // Ideally, use a 'service_role' client to call supabase.auth.admin.createUser() to bypass this.
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
   });
 
-  if (authError || !authData.user) {
-    throw new Error(authError?.message || "Failed to create auth user");
+  if (authError) {
+    if (authError.message.includes("rate limit exceeded")) {
+      throw new Error("Supabase Email Rate Limit Exceeded. Please wait 1 hour or change the 'Max Signups per Hour' setting in your Supabase Auth dashboard.");
+    }
+    throw new Error(authError.message);
+  }
+
+  if (!authData.user) {
+    throw new Error("Failed to create auth user");
   }
 
   // 3. Create or update the profile for the operator
@@ -51,6 +57,7 @@ export async function addOperator(formData: FormData) {
     .upsert({
       id: authData.user.id,
       username: username,
+      email: email,
       org_id: profile.org_id,
       role: role as any
     }, { onConflict: 'id' });
@@ -60,4 +67,17 @@ export async function addOperator(formData: FormData) {
   }
 
   revalidatePath("/users");
+}
+
+export async function getUsers() {
+  const supabase = await createClient();
+  const { data, error, count } = await supabase
+    .from('users')
+    .select('*, organisation:organisations(*)', { count: 'exact' });
+
+  if (error) {
+    console.error("[getUsers Action] Error:", error);
+    return { data: [], error };
+  }
+  return { data: data || [], error: null };
 }

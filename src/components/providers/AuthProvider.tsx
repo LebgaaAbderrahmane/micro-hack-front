@@ -28,7 +28,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   session: null,
   isLoading: true,
-  signOut: async () => {},
+  signOut: async () => { },
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(
     async (userId: string) => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased to 10s for remote dev
 
       try {
         const { data, error } = await supabase
@@ -53,12 +53,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (error) {
-          console.error("[AuthProvider] Profile fetch error:", error);
+          // Ignore the error if it was a manual abort
+          if (error.message?.includes("aborted")) return null;
+
+          console.error("[AuthProvider] Profile fetch error:", {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
           return null;
         }
         return data as Profile;
-      } catch (err) {
-        console.error("[AuthProvider] Profile fetch exception:", err);
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          console.warn("[AuthProvider] Profile fetch timed out or was aborted");
+        } else {
+          console.error("[AuthProvider] Profile fetch exception:", err);
+        }
         return null;
       } finally {
         clearTimeout(timeoutId);
@@ -145,10 +157,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase, fetchProfile]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
-    setUser(null);
-    setSession(null);
+    console.log("[AuthProvider] Signing out...");
+    try {
+      await supabase.auth.signOut();
+      console.log("[AuthProvider] Sign out complete");
+    } catch (err) {
+      console.error("[AuthProvider] Sign out error:", err);
+    } finally {
+      setProfile(null);
+      setUser(null);
+      setSession(null);
+    }
   };
 
   return (

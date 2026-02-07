@@ -10,7 +10,7 @@ export default function CarrierLoginPage() {
       roleTitle="Carrier Portal"
       description="Fleet sync & slot reservation"
       icon={Truck}
-      themeColor="bg-accent shadow-accent/20"
+      themeColor="bg-amber-500 shadow-amber-500/20"
     />
   );
 }

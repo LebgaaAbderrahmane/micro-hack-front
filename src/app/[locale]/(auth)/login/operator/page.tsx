@@ -10,7 +10,7 @@ export default function OperatorLoginPage() {
       roleTitle="Terminal Op"
       description="Yard & berth management"
       icon={Ship}
-      themeColor="bg-secondary shadow-secondary/20"
+      themeColor="bg-emerald-500 shadow-emerald-500/20"
     />
   );
 }
