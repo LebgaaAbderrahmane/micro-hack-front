@@ -66,21 +66,21 @@ const SectionHeader = ({ icon: Icon, title, subtitle, color = "primary" }: {
     initial={{ opacity: 0, y: -10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5 }}
-    className="flex items-center gap-4"
+    className="flex items-center gap-3"
   >
-    <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center", `bg-${color}/10 text-${color}`)}>
-      <Icon size={28} />
+    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", `bg-${color}/10 text-${color}`)}>
+      <Icon size={22} />
     </div>
     <div>
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{title}</h1>
-      <p className="text-foreground/50 text-sm">{subtitle}</p>
+      <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">{title}</h1>
+      <p className="text-foreground/50 text-xs">{subtitle}</p>
     </div>
     <div className="ml-auto flex items-center gap-2">
-      <span className="relative flex h-2.5 w-2.5">
+      <span className="relative flex h-2 w-2">
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
       </span>
-      <span className="text-[10px] font-bold text-success uppercase tracking-widest">Live</span>
+      <span className="text-[9px] font-bold text-success uppercase tracking-widest">Live</span>
     </div>
   </motion.div>
 );
@@ -199,11 +199,11 @@ export const AdminDashboard = () => {
   }, [terminals, gates, bookings, dismissedWarnings]);
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-4 pb-8">
       <SectionHeader icon={ShieldCheck} title="Port Administration" subtitle="System-wide monitoring & terminal management" color="primary" />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="Today's Bookings" value={kpis.todayBookings} icon={<Package size={18} />} color="primary" trend={{ value: 12, label: "vs yesterday" }} delay={0} />
         <StatCard label="Active Terminals" value={`${kpis.activeTerminals}/${kpis.totalTerminals}`} icon={<Anchor size={18} />} color="secondary" delay={1} />
         <StatCard label="Port Utilization" value={`${kpis.utilizationPct}%`} icon={<Activity size={18} />} color={kpis.utilizationPct > 85 ? "error" : kpis.utilizationPct > 60 ? "warning" : "success"} trend={{ value: kpis.utilizationPct > 70 ? -3 : 5 }} delay={2} />
@@ -218,20 +218,20 @@ export const AdminDashboard = () => {
       )}
 
       {/* Interactive Port Plan + Notifications */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <ChartCard title="Interactive Port Plan" subtitle="Live terminal & gate status" accentColor="bg-primary" className="lg:col-span-2 min-h-[480px]" delay={1}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <ChartCard title="Interactive Port Plan" subtitle="Live terminal & gate status" accentColor="bg-primary" className="lg:col-span-2 min-h-[340px]" delay={1}>
           <PortMap mode="ADMIN" />
         </ChartCard>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <NotificationFeed userId={profile?.id} maxItems={6} />
         </div>
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ChartCard title="Bookings Per Hour" subtitle="Today's distribution" accentColor="bg-secondary" delay={2}>
-          <div className="h-[220px]">
+          <div className="h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={bookingsPerHour}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -245,7 +245,7 @@ export const AdminDashboard = () => {
         </ChartCard>
 
         <ChartCard title="Booking Status" subtitle="All-time distribution" accentColor="bg-accent" delay={3}>
-          <div className="h-[220px] flex items-center">
+          <div className="h-[180px] flex items-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -273,9 +273,9 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Terminal Utilization Bar + Recommendations + Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <ChartCard title="Terminal Utilization" subtitle="Current occupancy vs capacity" accentColor="bg-success" className="lg:col-span-1" delay={4}>
-          <div className="h-[220px]">
+          <div className="h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={terminalOccupancy} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -289,7 +289,7 @@ export const AdminDashboard = () => {
           </div>
         </ChartCard>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Recommendations</p>
           <div className="space-y-2">
             <RecommendationCard
@@ -315,7 +315,7 @@ export const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <QuickActionsGrid
             title="Quick Actions"
             actions={[
@@ -426,11 +426,11 @@ export const TerminalOpDashboard = () => {
   }, [kpis, gates, dismissedWarnings]);
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-4 pb-8">
       <SectionHeader icon={Ship} title="Terminal Control Center" subtitle="Operations monitoring & booking management" color="secondary" />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="Pending Approvals" value={kpis.pending} icon={<Clock size={18} />} color="warning" trend={{ value: kpis.pending > 5 ? -8 : 12 }} delay={0} />
         <StatCard label="Slot Utilization" value={`${kpis.slotUtilization}%`} icon={<BarChart3 size={18} />} color={kpis.slotUtilization > 85 ? "error" : "success"} delay={1} />
         <StatCard label="Terminal Occupancy" value={`${kpis.terminalPct}%`} icon={<Box size={18} />} color={kpis.terminalPct > 80 ? "warning" : "primary"} delay={2} />
@@ -445,12 +445,12 @@ export const TerminalOpDashboard = () => {
       )}
 
       {/* Terminal Yard + Booking Queue */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <ChartCard title="Gate & Yard Visualization" subtitle="Live truck positions" accentColor="bg-secondary" className="lg:col-span-2 min-h-[480px]" delay={1}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <ChartCard title="Gate & Yard Visualization" subtitle="Live truck positions" accentColor="bg-secondary" className="lg:col-span-2 min-h-[340px]" delay={1}>
           <PortMap mode="OPERATOR" />
         </ChartCard>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Booking Queue</p>
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
@@ -491,9 +491,9 @@ export const TerminalOpDashboard = () => {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ChartCard title="Gate Throughput" subtitle="Entries & exits per hour" accentColor="bg-info" delay={2}>
-          <div className="h-[220px]">
+          <div className="h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={throughputData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -509,7 +509,7 @@ export const TerminalOpDashboard = () => {
         </ChartCard>
 
         <ChartCard title="Slot Availability" subtitle="Today's time slots" accentColor="bg-primary" delay={3}>
-          <div className="h-[220px]">
+          <div className="h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={slotAvailability}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -525,12 +525,12 @@ export const TerminalOpDashboard = () => {
       </div>
 
       {/* Notifications + Recommendations + Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <div className="absolute -top-1 -right-1 w-14 h-14 opacity-10 bg-info" style={{ clipPath: "polygon(100% 0, 0 0, 100% 100%)" }} />
           <NotificationFeed userId={profile?.id} maxItems={5} />
         </div>
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Recommendations</p>
           <div className="space-y-2">
             <RecommendationCard title="Open Additional Lane" description={`Queue length is ${kpis.totalQueue}. Consider opening a bidirectional lane for faster processing.`} type="optimization" delay={0} />
@@ -538,7 +538,7 @@ export const TerminalOpDashboard = () => {
           </div>
         </div>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <QuickActionsGrid
             title="Quick Actions"
             actions={[
@@ -652,11 +652,11 @@ export const CarrierDashboard = () => {
   }, [kpis, dismissedWarnings]);
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-4 pb-8">
       <SectionHeader icon={TruckIcon} title="Carrier Portal" subtitle="Fleet management & slot booking" color="accent" />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="Active Bookings" value={kpis.activeBookings} icon={<Package size={18} />} color="primary" delay={0} />
         <StatCard label="Completed Today" value={kpis.completedToday} icon={<CheckCircle2 size={18} />} color="success" trend={{ value: 15, label: "on track" }} delay={1} />
         <StatCard label="Fleet Available" value={`${kpis.availableTrucks}/${kpis.totalTrucks}`} icon={<TruckIcon size={18} />} color="accent" delay={2} />
@@ -671,9 +671,9 @@ export const CarrierDashboard = () => {
       )}
 
       {/* Charts + Upcoming Bookings */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <ChartCard title="Weekly Booking Trend" subtitle="Last 7 days" accentColor="bg-primary" className="lg:col-span-2" delay={1}>
-          <div className="h-[240px]">
+          <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={weeklyTrend}>
                 <defs>
@@ -698,7 +698,7 @@ export const CarrierDashboard = () => {
           </div>
         </ChartCard>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <div className="absolute -top-1 -right-1 w-14 h-14 opacity-10 bg-accent" style={{ clipPath: "polygon(100% 0, 0 0, 100% 100%)" }} />
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3 flex items-center gap-2">
             <Calendar size={12} />
@@ -749,9 +749,9 @@ export const CarrierDashboard = () => {
       </div>
 
       {/* Fleet Status + Booking Types + Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <ChartCard title="Fleet Utilization" subtitle="Current truck usage" accentColor="bg-accent" delay={2}>
-          <div className="h-[200px] flex items-center justify-center">
+          <div className="h-[160px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={fleetUtilization} startAngle={180} endAngle={0}>
                 <RadialBar dataKey="value" cornerRadius={10} background={{ fill: "rgba(255,255,255,0.03)" }} />
@@ -790,7 +790,7 @@ export const CarrierDashboard = () => {
         </ChartCard>
 
         <ChartCard title="Booking Types" subtitle="Breakdown by type" accentColor="bg-secondary" delay={3}>
-          <div className="h-[220px]">
+          <div className="h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -816,8 +816,8 @@ export const CarrierDashboard = () => {
           </div>
         </ChartCard>
 
-        <div className="space-y-4">
-          <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="space-y-3">
+          <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
             <QuickActionsGrid
               title="Quick Actions"
               actions={[
@@ -828,7 +828,7 @@ export const CarrierDashboard = () => {
             />
           </div>
 
-          <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+          <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Suggestions</p>
             <RecommendationCard
               title="Optimal Booking Window"
@@ -843,12 +843,12 @@ export const CarrierDashboard = () => {
       </div>
 
       {/* Notification Feed */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <NotificationFeed userId={profile?.id} maxItems={5} />
         </div>
 
-        <div className="glass-card-geo p-5 border border-foreground/5 relative overflow-hidden h-full">
+        <div className="glass-card-geo p-4 border border-foreground/5 relative overflow-hidden h-full">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-3">Driver Status</p>
           <div className="space-y-2">
             {kpis.drivers.slice(0, 4).map((driver) => {

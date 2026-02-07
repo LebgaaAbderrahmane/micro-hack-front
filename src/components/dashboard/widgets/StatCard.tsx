@@ -56,35 +56,31 @@ export const StatCard: React.FC<StatCardProps> = ({
       className="relative h-full"
     >
       <div className={cn(
-        "glass-card-geo p-5 relative overflow-hidden group border h-full flex flex-col justify-between",
+        "glass-card-geo px-3 py-2.5 relative overflow-hidden group border h-full flex items-center gap-3",
         `border-${color}/20`
       )}>
-        
-        <div className="flex items-start justify-between mb-3 relative z-10">
-          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md shadow-sm border", 
-             `bg-${color}/10 border-${color}/20 text-${color}`)}>
-            {icon}
-          </div>
-          {trend && TrendIcon && (
-            <div className={cn(
-              "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold",
-              trend.value > 0 ? "bg-success/10 text-success" : trend.value < 0 ? "bg-error/10 text-error" : "bg-foreground/5 text-foreground/50"
-            )}>
-              <TrendIcon size={10} />
-              <span>{Math.abs(trend.value)}%</span>
-            </div>
-          )}
+        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", 
+           `bg-${color}/10 text-${color}`)}>
+          {icon}
         </div>
 
-        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-1">
-          {label}
-        </p>
-        <p className={cn("text-2xl font-black tracking-tight", `text-${color}`)}>
-          {value}
-        </p>
+        <div className="flex-1 min-w-0">
+          <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-foreground/40 leading-tight truncate">
+            {label}
+          </p>
+          <p className={cn("text-lg font-black tracking-tight leading-tight", `text-${color}`)}>
+            {value}
+          </p>
+        </div>
 
-        {trend?.label && (
-          <p className="text-[9px] text-foreground/30 mt-1 font-medium">{trend.label}</p>
+        {trend && TrendIcon && (
+          <div className={cn(
+            "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold shrink-0",
+            trend.value > 0 ? "bg-success/10 text-success" : trend.value < 0 ? "bg-error/10 text-error" : "bg-foreground/5 text-foreground/50"
+          )}>
+            <TrendIcon size={9} />
+            <span>{Math.abs(trend.value)}%</span>
+          </div>
         )}
       </div>
     </motion.div>

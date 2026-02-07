@@ -3,12 +3,13 @@
 import React, { useEffect, useState } from "react";
 import { usePathname } from "@/i18n/routing";
 import { Header } from "./Header";
-import { FloatingSettings } from "../common/FloatingSettings";
 import { AIChat } from "../common/AIChat";
+import { SettingsModal } from "../common/SettingsModal";
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -39,7 +40,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
       />
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
+        <Header onOpenSettings={() => setShowSettings(true)} />
         <main className="flex-1">
           <div className="max-w-[1440px] mx-auto px-8 md:px-16 py-4">
             {children}
@@ -47,8 +48,8 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
         </main>
       </div>
 
-      <FloatingSettings />
       <AIChat />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 };
