@@ -37,7 +37,11 @@ export async function middleware(request: NextRequest) {
   );
 
   // 3. Get user session (refreshes if needed)
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError && authError.message !== "Auth session missing!") {
+    console.error(`[Middleware] Auth error: ${authError.message}`);
+  }
 
   // Define public paths (login, register, and auth callback)
   const isAuthPage = /\/(login|register|auth\/callback)/.test(pathname);

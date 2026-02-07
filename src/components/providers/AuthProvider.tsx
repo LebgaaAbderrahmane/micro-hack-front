@@ -106,13 +106,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (currentSession?.user) {
           const profileData = await fetchProfile(currentSession.user.id);
-          if (mounted) setProfile(profileData);
+          if (mounted) {
+            if (!profileData) {
+                console.warn("[AuthProvider] Profile data missing. Check RLS policies or database content.");
+            }
+            setProfile(profileData);
+          }
         }
       } catch (error) {
         console.error("[AuthProvider] Initialization error:", error);
       } finally {
+        if (mounted) setIsLoading(false);
         clearTimeout(timeoutId);
-        setIsLoading(false);
       }
     };
 

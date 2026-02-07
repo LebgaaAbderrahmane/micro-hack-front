@@ -6,11 +6,14 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 
 export async function login(formData: FormData) {
+  console.log("[Login Action] Starting login process...");
   const supabase = await createClient();
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const requiredRole = formData.get("requiredRole") as string;
+
+  console.log(`[Login Action] Attempting login for: ${email}, role: ${requiredRole || 'any'}`);
 
   const getRedirectPath = (role: string) => {
     switch (role) {
@@ -33,9 +36,17 @@ export async function login(formData: FormData) {
       password,
     });
 
-  if (authError || !authData.user) {
+  if (authError) {
+    console.error(`[Login Action] SignIn failed: ${authError.message}`);
     redirect(`${redirectPath}?error=Invalid credentials`);
   }
+
+  if (!authData.user) {
+    console.error("[Login Action] SignIn succeeded but no user returned.");
+    redirect(`${redirectPath}?error=Invalid credentials`);
+  }
+
+  console.log(`[Login Action] Auth successful for user: ${authData.user.id}. Fetching profile...`);
 
   // Verify Role and Organization
   const { data: profile, error: profileError } = await supabase
@@ -44,18 +55,29 @@ export async function login(formData: FormData) {
     .eq("id", authData.user.id)
     .single();
 
-  if (profileError || !profile) {
+  if (profileError) {
+    console.error(`[Login Action] Profile fetch failed: ${profileError.message}`);
+    await supabase.auth.signOut();
+    redirect(`${redirectPath}?error=Profile not found`);
+  }
+  
+  if (!profile) {
+    console.error("[Login Action] Profile not found (null data)");
     await supabase.auth.signOut();
     redirect(`${redirectPath}?error=Profile not found`);
   }
 
+  console.log(`[Login Action] Profile found. Role: ${profile.role}`);
+
   if (requiredRole && profile.role !== requiredRole) {
+    console.warn(`[Login Action] Role mismatch. Required: ${requiredRole}, Found: ${profile.role}`);
     await supabase.auth.signOut();
     redirect(
       `${redirectPath}?error=Unauthorized access: This account is registered as a ${profile.role}`,
     );
   }
 
+  console.log("[Login Action] Login complete. Redirecting to dashboard.");
   revalidatePath("/", "layout");
   redirect("/");
 }
