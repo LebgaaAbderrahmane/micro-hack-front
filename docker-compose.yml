@@ -5,20 +5,31 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-        NEXT_PUBLIC_AI_API_URL: ${NEXT_PUBLIC_AI_API_URL}
-        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+        NEXT_PUBLIC_AI_API_URL: ${NEXT_PUBLIC_AI_API_URL:-}
+        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-}
     restart: always
     ports:
       - 3000:3000
+    env_file:
+      - .env.production
     environment:
-      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-      - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL}
-      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
       - HOSTNAME=0.0.0.0
       - PORT=3000
+    networks:
+      - app_network
+    depends_on:
+      - backend
+
+  backend:
+    container_name: ilacs-backend
+    build:
+      context: ../MicroHack-Backend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8000:8000"
     networks:
       - app_network
 

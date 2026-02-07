@@ -29,8 +29,8 @@ npm run build:remote # Build + .env.production
 To run the container with a specific environment:
 
 ```bash
-# Example: Local build
-docker compose --env-file .env.local up --build
+# Example: remote build
+docker compose --env-file .env.production up --build
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
