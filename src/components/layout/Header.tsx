@@ -4,21 +4,29 @@ import React from "react";
 import { usePathname, Link } from "@/i18n/routing";
 import { Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { label: "Dashboard", href: "/" },
-  { label: "Logging", href: "/loggings" },
+  { label: "Logging", href: "/bookings" },
   { label: "Manage", href: "/fleet" },
   { label: "Analytics", href: "/settings" },
 ];
 
 export const Header = () => {
   const pathname = usePathname();
+  const { profile: user } = useAuth();
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/" || pathname === "";
     return pathname?.startsWith(href);
   };
+
+  const filteredItems = navItems.filter(item => {
+    // Fallback to OPERATOR view if no user is logged in (for development/demo)
+    const userRole = user?.role || "OPERATOR";
+    return item.roles.includes(userRole);
+  });
 
   return (
     <header
@@ -70,7 +78,7 @@ export const Header = () => {
           gap: 8,
         }}
       >
-        {navItems.map((item) => {
+        {filteredItems.map((item) => {
           const active = isActive(item.href);
           return (
             <Link
