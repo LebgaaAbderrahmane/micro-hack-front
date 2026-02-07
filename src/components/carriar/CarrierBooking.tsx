@@ -1,26 +1,19 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { format, addDays, addHours, isBefore, startOfDay } from "date-fns";
 import {
-    format,
-    addDays,
-    addHours,
-    isBefore,
-    differenceInDays,
-    startOfDay,
-    eachDayOfInterval,
-} from "date-fns";
-import {
-    Calendar,
-    Clock,
     Truck,
-    Package,
     CheckCircle,
     XCircle,
-    AlertCircle,
     Download,
     X,
     Filter,
+    Calendar,
+    Clock,
+    MoreHorizontal,
+    QrCode,
+    Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,9 +66,10 @@ import {
 import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-// import { createClient } from "@/utils/supabase/client";
-// import { useAuth } from "@/hooks/useAuth";
-// import type { Database, Tables } from "@/types/database.types";
+import { createClient } from "@/utils/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 // ---------- TYPES ----------
 
@@ -98,89 +92,26 @@ interface Booking {
     terminal: string;
     gate: string;
     createdAt: Date;
+    qrCode?: string; // Add QR code field
 }
 
 // Full 24h range (or 06:00 to 23:00)
 const HOURS = Array.from({ length: 18 }, (_, i) => i + 6); // 06:00 -> 23:00
 
-// ---------- TIME SLOT GENERATION ----------
-
-function generateTimeSlotsForDay(date: Date): TimeSlot[] {
-    const slots: TimeSlot[] = [];
-    let i = 0;
-
-    while (i < HOURS.length) {
-        const hour = HOURS[i];
-
-        // Some merged slots logic
-        const durationHours =
-            i < HOURS.length - 1 && Math.random() > 0.8 ? 2 : 1;
-
-        const startTime = new Date(date);
-        startTime.setHours(hour, 0, 0, 0);
-
-        const availableCapacity = Math.floor(Math.random() * 20);
-        const totalCapacity = 20;
-        const percentage = (availableCapacity / totalCapacity) * 100;
-
-        slots.push({
-            id: `slot-${date.toISOString()}-${hour}`,
-            startTime,
-            durationHours,
-            availableCapacity,
-            totalCapacity,
-            status:
-                percentage > 50 ? "available" : percentage > 20 ? "limited" : "full",
-        });
-
-        i += durationHours;
-    }
-    return slots;
-}
-
-// ---------- COMPONENT ----------
-
 export default function CarrierBookingPage() {
+    const supabase = createClient();
+    const { profile: user } = useAuth();
     const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
     const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
     const [containerType, setContainerType] = useState("20FT");
     const [terminal, setTerminal] = useState<"terminal-a" | "terminal-b">("terminal-a");
 
-    const [bookings, setBookings] = useState<Booking[]>([
-        {
-            id: "1",
-            bookingCode: "BK-2026-001-ALG",
-            date: new Date(2026, 1, 10, 14, 0),
-            timeSlot: "14:00 - 15:00",
-            containerType: "40FT",
-            status: "confirmed",
-            terminal: "Terminal A",
-            gate: "Gate 3",
-            createdAt: new Date(2026, 1, 3),
-        },
-        {
-            id: "2",
-            bookingCode: "BK-2026-002-ALG",
-            date: new Date(2026, 1, 12, 9, 0),
-            timeSlot: "09:00 - 10:00",
-            containerType: "20FT",
-            status: "pending",
-            terminal: "Terminal B",
-            gate: "Gate 1",
-            createdAt: new Date(2026, 1, 5),
-        },
-        {
-            id: "3",
-            bookingCode: "BK-2026-003-ALG",
-            date: new Date(2026, 1, 8, 16, 0),
-            timeSlot: "16:00 - 17:00",
-            containerType: "40HC",
-            status: "rejected",
-            terminal: "Terminal A",
-            gate: "Gate 2",
-            createdAt: new Date(2026, 1, 1),
-        },
-    ]);
+    // Real Data States
+    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [trucks, setTrucks] = useState<{ id: string; plate_number: string; status: string }[]>([]);
+    const [drivers, setDrivers] = useState<{ id: string; full_name: string }[]>([]);
+    const [selectedTruck, setSelectedTruck] = useState<string>("");
+    const [selectedDriver, setSelectedDriver] = useState<string>("");
 
     const [selectedBookings, setSelectedBookings] = useState<Set<string>>(new Set());
     const [qrBooking, setQrBooking] = useState<Booking | null>(null);
@@ -188,19 +119,146 @@ export default function CarrierBookingPage() {
     // Filters state
     const [statusFilter, setStatusFilter] = useState<string[]>([]);
     const [typeFilter, setTypeFilter] = useState<string[]>([]);
-    const [dateFilter, setDateFilter] = useState<string>(""); // Simple string date match for demo
+    const [dateFilter, setDateFilter] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+    const [dbSlots, setDbSlots] = useState<any[]>([]);
+    const [terminals, setTerminals] = useState<any[]>([]);
+    const [selectedTerminal, setSelectedTerminal] = useState<string>("");
 
-    // Derived state: Next 7 days
+    // Real-time Data Fetching
+    useEffect(() => {
+        if (!user?.org_id) return;
+
+        const fetchData = async () => {
+            // Fetch Trucks
+            const { data: trucksData } = await supabase
+                .from("trucks")
+                .select("id, plate_number, status")
+                .eq("org_id", user.org_id);
+            if (trucksData) setTrucks(trucksData);
+
+            // Fetch Drivers
+            const { data: driversData } = await supabase
+                .from("drivers")
+                .select("id, full_name")
+                .eq("org_id", user.org_id);
+            if (driversData) setDrivers(driversData);
+
+            // Fetch Terminals
+            const { data: termData } = await supabase.from("terminals").select(`
+                *,
+                gate:gates(gate_number)
+            `);
+            if (termData) {
+                setTerminals(termData);
+                if (termData.length > 0) setSelectedTerminal(termData[0].id);
+            }
+
+            // Fetch Bookings
+            const { data: bookingsData } = await supabase
+                .from("bookings")
+                .select("*")
+                .eq("carrier_org_id", user.org_id)
+                .order("created_at", { ascending: false });
+
+            if (bookingsData) {
+                const mappedBookings: Booking[] = bookingsData.map((b: any) => ({
+                    id: b.id,
+                    bookingCode: b.booking_reference,
+                    date: new Date(b.scheduled_date),
+                    timeSlot: `${format(new Date(b.scheduled_start), "HH:mm")} - ${format(new Date(b.scheduled_end), "HH:mm")}`,
+                    containerType: "20FT", // Default or fetch relation if needed
+                    status: b.status.toLowerCase(),
+                    terminal: "Terminal A", // Map from terminal_id or relation
+                    gate: "Auto-assigned",
+                    createdAt: new Date(b.created_at),
+                    qrCode: b.qr_code
+                }));
+                setBookings(mappedBookings);
+            }
+        };
+
+        fetchData();
+
+        // Real-time Subscription for Bookings
+        const channel = supabase
+            .channel("carrier-bookings")
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "bookings",
+                    filter: `carrier_org_id=eq.${user.org_id}`,
+                },
+                (payload) => {
+                    console.log("Real-time update:", payload);
+                    fetchData(); // Simplest way to sync state is refetch or manually merge
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user?.org_id, supabase]);
+
+    // Fetch Real Slots
+    useEffect(() => {
+        const fetchSlots = async () => {
+            let query = supabase
+                .from("active_slots")
+                .select("*")
+                .eq("slot_date", dateFilter);
+
+            if (selectedTerminal) {
+                query = query.eq("terminal_id", selectedTerminal);
+            }
+
+            const { data, error } = await query;
+            if (data) setDbSlots(data);
+        };
+
+        fetchSlots();
+    }, [dateFilter, selectedTerminal, supabase]);
+
+
+    // Mock Slots (For demo, usually fetch active_slots from DB)
     const days = useMemo(() => {
         const today = new Date();
         const firstDay = addDays(startOfDay(today), 1);
         return Array.from({ length: 7 }, (_, i) => addDays(firstDay, i));
     }, []);
 
-    const daySlots = useMemo(
-        () => days.map((day) => ({ date: day, slots: generateTimeSlotsForDay(day) })),
-        [days]
-    );
+    const daySlots = useMemo(() => {
+        // Group dbSlots by date (though we filter by date, let's keep the structure for Gantt)
+        const dateMap: Record<string, any[]> = {};
+
+        dbSlots.forEach(s => {
+            if (!dateMap[s.slot_date]) dateMap[s.slot_date] = [];
+
+            // Map DB slot to TimeSlot interface
+            const startTime = new Date(`${s.slot_date}T${s.start_time}`);
+            const endTime = new Date(`${s.slot_date}T${s.end_time}`);
+            const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+
+            dateMap[s.slot_date].push({
+                id: s.id,
+                startTime,
+                durationHours: Math.max(1, Math.round(duration)),
+                availableCapacity: s.max_capacity - (s.current_occupancy || 0),
+                totalCapacity: s.max_capacity,
+                status: (s.current_occupancy || 0) >= s.max_capacity ? "full" : "available",
+            });
+        });
+
+        // Ensure we show at least the selected date or upcoming days
+        const targetDates = [dateFilter]; // For now focus on filtered date
+
+        return targetDates.map(d => ({
+            date: new Date(d),
+            slots: dateMap[d] || []
+        }));
+    }, [dbSlots, dateFilter]);
 
     // Filtered bookings
     const filteredBookings = useMemo(() => {
@@ -216,10 +274,6 @@ export default function CarrierBookingPage() {
 
     // Actions
     const handleSlotClick = (slot: TimeSlot) => {
-        if (slot.status === "full") {
-            toast.error("Fully booked.");
-            return;
-        }
         if (isBefore(slot.startTime, new Date())) {
             toast.error("Slot is in the past.");
             return;
@@ -228,58 +282,60 @@ export default function CarrierBookingPage() {
         setIsBookingDialogOpen(true);
     };
 
-    const handleBooking = () => {
-        if (!selectedSlot) return;
-        const endTime = addHours(selectedSlot.startTime, selectedSlot.durationHours);
-        const newBooking: Booking = {
-            id: Math.random().toString(36).slice(2),
-            bookingCode: `BK-2026-${String(bookings.length + 1).padStart(3, "0")}-ALG`,
-            date: selectedSlot.startTime,
-            timeSlot: `${format(selectedSlot.startTime, "HH:mm")} - ${format(endTime, "HH:mm")}`,
-            containerType,
-            status: "pending",
-            terminal: terminal === "terminal-a" ? "Terminal A" : "Terminal B",
-            gate: "Auto-assigned",
-            createdAt: new Date(),
-        };
-        setBookings([newBooking, ...bookings]);
-        setIsBookingDialogOpen(false);
-        toast.success("Booking requested.");
-    };
-
-    const handleCancelBooking = (bookingId: string) => {
-        setBookings((prev) =>
-            prev.map((b) => (b.id === bookingId ? { ...b, status: "cancelled" } : b))
-        );
-        toast.success("Booking cancelled.");
-    };
-
-    // Bulk Actions
-    const handleBulkDownload = () => {
-        const selected = bookings.filter(b => selectedBookings.has(b.id) && b.status === 'confirmed');
-        if (selected.length === 0) {
-            toast.error("No confirmed bookings selected.");
+    const handleBooking = async () => {
+        if (!selectedSlot || !user?.org_id || !selectedTruck || !selectedDriver) {
+            toast.error("Please select a truck, driver, and slot.");
             return;
         }
 
-        // Since we need actual canvas elements to download, we'll iterate and trigger them.
-        // In a real app, you might use a zip library (jszip).
-        // Here we'll just open each (or simulate it). 
-        // Since we only render one QR in the dialog, we need a hidden way to render them all.
-        // For this demo, we'll show a toast.
-        toast.info(`Downloading ${selected.length} QR codes... (Mock action)`);
+        const startTime = selectedSlot.startTime;
+        const endTime = addHours(selectedSlot.startTime, selectedSlot.durationHours);
+        const bookingRef = `BK-${Date.now().toString().slice(-6)}`;
+
+        try {
+            const { error } = await supabase.from("bookings").insert({
+                booking_reference: bookingRef,
+                carrier_org_id: user.org_id,
+                truck_id: selectedTruck,
+                driver_id: selectedDriver,
+                slot_id: selectedSlot.id,
+                scheduled_date: format(startTime, "yyyy-MM-dd"),
+                scheduled_start: format(startTime, "yyyy-MM-dd HH:mm:ss"),
+                scheduled_end: format(endTime, "yyyy-MM-dd HH:mm:ss"),
+                status: "PENDING",
+                booking_type: "EXPORT_DELIVERY", // Default
+                qr_code: "{}" // Placeholder until validated
+            });
+
+            if (error) throw error;
+
+            toast.success("Booking requested successfully!");
+            setIsBookingDialogOpen(false);
+        } catch (err: any) {
+            console.error(err);
+            toast.error("Booking failed: " + err.message);
+        }
     };
 
-    const handleBulkCancel = () => {
-        const selectedIds = Array.from(selectedBookings);
-        setBookings(prev => prev.map(b =>
-            selectedIds.includes(b.id) && b.status === 'confirmed' ? { ...b, status: 'cancelled' } : b
-        ));
-        setSelectedBookings(new Set());
-        toast.success("Selected bookings cancelled.");
+    const handleTruckStatusToggle = async (truckId: string, currentStatus: string) => {
+        const newStatus = currentStatus === "AVAILABLE" ? "IN_USE" : "AVAILABLE";
+
+        try {
+            const { error } = await supabase
+                .from("trucks")
+                .update({ status: newStatus })
+                .eq("id", truckId);
+
+            if (error) throw error;
+
+            setTrucks(prev => prev.map(t => t.id === truckId ? { ...t, status: newStatus } : t));
+            toast.success(`Truck ${newStatus === 'AVAILABLE' ? 'available' : 'set to in-use'}`);
+        } catch (err: any) {
+            console.error(err);
+            toast.error("Failed to update truck status");
+        }
     };
 
-    // Selection
     const toggleSelectAll = () => {
         if (selectedBookings.size === filteredBookings.length) {
             setSelectedBookings(new Set());
@@ -295,15 +351,14 @@ export default function CarrierBookingPage() {
         setSelectedBookings(next);
     };
 
-    // Render Helpers
-    const getStatusBadge = (status: Booking["status"]) => {
-        const styles = {
+    const getStatusBadge = (status: string) => {
+        const styles: Record<string, string> = {
             confirmed: "bg-green-100 text-green-700 hover:bg-green-100",
             pending: "bg-orange-100 text-orange-700 hover:bg-orange-100",
             rejected: "bg-red-100 text-red-700 hover:bg-red-100",
             cancelled: "bg-slate-100 text-slate-700 hover:bg-slate-100",
         };
-        return <Badge className={styles[status]}>{status}</Badge>;
+        return <Badge className={styles[status] || styles.pending}>{status}</Badge>;
     };
 
     const getSlotColor = (status: TimeSlot["status"]) => {
@@ -326,241 +381,270 @@ export default function CarrierBookingPage() {
                         </h1>
                         <p className="text-slate-500">Manage bookings and check availability</p>
                     </div>
-                    <Select value={terminal} onValueChange={(v: any) => setTerminal(v)}>
-                        <SelectTrigger className="w-48 bg-white">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="terminal-a">Algiers Terminal A</SelectItem>
-                            <SelectItem value="terminal-b">Oran Terminal B</SelectItem>
-                        </SelectContent>
-                    </Select>
                 </div>
 
-                {/* Gantt Chart with Horizontal Scroll */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-center">
-                            <CardTitle>Availability Schedule (Next 7 Days)</CardTitle>
-                            <div className="flex gap-4 text-sm">
-                                <span className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 rounded" /> Available</span>
-                                <span className="flex items-center gap-2"><div className="w-3 h-3 bg-orange-500 rounded" /> Limited</span>
-                                <span className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded" /> Full</span>
-                            </div>
-                        </div>
-                        <CardDescription>Scroll horizontally to see all hours (06:00 - 23:00)</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ScrollArea className="w-full border rounded-md">
-                            <div className="min-w-[1600px]"> {/* Force width to enable scroll */}
-                                <div
-                                    className="grid"
-                                    style={{
-                                        gridTemplateColumns: `120px repeat(${HOURS.length}, 1fr)`,
-                                    }}
-                                >
-                                    {/* Header Row */}
-                                    <div className="p-3 border-b border-r bg-slate-50 font-semibold text-center sticky left-0 z-10">Day</div>
-                                    {HOURS.map((h) => (
-                                        <div key={h} className="p-3 border-b border-r text-center text-sm font-medium bg-slate-50">
-                                            {String(h).padStart(2, "0")}:00
-                                        </div>
-                                    ))}
+                {/* Content Tabs */}
+                <Tabs defaultValue="bookings" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 mb-8">
+                        <TabsTrigger value="bookings">Booking Management</TabsTrigger>
+                        <TabsTrigger value="traffic">Traffic Tracking</TabsTrigger>
+                    </TabsList>
 
-                                    {/* Body Rows */}
-                                    {daySlots.map(({ date, slots }) => (
-                                        <React.Fragment key={date.toISOString()}>
-                                            <div className="p-3 border-b border-r bg-white sticky left-0 z-10 flex flex-col justify-center items-center shadow-[1px_0_3px_rgba(0,0,0,0.05)]">
-                                                <span className="text-xs text-slate-500">{format(date, "EEE")}</span>
-                                                <span className="font-bold">{format(date, "d MMM")}</span>
-                                            </div>
-
-                                            {slots.map((slot) => {
-                                                const startHour = slot.startTime.getHours();
-                                                const startIndex = HOURS.indexOf(startHour);
-                                                if (startIndex === -1) return null;
-
-                                                return (
-                                                    <Tooltip key={slot.id}>
-                                                        <TooltipTrigger asChild>
-                                                            <div
-                                                                onClick={() => handleSlotClick(slot)}
-                                                                style={{
-                                                                    gridColumn: `${startIndex + 2} / span ${slot.durationHours}`,
-                                                                }}
-                                                                className={`h-16 border-b border-r p-1 transition-all ${slot.status === "full" ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-slate-50"
-                                                                    }`}
-                                                            >
-                                                                <div className={`h-full w-full rounded-md ${getSlotColor(slot.status)} flex flex-col items-center justify-center text-white text-xs shadow-sm`}>
-                                                                    <span className="font-bold">{slot.availableCapacity}/{slot.totalCapacity}</span>
-                                                                    <span className="opacity-80 text-[10px]">{slot.durationHours}h</span>
-                                                                </div>
-                                                            </div>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <div className="text-xs">
-                                                                <p><strong>{format(slot.startTime, "HH:mm")} - {format(addHours(slot.startTime, slot.durationHours), "HH:mm")}</strong></p>
-                                                                <p>Status: {slot.status}</p>
-                                                                <p>Free: {slot.availableCapacity} slots</p>
-                                                            </div>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                );
-                                            })}
-                                        </React.Fragment>
-                                    ))}
+                    <TabsContent value="bookings" className="space-y-6">
+                        {/* Gantt Chart with Horizontal Scroll */}
+                        <Card>
+                            <CardHeader>
+                                <div className="flex justify-between items-center">
+                                    <CardTitle>Availability Schedule (Next 7 Days)</CardTitle>
+                                    <div className="flex gap-4 text-sm">
+                                        <span className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 rounded" /> Available</span>
+                                        <span className="flex items-center gap-2"><div className="w-3 h-3 bg-orange-500 rounded" /> Limited</span>
+                                        <span className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded" /> Full</span>
+                                    </div>
                                 </div>
-                            </div>
-                            <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
-                    </CardContent>
-                </Card>
-
-                {/* Filter Bar */}
-                <div className="flex flex-wrap gap-4 bg-white p-4 rounded-lg border shadow-sm items-center">
-                    <div className="flex items-center gap-2 text-slate-500">
-                        <Filter className="w-4 h-4" /> Filters:
-                    </div>
-
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" size="sm">Status</Button></DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuLabel>Filter Status</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {['confirmed', 'pending', 'rejected', 'cancelled'].map(s => (
-                                <DropdownMenuCheckboxItem
-                                    key={s}
-                                    checked={statusFilter.includes(s)}
-                                    onCheckedChange={(checked) => {
-                                        setStatusFilter(prev => checked ? [...prev, s] : prev.filter(x => x !== s))
-                                    }}
-                                >
-                                    {s}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" size="sm">Container Type</Button></DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuLabel>Filter Type</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {['20FT', '40FT', '40HC', '45HC'].map(t => (
-                                <DropdownMenuCheckboxItem
-                                    key={t}
-                                    checked={typeFilter.includes(t)}
-                                    onCheckedChange={(checked) => {
-                                        setTypeFilter(prev => checked ? [...prev, t] : prev.filter(x => x !== t))
-                                    }}
-                                >
-                                    {t}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <Input
-                        type="date"
-                        className="w-auto h-9"
-                        value={dateFilter}
-                        onChange={(e) => setDateFilter(e.target.value)}
-                    />
-
-                    {/* Clear Filters */}
-                    {(statusFilter.length > 0 || typeFilter.length > 0 || dateFilter) && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => { setStatusFilter([]); setTypeFilter([]); setDateFilter(""); }}
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        >
-                            Clear All
-                        </Button>
-                    )}
-                </div>
-
-                {/* Bookings Table with Bulk Actions */}
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle>Booking Log</CardTitle>
-                            <CardDescription>Manage your requested slots</CardDescription>
-                        </div>
-                        {selectedBookings.size > 0 && (
-                            <div className="flex gap-2 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <Button size="sm" variant="outline" onClick={handleBulkDownload}>
-                                    <Download className="w-4 h-4 mr-2" />
-                                    Download QR ({selectedBookings.size})
-                                </Button>
-                                <Button size="sm" variant="destructive" onClick={handleBulkCancel}>
-                                    <X className="w-4 h-4 mr-2" />
-                                    Cancel Selected
-                                </Button>
-                            </div>
-                        )}
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-10">
-                                        <Checkbox
-                                            checked={selectedBookings.size === filteredBookings.length && filteredBookings.length > 0}
-                                            onCheckedChange={toggleSelectAll}
-                                        />
-                                    </TableHead>
-                                    <TableHead>Code</TableHead>
-                                    <TableHead>Date & Time</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Terminal</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredBookings.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8 text-slate-500">
-                                            No bookings found matching filters.
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    filteredBookings.map(booking => (
-                                        <TableRow key={booking.id}>
-                                            <TableCell>
-                                                <Checkbox
-                                                    checked={selectedBookings.has(booking.id)}
-                                                    onCheckedChange={() => toggleBookingSelection(booking.id)}
-                                                />
-                                            </TableCell>
-                                            <TableCell className="font-mono">{booking.bookingCode}</TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span>{format(booking.date, "MMM dd, yyyy")}</span>
-                                                    <span className="text-xs text-slate-500">{booking.timeSlot}</span>
+                                <CardDescription>Scroll horizontally to select a slot</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <ScrollArea className="w-full border rounded-md">
+                                    <div className="min-w-[1600px]">
+                                        <div
+                                            className="grid"
+                                            style={{
+                                                gridTemplateColumns: `120px repeat(${HOURS.length}, 1fr)`,
+                                            }}
+                                        >
+                                            {/* Header Row */}
+                                            <div className="p-3 border-b border-r bg-slate-50 font-semibold text-center sticky left-0 z-10">Day</div>
+                                            {HOURS.map((h) => (
+                                                <div key={h} className="p-3 border-b border-r text-center text-sm font-medium bg-slate-50">
+                                                    {String(h).padStart(2, "0")}:00
                                                 </div>
-                                            </TableCell>
-                                            <TableCell><Badge variant="outline">{booking.containerType}</Badge></TableCell>
-                                            <TableCell>{booking.terminal}</TableCell>
-                                            <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                                            <TableCell className="text-right">
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    onClick={() => setQrBooking(booking)}
-                                                    disabled={booking.status !== 'confirmed'}
-                                                >
-                                                    <Download className="w-4 h-4" />
-                                                </Button>
-                                            </TableCell>
+                                            ))}
+
+                                            {/* Body Rows */}
+                                            {daySlots.map(({ date, slots }) => (
+                                                <React.Fragment key={date.toISOString()}>
+                                                    <div className="p-3 border-b border-r bg-white sticky left-0 z-10 flex flex-col justify-center items-center shadow-[1px_0_3px_rgba(0,0,0,0.05)]">
+                                                        <span className="text-xs text-slate-500">{format(date, "EEE")}</span>
+                                                        <span className="font-bold">{format(date, "d MMM")}</span>
+                                                    </div>
+
+                                                    {slots.map((slot) => {
+                                                        const startHour = slot.startTime.getHours();
+                                                        const startIndex = HOURS.indexOf(startHour);
+                                                        if (startIndex === -1) return null;
+
+                                                        return (
+                                                            <Tooltip key={slot.id}>
+                                                                <TooltipTrigger asChild>
+                                                                    <div
+                                                                        onClick={() => handleSlotClick(slot)}
+                                                                        style={{
+                                                                            gridColumn: `${startIndex + 2} / span ${slot.durationHours}`,
+                                                                        }}
+                                                                        className={`h-16 border-b border-r p-1 transition-all ${slot.status === "full" ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-slate-50"
+                                                                            }`}
+                                                                    >
+                                                                        <div className={`h-full w-full rounded-md ${getSlotColor(slot.status)} flex flex-col items-center justify-center text-white text-xs shadow-sm`}>
+                                                                            <span className="font-bold">{slot.availableCapacity}/{slot.totalCapacity}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <div className="text-xs">
+                                                                        <p><strong>{format(slot.startTime, "HH:mm")}</strong></p>
+                                                                        <p>Status: {slot.status}</p>
+                                                                    </div>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        );
+                                                    })}
+                                                </React.Fragment>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <ScrollBar orientation="horizontal" />
+                                </ScrollArea>
+                            </CardContent>
+                        </Card>
+
+                        {/* Filter Bar */}
+                        <div className="flex flex-wrap gap-4 bg-white p-4 rounded-lg border shadow-sm items-center">
+                            <div className="flex items-center gap-2 text-slate-500">
+                                <Filter className="w-4 h-4" /> Port / Terminal:
+                            </div>
+
+                            <Select value={selectedTerminal} onValueChange={setSelectedTerminal}>
+                                <SelectTrigger className="w-[200px]"><SelectValue placeholder="Select Terminal" /></SelectTrigger>
+                                <SelectContent>
+                                    {terminals.map(t => (
+                                        <SelectItem key={t.id} value={t.id}>
+                                            {t.zone_name} (Gate {t.gate?.gate_number || "?"})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            <div className="flex items-center gap-2 text-slate-500 ml-4">
+                                <Calendar className="w-4 h-4" /> Date:
+                            </div>
+                            <Input
+                                type="date"
+                                className="w-[180px]"
+                                value={dateFilter}
+                                onChange={(e) => setDateFilter(e.target.value)}
+                            />
+
+                            <div className="flex-1" />
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild><Button variant="outline" size="sm">Status Filter</Button></DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuLabel>Filter Status</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {['confirmed', 'pending', 'rejected', 'cancelled'].map(s => (
+                                        <DropdownMenuCheckboxItem
+                                            key={s}
+                                            checked={statusFilter.includes(s)}
+                                            onCheckedChange={(checked) => {
+                                                setStatusFilter(prev => checked ? [...prev, s] : prev.filter(x => x !== s))
+                                            }}
+                                        >
+                                            {s}
+                                        </DropdownMenuCheckboxItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => { setStatusFilter([]); setTypeFilter([]); setDateFilter(format(new Date(), "yyyy-MM-dd")); }}
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                                Reset
+                            </Button>
+                        </div>
+
+                        {/* Bookings Table */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Booking Log</CardTitle>
+                                <CardDescription>Manage your requested slots</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-10">
+                                                <Checkbox
+                                                    checked={selectedBookings.size === filteredBookings.length && filteredBookings.length > 0}
+                                                    onCheckedChange={toggleSelectAll}
+                                                />
+                                            </TableHead>
+                                            <TableHead>Code</TableHead>
+                                            <TableHead>Date & Time</TableHead>
+                                            <TableHead>Type</TableHead>
+                                            <TableHead>Terminal</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredBookings.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                                                    No bookings found.
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            filteredBookings.map(booking => (
+                                                <TableRow key={booking.id}>
+                                                    <TableCell>
+                                                        <Checkbox
+                                                            checked={selectedBookings.has(booking.id)}
+                                                            onCheckedChange={() => toggleBookingSelection(booking.id)}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="font-mono">{booking.bookingCode}</TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <span>{format(booking.date, "MMM dd, yyyy")}</span>
+                                                            <span className="text-xs text-slate-500">{booking.timeSlot}</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell><Badge variant="outline">{booking.containerType}</Badge></TableCell>
+                                                    <TableCell>{booking.terminal}</TableCell>
+                                                    <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        {booking.status === 'confirmed' && booking.qrCode && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                onClick={() => setQrBooking(booking)}
+                                                            >
+                                                                <QrCode className="w-4 h-4 mr-2" /> View QR
+                                                            </Button>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="traffic">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Traffic Tracking & Fleet Availability</CardTitle>
+                                <CardDescription>Manage your truck fleet status for real-time tracking</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Truck Plate Number</TableHead>
+                                            <TableHead>Current Status</TableHead>
+                                            <TableHead className="text-right">Availability</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {trucks.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={3} className="text-center py-8">No trucks found.</TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            trucks.map(truck => (
+                                                <TableRow key={truck.id}>
+                                                    <TableCell className="font-mono font-bold text-blue-600">{truck.plate_number}</TableCell>
+                                                    <TableCell>
+                                                        <Badge className={truck.status === 'AVAILABLE' ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}>
+                                                            {truck.status}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <span className="text-xs text-muted-foreground mr-2">
+                                                                {truck.status === 'AVAILABLE' ? 'Online' : 'In Transit'}
+                                                            </span>
+                                                            <Checkbox
+                                                                checked={truck.status === 'AVAILABLE'}
+                                                                onCheckedChange={() => handleTruckStatusToggle(truck.id, truck.status)}
+                                                            />
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
 
                 {/* QR Dialog */}
                 <Dialog open={!!qrBooking} onOpenChange={() => setQrBooking(null)}>
@@ -569,9 +653,9 @@ export default function CarrierBookingPage() {
                             <DialogTitle>Booking QR</DialogTitle>
                         </DialogHeader>
                         <div className="flex justify-center py-4 bg-white rounded border">
-                            {qrBooking && (
+                            {qrBooking && qrBooking.qrCode && (
                                 <QRCodeCanvas
-                                    value={qrBooking.bookingCode}
+                                    value={qrBooking.qrCode}
                                     size={180}
                                     level="H"
                                 />
@@ -579,11 +663,8 @@ export default function CarrierBookingPage() {
                         </div>
                         <div className="text-center space-y-1">
                             <p className="font-bold">{qrBooking?.bookingCode}</p>
-                            <p className="text-sm text-slate-500">{qrBooking?.timeSlot}</p>
+                            <p className="text-sm text-slate-500">Scan at terminal gate</p>
                         </div>
-                        <Button className="w-full mt-2" onClick={() => toast.success("Downloaded!")}>
-                            <Download className="w-4 h-4 mr-2" /> Save Image
-                        </Button>
                     </DialogContent>
                 </Dialog>
 
@@ -598,20 +679,41 @@ export default function CarrierBookingPage() {
                         </DialogHeader>
                         <div className="py-4 space-y-4">
                             <div className="grid gap-2">
-                                <label>Container Type</label>
+                                <label className="text-sm font-medium">Select Truck</label>
+                                <Select onValueChange={setSelectedTruck} value={selectedTruck}>
+                                    <SelectTrigger><SelectValue placeholder="Select a truck" /></SelectTrigger>
+                                    <SelectContent>
+                                        {trucks.map(t => (
+                                            <SelectItem key={t.id} value={t.id}>{t.plate_number}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium">Select Driver</label>
+                                <Select onValueChange={setSelectedDriver} value={selectedDriver}>
+                                    <SelectTrigger><SelectValue placeholder="Select a driver" /></SelectTrigger>
+                                    <SelectContent>
+                                        {drivers.map(d => (
+                                            <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium">Container Type</label>
                                 <Select value={containerType} onValueChange={setContainerType}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="20FT">20FT Standard</SelectItem>
                                         <SelectItem value="40FT">40FT Standard</SelectItem>
-                                        <SelectItem value="40HC">40 High Cube</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setIsBookingDialogOpen(false)}>Cancel</Button>
-                            <Button onClick={handleBooking}>Confirm</Button>
+                            <Button onClick={handleBooking}>Confirm Booking</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

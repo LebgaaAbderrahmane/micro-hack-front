@@ -77,7 +77,15 @@ export async function login(formData: FormData) {
     );
   }
 
-  console.log("[Login Action] Login complete. Redirecting to dashboard.");
+  // Backup: Update user metadata with profile info to ensure client access even if DB fetch fails
+  await supabase.auth.updateUser({
+    data: {
+      role: profile.role,
+      username: profile.username,
+      org_id: profile.org_id
+    }
+  });
+
   revalidatePath("/", "layout");
   redirect("/");
 }

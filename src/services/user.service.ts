@@ -1,8 +1,12 @@
-import { BaseService } from './supabase/base.service';
+import { BaseService, ServiceResponse } from './supabase/base.service';
 
 export class UsersService extends BaseService<'users'> {
     constructor() {
         super('users');
+    }
+
+    async getWithAuth(): Promise<ServiceResponse<any[]>> {
+        return this.getAll();
     }
 }
 

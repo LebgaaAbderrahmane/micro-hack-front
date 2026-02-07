@@ -214,7 +214,7 @@ export default function AnalyticsPage() {
                 <h2 className="text-content-title dark:text-foreground font-poppins font-semibold text-[20px] px-1">
                     Predictive Intelligence Report
                 </h2>
-                <div onClick={handleGenerateReport} className="bg-background border border-border-div p-8 rounded-lg shadow-sm flex flex-col md:flex-row items-center justify-between gap-8 transition-all hover:shadow-md hover:bg-foreground/[0.01] cursor-pointer group">
+                <div onClick={handleGenerateReport} className="bg-background border border-border-div p-8 rounded-lg shadow-sm flex flex-col md:flex-row items-center justify-between gap-8 transition-all hover:shadow-md hover:bg-foreground/1 cursor-pointer group">
                     <div className="space-y-2 text-left w-full">
                         <div className="flex items-center gap-2 text-primary font-semibold uppercase tracking-wider text-[10px]">
                             <TrendingUp size={14} />
