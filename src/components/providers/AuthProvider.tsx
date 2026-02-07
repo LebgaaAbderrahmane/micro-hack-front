@@ -10,6 +10,7 @@ import {
 import { User, Session } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { Database } from "@/types/database.types";
+import { signOutAction } from "@/app/[locale]/(auth)/actions";
 
 type Profile = Database["public"]["Tables"]["users"]["Row"] & {
   organisation?: Database["public"]["Tables"]["organisations"]["Row"];
@@ -41,11 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [supabase] = useState(() => createClient());
 
   const fetchProfile = useCallback(
-    async (userId: string) => {
-      const controller = new AbortController();
-      // Increased timeout to 10 seconds for slower dev environments
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-
+    async (userId: string, retryCount = 0): Promise<Profile | null> => {
       try {
         // Try to fetch with organisation details first
         const { data, error } = await supabase
@@ -55,14 +52,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (!error && data) {
-          clearTimeout(timeoutId);
           return data as Profile;
+        }
+
+        // If we get an empty error in dev, it might be MSW still booting
+        if (process.env.NODE_ENV === "development" && retryCount < 2) {
+           console.log(`[AuthProvider] Potential race with MSW, retrying... (${retryCount + 1})`);
+           await new Promise(resolve => setTimeout(resolve, 500));
+           return fetchProfile(userId, retryCount + 1);
         }
 
         console.warn("[AuthProvider] Detailed profile fetch failed, trying basic fetch:", error);
 
         // Fallback: Fetch just the user profile without organisation if the join fails
-        // This handles cases where RLS might block organisation access or relation is missing
         const { data: basicData, error: basicError } = await supabase
           .from("users")
           .select("*")
@@ -70,17 +72,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (basicError) {
-          console.error("[AuthProvider] Basic profile fetch error:", basicError);
+          console.error("[AuthProvider] Basic profile fetch error:", {
+            message: basicError.message,
+            details: basicError.details,
+            hint: basicError.hint,
+            code: basicError.code
+          });
           return null;
         }
 
-        clearTimeout(timeoutId);
         return basicData as Profile;
       } catch (err) {
         console.error("[AuthProvider] Profile fetch exception:", err);
         return null;
-      } finally {
-        clearTimeout(timeoutId);
       }
     },
     [supabase],
@@ -198,10 +202,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase, fetchProfile]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // 1. Clear local state for immediate feedback
     setProfile(null);
     setUser(null);
     setSession(null);
+
+    // 2. Call server action to clear cookies and redirect
+    // This will trigger a redirect to /login
+    await signOutAction();
   };
 
   return (

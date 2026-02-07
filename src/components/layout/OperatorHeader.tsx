@@ -22,7 +22,6 @@ export const OperatorHeader = () => {
 
     const handleSignOut = async () => {
         await signOut();
-        router.push("/login");
     };
 
     return (

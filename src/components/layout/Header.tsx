@@ -36,7 +36,6 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push("/login");
   };
 
   return (

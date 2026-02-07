@@ -16,10 +16,10 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="h-[60vh] flex items-center justify-center">
+      <div className="h-[60vh] flex items-center justify-center" suppressHydrationWarning>
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-          <p className="text-xs font-black uppercase tracking-widest text-foreground/40 animate-pulse">
+          <p className="text-xs font-black uppercase tracking-widest text-foreground/40 animate-pulse" suppressHydrationWarning>
             Initializing Dashboard...
           </p>
         </div>

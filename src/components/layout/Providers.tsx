@@ -16,9 +16,11 @@ const queryClient = new QueryClient({
 });
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   const [mswReady, setMswReady] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     async function init() {
       if (process.env.NODE_ENV === "development") {
         const { initMocks } = await import("@/mocks");
@@ -29,15 +31,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     init();
   }, []);
 
-  if (!mswReady) return null;
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <AuthProvider>
-          <ToastContainer />
+          {mounted && <ToastContainer />}
           {children}
-          <FloatingSettings />
+          {mounted && <FloatingSettings />}
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

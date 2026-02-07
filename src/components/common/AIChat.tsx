@@ -11,7 +11,6 @@ import {
   ChevronRight,
   LayoutDashboard,
   FileText,
-  Activity,
   Loader2,
   Plus,
   History,
@@ -26,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChat, ChatMessage } from "@/hooks/domain/useChat";
 import { useAuth } from "@/hooks/useAuth";
+import { UIComponentRenderer } from "@/components/common/ai-widgets";
 
 type ChatState = "closed" | "small" | "large";
 
@@ -37,32 +37,33 @@ interface ChatHistoryItem {
 }
 
 const RECOMMENDED_PROMPTS = [
-  { icon: <Activity size={14} />, text: "Show my recent bookings" },
+  { icon: <LayoutDashboard size={14} />, text: "Show my recent bookings" },
   {
-    icon: <LayoutDashboard size={14} />,
+    icon: <FileText size={14} />,
     text: "Check available slots for today",
   },
-  { icon: <FileText size={14} />, text: "Show terminal capacity" },
+  { icon: <Cpu size={14} />, text: "Show terminal capacity" },
 ];
 
 export const AIChat = () => {
-  const { session, isLoading: authLoading } = useAuth();
-
   const [chatState, setChatState] = useState<ChatState>("closed");
   const [inputValue, setInputValue] = useState("");
   const [showHistory, setShowHistory] = useState(false);
-  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>(() => {
-    if (typeof window === "undefined") return [];
-    const saved = localStorage.getItem("portflow_chat_history");
-    try {
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      console.error("Failed to parse history", e);
-      return [];
-    }
-  });
+  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load history after mount to avoid hydration mismatch
+  useEffect(() => {
+    const saved = localStorage.getItem("portflow_chat_history");
+    if (saved) {
+      try {
+        setChatHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse history", e);
+      }
+    }
+  }, []);
 
   const {
     messages,
@@ -227,49 +228,8 @@ export const AIChat = () => {
     );
   };
 
-  const renderDataTable = (data: Record<string, unknown>[]) => {
-    if (!data.length) return null;
-    const keys = Object.keys(data[0]).slice(0, 6); // Show max 6 columns
-    return (
-      <div className="mt-3 overflow-x-auto rounded-xl border border-white/10">
-        <table className="w-full text-[11px]">
-          <thead>
-            <tr className="bg-white/5">
-              {keys.map((k) => (
-                <th
-                  key={k}
-                  className="px-3 py-2 text-left font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap"
-                >
-                  {k.replace(/_/g, " ")}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.slice(0, 10).map((row, i) => (
-              <tr
-                key={i}
-                className="border-t border-white/5 hover:bg-white/5 transition-colors"
-              >
-                {keys.map((k) => (
-                  <td
-                    key={k}
-                    className="px-3 py-2 text-foreground/80 whitespace-nowrap"
-                  >
-                    {String(row[k] ?? "—")}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
-
   return (
-    <>
-      <AnimatePresence>
+    <>      <AnimatePresence>
         {chatState === "large" && (
           <motion.div
             initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
@@ -523,36 +483,37 @@ export const AIChat = () => {
                               {formatText(msg.text)}
                             </div>
 
-                            {/* Structured data table */}
+                            {/* Rich UI Components from backend */}
+                            {msg.uiComponents &&
+                              msg.uiComponents.length > 0 && (
+                                <UIComponentRenderer
+                                  components={msg.uiComponents}
+                                  onApprovalRespond={(action, entityId, actionType) => {
+                                    sendMessage(
+                                      action === "approve"
+                                        ? `Approved ${actionType} for ${entityId}`
+                                        : `Rejected ${actionType} for ${entityId}`,
+                                    );
+                                  }}
+                                />
+                              )}
+
+                            {/* Legacy: fallback table for old-format data without ui_components */}
                             {msg.data &&
                               msg.data.length > 0 &&
-                              renderDataTable(msg.data)}
-
-                            {/* Proposal card */}
-                            {msg.hasProposal && (
-                              <div className="mt-2 w-full p-4 border border-primary/20 bg-primary/5 rounded-2xl flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="p-2 bg-primary/10 rounded-xl text-primary">
-                                    <Activity size={18} />
-                                  </div>
-                                  <div>
-                                    <p className="text-xs font-bold">
-                                      Action Proposal
-                                    </p>
-                                    <p className="text-[10px] text-muted-foreground">
-                                      Agent requires your confirmation
-                                    </p>
-                                  </div>
-                                </div>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-8 rounded-lg text-[10px] font-bold uppercase transition-all hover:bg-primary hover:text-white"
-                                >
-                                  Review
-                                </Button>
-                              </div>
-                            )}
+                              (!msg.uiComponents || msg.uiComponents.length === 0) && (
+                                <UIComponentRenderer
+                                  components={[{
+                                    type: "table" as const,
+                                    columns: Object.keys(msg.data[0]).slice(0, 6).map((k) => ({
+                                      key: k,
+                                      header: k.replace(/_/g, " "),
+                                      type: "text" as const,
+                                    })),
+                                    data: msg.data,
+                                  }]}
+                                />
+                              )}
 
                             {/* Confidence indicator for assistant messages */}
                             {msg.role === "assistant" &&

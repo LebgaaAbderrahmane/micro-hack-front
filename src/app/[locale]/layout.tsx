@@ -24,10 +24,12 @@ const montserrat = Montserrat({
   variable: "--font-montserrat",
 });
 
-export const metadata: Metadata = {
-  title: "ILACS | Intelligent Logistics Access Control System",
-  description: "Advanced port access and terminal management system",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "ILACS | Intelligent Logistics Access Control System",
+    description: "Advanced port access and terminal management system",
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -38,7 +40,7 @@ export default async function RootLayout({
 }) {
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale as any)) {
+  if (!routing.locales.includes(locale as "en" | "fr")) {
     notFound();
   }
 
@@ -48,9 +50,11 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning>
       <body
         suppressHydrationWarning
+        data-gramm="false"
+        data-gr-ext-installed=""
         className={`${inter.variable} ${poppins.variable} ${montserrat.variable} font-sans antialiased text-foreground bg-background`}
       >
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider messages={messages} locale={locale}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
       </body>

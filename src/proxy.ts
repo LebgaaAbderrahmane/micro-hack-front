@@ -3,7 +3,7 @@ import { routing } from './i18n/routing';
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
   // 1. Handle i18n routing first
@@ -40,7 +40,16 @@ export async function middleware(request: NextRequest) {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError && authError.message !== "Auth session missing!") {
-    console.error(`[Middleware] Auth error: ${authError.message}`);
+    const isInvalidToken = authError.message.toLowerCase().includes("refresh token") || 
+                          authError.message.toLowerCase().includes("invalid token");
+    
+    if (isInvalidToken) {
+      console.warn(`[Proxy] Session invalidated: ${authError.message}`);
+      // Force sign out to clear invalid cookies and prevent infinite refresh attempts
+      await supabase.auth.signOut();
+    } else {
+      console.error(`[Proxy] Auth error: ${authError.message}`);
+    }
   }
 
   // Define public paths (login, register, and auth callback)
@@ -94,7 +103,7 @@ export async function middleware(request: NextRequest) {
         .single();
 
       if (profile?.role !== "ADMIN") {
-        console.warn(`[Middleware] Non-admin user ${user.id} attempted to access ${pathname}`);
+        console.warn(`[Proxy] Non-admin user ${user.id} attempted to access ${pathname}`);
         const locale = pathname.split('/')[1];
         const finalLocale = routing.locales.includes(locale as any) ? locale : routing.defaultLocale;
         const redirectUrl = new URL(`/${finalLocale}`, request.url);
