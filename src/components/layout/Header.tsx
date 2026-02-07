@@ -85,11 +85,7 @@ export const Header = ({ onOpenSettings }: HeaderProps) => {
       style={{ padding: "22px 64px" }}
     >
       {/* Logo */}
-<<<<<<< HEAD
-      <Link href="/">
-=======
       <Link href="/" className="flex items-center group transition-all duration-300">
->>>>>>> origin/features/carrier-pages
         <Logo />
       </Link>
 
