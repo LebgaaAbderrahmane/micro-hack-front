@@ -1,11 +1,15 @@
 import { createClient } from "@/utils/supabase/client";
 import type { UIComponent } from "@/types/ai-components";
+import { buildResponse as buildDemoResponse } from "@/mocks/ai-chat-handler";
 
 const AI_API_URL = (
   process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000"
 )
   .replace(/\/$/, "")
   .replace("https://localhost", "http://localhost");
+
+// Demo mode: always on — set to false to use the real AI backend
+const AI_DEMO_MODE = true;
 
 // ── Request / Response types matching the FastAPI backend ──
 
@@ -70,10 +74,26 @@ export const aiService = {
     userId?: string,
     signal?: AbortSignal,
   ): Promise<ChatResponse> {
+    // ── Demo mode: return scripted response without network call ──
+    if (AI_DEMO_MODE) {
+      console.log(`[AI Service] Demo mode — generating mock response for: "${payload.message}"`);
+
+      // Simulate realistic AI processing delay (600–1200ms)
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(resolve, 600 + Math.random() * 600);
+        // Support abort signal even in demo mode
+        signal?.addEventListener("abort", () => {
+          clearTimeout(timeout);
+          reject(new DOMException("Aborted", "AbortError"));
+        });
+      });
+
+      return buildDemoResponse(payload) as ChatResponse;
+    }
+
+    // ── Real backend mode ──
     const headers = await getAuthHeaders(token, userId);
 
-    // Ensure we are calling the endpoint with a trailing slash to avoid 307 redirects
-    // and ensure headers like Authorization are preserved.
     const baseUrl = AI_API_URL.replace(/\/$/, "");
     const url = `${baseUrl}/api/v1/chat/`;
 

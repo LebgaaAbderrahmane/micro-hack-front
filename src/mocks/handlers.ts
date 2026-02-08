@@ -1,6 +1,9 @@
 import { http, HttpResponse } from "msw";
+import { aiChatHandlers } from "./ai-chat-handler";
 
 export const handlers = [
+  // AI Chat Demo Handler
+  ...aiChatHandlers,
   // Auth
   http.post("/api/auth/login", async ({ request }) => {
     const info = (await request.json()) as { email: string };

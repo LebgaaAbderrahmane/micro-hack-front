@@ -43,6 +43,9 @@ const RECOMMENDED_PROMPTS = [
     text: "Check available slots for today",
   },
   { icon: <Cpu size={14} />, text: "Show terminal capacity" },
+  { icon: <LayoutDashboard size={14} />, text: "Book a slot at Terminal North" },
+  { icon: <FileText size={14} />, text: "Show booking history for last week" },
+  { icon: <Cpu size={14} />, text: "Show fleet status" },
 ];
 
 export const AIChat = () => {
